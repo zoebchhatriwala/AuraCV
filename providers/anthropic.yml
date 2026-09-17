@@ -1,0 +1,165 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# AuraCV - Anthropic Claude Provider Contract
+# ─────────────────────────────────────────────────────────────────────────────
+
+provider: anthropic
+name: Anthropic Claude
+icon: anthropic
+description: Claude 5 — Excellent writing quality and nuanced feedback
+
+# ─── API Connection ───────────────────────────────────────────────────────────
+api:
+  base_url: https://api.anthropic.com/v1
+  content_type: application/json
+  accept: application/json
+  auth:
+    type: api-key-header            # Anthropic uses x-api-key header (not Bearer)
+    header: x-api-key
+    prefix: ""                      # No prefix — raw key value
+  extra_headers:
+    anthropic-version: "2023-06-01" # Required versioning header
+
+# ─── Models ──────────────────────────────────────────────────────────────────
+models:
+  default: claude-fable-5.1
+  options:
+    - id: claude-fable-5.1
+      name: "Claude Fable 5.1"
+      context_window: 1000000
+      recommended: true
+    - id: claude-opus-5
+      name: "Claude Opus 5 (most capable)"
+      context_window: 1000000
+    - id: claude-sonnet-5
+      name: "Claude Sonnet 5 (balanced)"
+      context_window: 1000000
+    - id: claude-haiku-4.5
+      name: "Claude Haiku 4.5 (faster)"
+      context_window: 1000000
+
+# ─── Endpoints ───────────────────────────────────────────────────────────────
+endpoints:
+  chat:
+    path: /messages
+    method: POST
+    content_type: application/json
+    request:
+      model: "{{model}}"
+      max_tokens: 4096
+      messages:
+        - role: user
+          content: "{{prompt}}"
+    # Anthropic response shape differs from OpenAI
+    response:
+      extract: "content[0].text"
+      parse: json                   # Parse text as JSON (strip markdown code fences first)
+      strip_markdown_fences: true   # Strip ```json ... ``` wrappers before parsing
+
+  test:
+    path: /messages
+    method: POST
+    content_type: application/json
+    request:
+      model: "{{model}}"
+      max_tokens: 20
+      messages:
+        - role: user
+          content: 'Reply with only this exact JSON and nothing else: {"ok":true}'
+    response:
+      extract: "content[0].text"
+      parse: json
+      strip_markdown_fences: true
+
+# ─── Features (same contract as OpenAI, Anthropic supports all) ───────────────
+features:
+  redline:
+    enabled: true
+    endpoint: chat
+    description: "Annotate a resume section with improvement suggestions"
+    input:
+      section_title:
+        type: string
+        required: true
+      section_content:
+        type: string
+        required: true
+      context:
+        type: string
+        required: false
+    output:
+      overall_score:
+        type: number
+        range: [0, 100]
+      suggestions:
+        type: array
+        items:
+          type: { type: string, enum: [improve, remove, add, rewrite] }
+          original: { type: string }
+          suggestion: { type: string }
+          reason: { type: string }
+          priority: { type: string, enum: [high, medium, low] }
+      strengths:
+        type: array
+        items: { type: string }
+      summary:
+        type: string
+
+  rewrite:
+    enabled: true
+    endpoint: chat
+    description: "Rewrite a single resume bullet point"
+    input:
+      bullet: { type: string, required: true }
+      tone:
+        type: string
+        required: false
+        default: professional
+        enum: [professional, concise, executive, technical, creative]
+      role: { type: string, required: false }
+    output:
+      rewritten: { type: string }
+      alternatives: { type: array, items: { type: string } }
+      action_verb_used: { type: string }
+      improvement_notes: { type: string }
+
+  ats_score:
+    enabled: true
+    endpoint: chat
+    description: "Score resume against a job description"
+    input:
+      resume_text: { type: string, required: true }
+      job_description: { type: string, required: true }
+    output:
+      overall_score: { type: number, range: [0, 100] }
+      keyword_match_score: { type: number, range: [0, 100] }
+      format_score: { type: number, range: [0, 100] }
+      experience_match_score: { type: number, range: [0, 100] }
+      matched_keywords: { type: array, items: { type: string } }
+      missing_keywords: { type: array, items: { type: string } }
+      section_scores: { type: object }
+      recommendations: { type: array, items: { type: string } }
+      summary: { type: string }
+
+  keyword_gap:
+    enabled: true
+    endpoint: chat
+    description: "Find keyword gaps between resume and JD"
+    input:
+      resume_text: { type: string, required: true }
+      job_description: { type: string, required: true }
+    output:
+      critical_missing: { type: array }
+      nice_to_have_missing: { type: array }
+      already_present: { type: array }
+      skills_gap: { type: object }
+      summary: { type: string }
+
+  import_parse:
+    enabled: true
+    endpoint: chat
+    description: "Parse raw resume text into structured sections"
+    input:
+      raw_text: { type: string, required: true }
+    output:
+      name: { type: string }
+      sections: { type: array }

@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>{{resume.name}} - Compact CV</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #f8fafc;
+    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+    color: #0f172a;
+    font-size: 8.5pt;
+    line-height: 1.4;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .page {
+    width: 210mm;
+    min-height: 297mm;
+    margin: 0 auto;
+    background: #ffffff;
+    padding: 24px 28px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+  }
+
+  /* Compact Header */
+  .compact-header {
+    border-bottom: 2px solid #2563eb;
+    padding-bottom: 12px;
+    margin-bottom: 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+  }
+  .compact-name {
+    font-size: 20pt;
+    font-weight: 800;
+    color: #0f172a;
+    letter-spacing: -0.5px;
+    line-height: 1.1;
+  }
+  .compact-role {
+    font-size: 9.5pt;
+    font-weight: 600;
+    color: #2563eb;
+    margin-top: 2px;
+  }
+  .compact-contacts {
+    text-align: right;
+    font-size: 8pt;
+    color: #475569;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .compact-contacts a {
+    color: #2563eb;
+    text-decoration: none;
+  }
+
+  /* Section Styles */
+  .compact-section {
+    margin-bottom: 12px;
+  }
+  .compact-section:last-child {
+    margin-bottom: 0;
+  }
+  .section-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 8.5pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: #0f172a;
+    background: #f1f5f9;
+    padding: 2px 8px;
+    border-radius: 4px;
+    border-left: 3px solid #2563eb;
+    margin-bottom: 8px;
+  }
+
+  /* Summary */
+  .summary-text {
+    font-size: 8.25pt;
+    color: #334155;
+    line-height: 1.45;
+  }
+
+  /* Experience */
+  .exp-item {
+    margin-bottom: 10px;
+  }
+  .exp-item:last-child {
+    margin-bottom: 0;
+  }
+  .exp-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+  .exp-title-bold {
+    font-size: 9pt;
+    font-weight: 700;
+    color: #0f172a;
+  }
+  .exp-dates {
+    font-size: 7.75pt;
+    font-weight: 600;
+    color: #64748b;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .exp-company-line {
+    font-size: 8.25pt;
+    font-weight: 500;
+    color: #2563eb;
+    margin-bottom: 3px;
+  }
+  .exp-bullets {
+    margin-left: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .exp-bullets li {
+    font-size: 8.25pt;
+    color: #334155;
+    line-height: 1.4;
+  }
+
+  /* Grid Layout for Skills & Education */
+  .compact-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  /* Skill lines */
+  .skill-line {
+    font-size: 8pt;
+    margin-bottom: 4px;
+    color: #334155;
+  }
+  .skill-line strong {
+    color: #0f172a;
+    font-weight: 600;
+  }
+
+  /* Education Compact */
+  .edu-row {
+    margin-bottom: 6px;
+  }
+  .edu-row:last-child {
+    margin-bottom: 0;
+  }
+  .edu-deg {
+    font-size: 8.5pt;
+    font-weight: 700;
+    color: #0f172a;
+  }
+  .edu-meta {
+    font-size: 7.75pt;
+    color: #64748b;
+  }
+
+  /* Projects Compact */
+  .proj-row {
+    margin-bottom: 6px;
+  }
+  .proj-row-head {
+    display: flex;
+    justify-content: space-between;
+    font-size: 8.5pt;
+    font-weight: 700;
+    color: #0f172a;
+  }
+  .proj-desc {
+    font-size: 8pt;
+    color: #475569;
+  }
+
+  @media print {
+    body { background: #ffffff; }
+    .page { width: 100%; box-shadow: none; padding: 18px 20px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <!-- Header -->
+  {{#with header}}
+  <header class="compact-header">
+    <div>
+      <h1 class="compact-name">{{name}}</h1>
+      {{#if role}}<div class="compact-role">{{role}}</div>{{/if}}
+    </div>
+    <div class="compact-contacts">
+      {{#if email}}<span>{{email}}</span>{{/if}}
+      {{#if phone}}<span>{{phone}}</span>{{/if}}
+      {{#if location}}<span>{{location}}</span>{{/if}}
+      {{#if linkedin}}<span><a href="https://{{linkedin}}">{{linkedin}}</a></span>{{/if}}
+      {{#if github}}<span><a href="https://{{github}}">{{github}}</a></span>{{/if}}
+    </div>
+  </header>
+  {{/with}}
+
+  <!-- Summary -->
+  {{#with summary}}
+  {{#if text}}
+  <div class="compact-section">
+    <div class="section-badge">Summary</div>
+    <p class="summary-text">{{text}}</p>
+  </div>
+  {{/if}}
+  {{/with}}
+
+  <!-- Experience -->
+  {{#if experience.length}}
+  <div class="compact-section">
+    <div class="section-badge">Experience</div>
+    {{#each experience}}
+    <div class="exp-item">
+      <div class="exp-top">
+        <span class="exp-title-bold">{{role}}</span>
+        <span class="exp-dates">{{start_date}} - {{end_date}}</span>
+      </div>
+      <div class="exp-company-line">{{company}}{{#if location}} · {{location}}{{/if}}</div>
+      {{#if bullets.length}}
+      <ul class="exp-bullets">
+        {{#each bullets}}<li>{{this}}</li>{{/each}}
+      </ul>
+      {{/if}}
+    </div>
+    {{/each}}
+  </div>
+  {{/if}}
+
+  <!-- Skills & Education Grid -->
+  <div class="compact-grid compact-section">
+    <!-- Skills -->
+    {{#if skills.length}}
+    <div>
+      <div class="section-badge">Technical Skills</div>
+      {{#each skills}}
+      <div class="skill-line">
+        <strong>{{category}}:</strong> {{#each items}}{{this}}{{#unless @last}}, {{/unless}}{{/each}}
+      </div>
+      {{/each}}
+    </div>
+    {{/if}}
+
+    <!-- Education -->
+    <div>
+      {{#if education.length}}
+      <div class="section-badge">Education</div>
+      {{#each education}}
+      <div class="edu-row">
+        <div class="edu-deg">{{degree}} in {{field}}</div>
+        <div class="edu-meta">{{institution}} · {{start_date}} - {{end_date}}{{#if gpa}} · GPA {{gpa}}{{/if}}</div>
+      </div>
+      {{/each}}
+      {{/if}}
+
+      {{#if certifications.length}}
+      <div class="section-badge" style="margin-top: 8px;">Certifications</div>
+      {{#each certifications}}
+      <div class="edu-row" style="font-size: 8pt;">
+        <strong>{{name}}</strong> — {{issuer}}{{#if date}} ({{date}}){{/if}}
+      </div>
+      {{/each}}
+      {{/if}}
+    </div>
+  </div>
+
+  <!-- Key Projects -->
+  {{#if projects.length}}
+  <div class="compact-section">
+    <div class="section-badge">Projects</div>
+    {{#each projects}}
+    <div class="proj-row">
+      <div class="proj-row-head">
+        <span>{{name}}</span>
+        {{#if url}}<span style="font-size: 7.5pt; font-weight: 500; color: #2563eb;">{{url}}</span>{{/if}}
+      </div>
+      {{#if description}}<div class="proj-desc">{{description}}</div>{{/if}}
+    </div>
+    {{/each}}
+  </div>
+  {{/if}}
+</div>
+</body>
+</html>

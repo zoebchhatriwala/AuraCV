@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>{{resume.name}} - Resume</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Outfit:wght@600;700;800&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  
+  html, body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 9.5pt;
+    line-height: 1.5;
+    color: #1e293b;
+    background: #ffffff;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  ::-webkit-scrollbar { display: none; }
+
+  .page {
+    box-sizing: border-box;
+    width: 794px;
+    min-height: 1123px;
+    margin: 0 auto;
+    background: #ffffff;
+    display: flex;
+    flex-direction: row;
+  }
+
+  /* ─── Left Sidebar (33%) ──────────────────────────────────────────────── */
+  .sidebar {
+    width: 270px;
+    flex-shrink: 0;
+    background: #f8fafc;
+    border-right: 1px solid #e2e8f0;
+    padding: 36px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  /* ─── Right Main Column (67%) ─────────────────────────────────────────── */
+  .main {
+    flex: 1;
+    padding: 36px 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+    background: #ffffff;
+  }
+
+  /* Header inside main */
+  .header-block {
+    border-bottom: 2px solid #e2e8f0;
+    padding-bottom: 18px;
+  }
+  .header-name {
+    font-family: 'Outfit', sans-serif;
+    font-size: 24pt;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    line-height: 1.1;
+    color: #0f172a;
+    margin-bottom: 4px;
+  }
+  .header-role {
+    font-size: 11pt;
+    font-weight: 600;
+    color: #4f46e5;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+
+  /* Section Headings */
+  .section-title {
+    font-family: 'Outfit', sans-serif;
+    font-size: 9.5pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: #0f172a;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+    padding-bottom: 4px;
+    border-bottom: 1.5px solid #e2e8f0;
+  }
+  .section-title::before {
+    content: '';
+    width: 6px; height: 6px;
+    border-radius: 2px;
+    background: #4f46e5;
+  }
+
+  .sidebar-title {
+    font-family: 'Outfit', sans-serif;
+    font-size: 8.5pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: #475569;
+    margin-bottom: 8px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid #cbd5e1;
+  }
+
+  /* Contact Items */
+  .contact-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    font-size: 8.5pt;
+  }
+  .contact-entry {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    color: #334155;
+    text-decoration: none;
+    word-break: break-all;
+    line-height: 1.35;
+  }
+  .contact-entry strong {
+    font-size: 7.5pt;
+    color: #64748b;
+    text-transform: uppercase;
+    min-width: 48px;
+    margin-top: 1px;
+  }
+
+  /* Summary */
+  .summary-p {
+    font-size: 9.25pt;
+    color: #334155;
+    line-height: 1.6;
+    text-align: justify;
+  }
+
+  /* Experience */
+  .exp-item {
+    margin-bottom: 14px;
+  }
+  .exp-item:last-child {
+    margin-bottom: 0;
+  }
+  .exp-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+  .exp-role {
+    font-size: 10pt;
+    font-weight: 700;
+    color: #0f172a;
+  }
+  .exp-date {
+    font-size: 8pt;
+    font-weight: 600;
+    color: #64748b;
+    white-space: nowrap;
+  }
+  .exp-company {
+    font-size: 9pt;
+    font-weight: 600;
+    color: #4f46e5;
+    margin-bottom: 4px;
+  }
+  .exp-bullets {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  .exp-bullets li {
+    font-size: 8.75pt;
+    color: #334155;
+    padding-left: 12px;
+    position: relative;
+    line-height: 1.5;
+    margin-bottom: 3px;
+  }
+  .exp-bullets li::before {
+    content: '▪';
+    position: absolute;
+    left: 0;
+    color: #4f46e5;
+    font-size: 7pt;
+    top: 1px;
+  }
+
+  /* Skills Sidebar */
+  .skills-block {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .skill-group-name {
+    font-size: 8pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #475569;
+    margin-bottom: 4px;
+  }
+  .skill-chip-wrap {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+  .skill-chip {
+    font-size: 8pt;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    color: #334155;
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-weight: 500;
+  }
+
+  /* Education Sidebar */
+  .edu-block {
+    margin-bottom: 10px;
+  }
+  .edu-block:last-child {
+    margin-bottom: 0;
+  }
+  .edu-deg {
+    font-size: 9pt;
+    font-weight: 700;
+    color: #0f172a;
+    line-height: 1.25;
+  }
+  .edu-inst {
+    font-size: 8.5pt;
+    color: #475569;
+    margin-top: 2px;
+  }
+  .edu-meta {
+    font-size: 8pt;
+    color: #64748b;
+    margin-top: 1px;
+  }
+
+  /* Projects */
+  .proj-item {
+    margin-bottom: 10px;
+  }
+  .proj-item:last-child {
+    margin-bottom: 0;
+  }
+  .proj-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+  .proj-name {
+    font-size: 9.5pt;
+    font-weight: 700;
+    color: #0f172a;
+  }
+  .proj-url {
+    font-size: 8pt;
+    color: #4f46e5;
+    text-decoration: none;
+    font-weight: 500;
+  }
+  .proj-desc {
+    font-size: 8.75pt;
+    color: #475569;
+    margin-top: 2px;
+    line-height: 1.45;
+  }
+
+  /* Certifications */
+  .cert-item {
+    margin-bottom: 6px;
+    font-size: 8.5pt;
+  }
+  .cert-item:last-child {
+    margin-bottom: 0;
+  }
+  .cert-name {
+    font-weight: 700;
+    color: #0f172a;
+  }
+  .cert-meta {
+    color: #64748b;
+    font-size: 8pt;
+  }
+
+  @media print {
+    body { background: white; }
+    .page { width: 100%; min-height: auto; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <!-- Left Sidebar (33%) -->
+  <aside class="sidebar">
+    <!-- Contact Details -->
+    <div>
+      <div class="sidebar-title">Contact</div>
+      <div class="contact-list">
+        {{#with header}}
+        {{#if email}}<div class="contact-entry"><strong>Email</strong><span>{{email}}</span></div>{{/if}}
+        {{#if phone}}<div class="contact-entry"><strong>Phone</strong><span>{{phone}}</span></div>{{/if}}
+        {{#if location}}<div class="contact-entry"><strong>Location</strong><span>{{location}}</span></div>{{/if}}
+        {{#if linkedin}}<div class="contact-entry"><strong>LinkedIn</strong><span>{{linkedin}}</span></div>{{/if}}
+        {{#if github}}<div class="contact-entry"><strong>GitHub</strong><span>{{github}}</span></div>{{/if}}
+        {{#if website}}<div class="contact-entry"><strong>Web</strong><span>{{website}}</span></div>{{/if}}
+        {{/with}}
+      </div>
+    </div>
+
+    <!-- Skills -->
+    {{#if skills.length}}
+    <div>
+      <div class="sidebar-title">Skills & Competencies</div>
+      <div class="skills-block">
+        {{#each skills}}
+        <div>
+          <div class="skill-group-name">{{category}}</div>
+          <div class="skill-chip-wrap">
+            {{#each items}}<span class="skill-chip">{{this}}</span>{{/each}}
+          </div>
+        </div>
+        {{/each}}
+      </div>
+    </div>
+    {{/if}}
+
+    <!-- Education -->
+    {{#if education.length}}
+    <div>
+      <div class="sidebar-title">Education</div>
+      {{#each education}}
+      <div class="edu-block">
+        <div class="edu-deg">{{degree}} in {{field}}</div>
+        <div class="edu-inst">{{institution}}</div>
+        <div class="edu-meta">{{start_date}} - {{end_date}}{{#if gpa}} · GPA {{gpa}}{{/if}}</div>
+      </div>
+      {{/each}}
+    </div>
+    {{/if}}
+
+    <!-- Certifications -->
+    {{#if certifications.length}}
+    <div>
+      <div class="sidebar-title">Certifications</div>
+      {{#each certifications}}
+      <div class="cert-item">
+        <div class="cert-name">{{name}}</div>
+        <div class="cert-meta">{{issuer}}{{#if date}} · {{date}}{{/if}}</div>
+      </div>
+      {{/each}}
+    </div>
+    {{/if}}
+  </aside>
+
+  <!-- Right Main Column (67%) -->
+  <main class="main">
+    <!-- Header Block -->
+    <div class="header-block">
+      {{#with header}}
+      <h1 class="header-name">{{name}}</h1>
+      {{#if role}}<div class="header-role">{{role}}</div>{{/if}}
+      {{/with}}
+    </div>
+
+    <!-- Executive Summary -->
+    {{#with summary}}
+    {{#if text}}
+    <section>
+      <div class="section-title">Executive Summary</div>
+      <p class="summary-p">{{text}}</p>
+    </section>
+    {{/if}}
+    {{/with}}
+
+    <!-- Work Experience -->
+    {{#if experience.length}}
+    <section>
+      <div class="section-title">Work Experience</div>
+      {{#each experience}}
+      <div class="exp-item">
+        <div class="exp-row">
+          <span class="exp-role">{{role}}</span>
+          <span class="exp-date">{{start_date}} - {{end_date}}</span>
+        </div>
+        <div class="exp-company">{{company}}{{#if location}} · {{location}}{{/if}}</div>
+        {{#if bullets.length}}
+        <ul class="exp-bullets">
+          {{#each bullets}}<li>{{this}}</li>{{/each}}
+        </ul>
+        {{/if}}
+      </div>
+      {{/each}}
+    </section>
+    {{/if}}
+
+    <!-- Key Projects -->
+    {{#if projects.length}}
+    <section>
+      <div class="section-title">Key Projects</div>
+      {{#each projects}}
+      <div class="proj-item">
+        <div class="proj-header">
+          <span class="proj-name">{{name}}</span>
+          {{#if url}}<a class="proj-url" href="https://{{url}}" target="_blank">{{url}}</a>{{/if}}
+        </div>
+        {{#if description}}<div class="proj-desc">{{description}}</div>{{/if}}
+      </div>
+      {{/each}}
+    </section>
+    {{/if}}
+  </main>
+</div>
+</body>
+</html>

@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <rect width="64" height="64" rx="16" fill="#0f172a"/>
+  <!-- Subtle sapphire rim -->
+  <rect x="1" y="1" width="62" height="62" rx="15" stroke="rgba(255,255,255,0.1)" stroke-width="1.5"/>
+  
+  <!-- Minimalist Geometric Apex & Document Folio (A + CV) -->
+  <path d="M32 14L46 42H38.5L32 28.5L25.5 42H18L32 14Z" fill="url(#brandGrad)"/>
+  <path d="M25 34H39V38.5H25V34Z" fill="#60a5fa" fill-opacity="0.9"/>
+  <circle cx="32" cy="22" r="2.5" fill="#ffffff"/>
+  
+  <defs>
+    <linearGradient id="brandGrad" x1="18" y1="14" x2="46" y2="42" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#3b82f6"/>
+      <stop offset="100%" stop-color="#1d4ed8"/>
+    </linearGradient>
+  </defs>
+</svg>

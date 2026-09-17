@@ -1,0 +1,152 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# AuraCV - Google Gemini Provider Contract
+# Note: Gemini uses a unique URL pattern (/models/{model}:generateContent)
+# and query-param auth instead of a header.
+# ─────────────────────────────────────────────────────────────────────────────
+
+provider: gemini
+name: Google Gemini
+icon: gemini
+description: Gemini 3.8 Flash — Fast, cost-effective, massive context
+
+# ─── API Connection ───────────────────────────────────────────────────────────
+api:
+  base_url: https://generativelanguage.googleapis.com/v1beta
+  content_type: application/json
+  accept: application/json
+  auth:
+    type: query-param               # Gemini uses ?key=API_KEY query parameter
+    param: key                      # Query parameter name
+
+# ─── Models ──────────────────────────────────────────────────────────────────
+models:
+  default: gemini-3.8-flash
+  options:
+    - id: gemini-3.8-flash
+      name: "Gemini 3.8 Flash"
+      context_window: 2000000
+      recommended: true
+    - id: gemini-3.8-live
+      name: "Gemini 3.8 Live"
+      context_window: 2000000
+    - id: gemini-3.1-pro
+      name: "Gemini 3.1 Pro (more capable)"
+      context_window: 2000000
+
+# ─── Endpoints ───────────────────────────────────────────────────────────────
+endpoints:
+  chat:
+    # Gemini uses model name in the URL path
+    path: "/models/{{model}}:generateContent"
+    method: POST
+    content_type: application/json
+    # Gemini request structure is completely different from OpenAI
+    request:
+      contents:
+        - parts:
+            - text: "{{prompt}}"
+      generationConfig:
+        temperature: 0.7
+        maxOutputTokens: 4096
+        responseMimeType: application/json    # Force JSON output from Gemini
+    # Gemini response structure
+    response:
+      extract: "candidates[0].content.parts[0].text"
+      parse: json
+      strip_markdown_fences: true
+
+  test:
+    path: "/models/{{model}}:generateContent"
+    method: POST
+    content_type: application/json
+    request:
+      contents:
+        - parts:
+            - text: 'Reply with only valid JSON: {"ok":true}'
+      generationConfig:
+        maxOutputTokens: 20
+        responseMimeType: application/json
+    response:
+      extract: "candidates[0].content.parts[0].text"
+      parse: json
+      strip_markdown_fences: true
+
+  # Gemini model listing uses a different path
+  list_models:
+    path: /models
+    method: GET
+    response:
+      extract: "models"
+      parse: json
+
+# ─── Features ────────────────────────────────────────────────────────────────
+features:
+  redline:
+    enabled: true
+    endpoint: chat
+    description: "Annotate a resume section with improvement suggestions"
+    input:
+      section_title: { type: string, required: true }
+      section_content: { type: string, required: true }
+      context: { type: string, required: false }
+    output:
+      overall_score: { type: number, range: [0, 100] }
+      suggestions: { type: array }
+      strengths: { type: array }
+      summary: { type: string }
+
+  rewrite:
+    enabled: true
+    endpoint: chat
+    description: "Rewrite a resume bullet point"
+    input:
+      bullet: { type: string, required: true }
+      tone: { type: string, required: false, default: professional }
+      role: { type: string, required: false }
+    output:
+      rewritten: { type: string }
+      alternatives: { type: array }
+      action_verb_used: { type: string }
+      improvement_notes: { type: string }
+
+  ats_score:
+    enabled: true
+    endpoint: chat
+    description: "Score resume against job description"
+    input:
+      resume_text: { type: string, required: true }
+      job_description: { type: string, required: true }
+    output:
+      overall_score: { type: number, range: [0, 100] }
+      keyword_match_score: { type: number }
+      format_score: { type: number }
+      experience_match_score: { type: number }
+      matched_keywords: { type: array }
+      missing_keywords: { type: array }
+      section_scores: { type: object }
+      recommendations: { type: array }
+      summary: { type: string }
+
+  keyword_gap:
+    enabled: true
+    endpoint: chat
+    description: "Find keyword gaps"
+    input:
+      resume_text: { type: string, required: true }
+      job_description: { type: string, required: true }
+    output:
+      critical_missing: { type: array }
+      nice_to_have_missing: { type: array }
+      already_present: { type: array }
+      skills_gap: { type: object }
+      summary: { type: string }
+
+  import_parse:
+    enabled: true
+    endpoint: chat
+    description: "Parse raw resume text into structured sections"
+    input:
+      raw_text: { type: string, required: true }
+    output:
+      name: { type: string }
+      sections: { type: array }

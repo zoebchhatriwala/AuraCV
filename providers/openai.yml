@@ -1,0 +1,284 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# AuraCV - OpenAI Provider Contract
+# Everything the app needs to talk to OpenAI is defined here.
+# Swap this file (or set active_provider in Settings) to change providers.
+# ─────────────────────────────────────────────────────────────────────────────
+
+provider: openai
+name: OpenAI
+icon: openai
+description: GPT-6 Astra — Best overall quality and instruction following
+
+# ─── API Connection ───────────────────────────────────────────────────────────
+api:
+  base_url: https://api.openai.com/v1
+  content_type: application/json
+  accept: application/json
+  auth:
+    type: bearer                    # bearer | api-key-header | query-param | none
+    header: Authorization           # HTTP header name
+    prefix: "Bearer "               # Token prefix in header value
+
+# ─── Models ──────────────────────────────────────────────────────────────────
+models:
+  default: gpt-6-astra
+  options:
+    - id: gpt-6-astra
+      name: "GPT-6 Astra"
+      context_window: 128000
+      recommended: true
+    - id: gpt-5.6-sol
+      name: "GPT-5.6 Sol"
+      context_window: 128000
+    - id: gpt-5.5
+      name: "GPT-5.5"
+      context_window: 128000
+    - id: o3-mini
+      name: "o3-mini (reasoning)"
+      context_window: 128000
+
+# ─── Endpoints ───────────────────────────────────────────────────────────────
+endpoints:
+  # Standard chat completion — used for all AI tasks
+  chat:
+    path: /chat/completions
+    method: POST
+    content_type: application/json
+    # Request body schema. {{model}} and {{prompt}} are interpolated at runtime.
+    request:
+      model: "{{model}}"
+      messages:
+        - role: user
+          content: "{{prompt}}"
+      response_format:
+        type: json_object             # Force JSON output
+      temperature: 0.7
+      max_tokens: 4096
+    # How to extract the text from the response body
+    response:
+      extract: "choices[0].message.content"  # dot-notation path into response JSON
+      parse: json                             # parse extracted value as: json | text | number
+
+  # Lightweight connectivity test
+  test:
+    path: /chat/completions
+    method: POST
+    content_type: application/json
+    request:
+      model: "{{model}}"
+      messages:
+        - role: user
+          content: 'Reply with exactly this JSON and nothing else: {"ok":true}'
+      response_format:
+        type: json_object
+      max_tokens: 10
+    response:
+      extract: "choices[0].message.content"
+      parse: json
+
+  # List available models (used for model picker UI)
+  list_models:
+    path: /models
+    method: GET
+    response:
+      extract: "data"
+      parse: json
+
+# ─── Features & Task I/O Contracts ───────────────────────────────────────────
+# Each feature declares what inputs it expects and what output shape it returns.
+# The prompts module injects these into the chat endpoint at runtime.
+features:
+  redline:
+    enabled: true
+    endpoint: chat
+    description: "Annotate a resume section with improvement suggestions"
+    input:
+      section_title:
+        type: string
+        required: true
+        description: "The section heading (e.g. 'Work Experience')"
+      section_content:
+        type: string
+        required: true
+        description: "Raw text content of the section"
+      context:
+        type: string
+        required: false
+        description: "Optional: target role or company for tailored feedback"
+    output:
+      overall_score:
+        type: number
+        range: [0, 100]
+      suggestions:
+        type: array
+        items:
+          type:
+            type: string
+            enum: [improve, remove, add, rewrite]
+          original:
+            type: string
+          suggestion:
+            type: string
+          reason:
+            type: string
+          priority:
+            type: string
+            enum: [high, medium, low]
+      strengths:
+        type: array
+        items:
+          type: string
+      summary:
+        type: string
+
+  rewrite:
+    enabled: true
+    endpoint: chat
+    description: "Rewrite a single resume bullet point to be more impactful"
+    input:
+      bullet:
+        type: string
+        required: true
+        description: "The original bullet point text"
+      tone:
+        type: string
+        required: false
+        default: professional
+        enum: [professional, concise, executive, technical, creative]
+        description: "Writing tone for the rewrite"
+      role:
+        type: string
+        required: false
+        description: "Target job role for tailored vocabulary"
+    output:
+      rewritten:
+        type: string
+      alternatives:
+        type: array
+        items:
+          type: string
+        min_items: 2
+        max_items: 3
+      action_verb_used:
+        type: string
+      improvement_notes:
+        type: string
+
+  ats_score:
+    enabled: true
+    endpoint: chat
+    description: "Score a resume against a job description for ATS compatibility"
+    input:
+      resume_text:
+        type: string
+        required: true
+        description: "Full plaintext resume content"
+      job_description:
+        type: string
+        required: true
+        description: "Full job description text to match against"
+    output:
+      overall_score:
+        type: number
+        range: [0, 100]
+      keyword_match_score:
+        type: number
+        range: [0, 100]
+      format_score:
+        type: number
+        range: [0, 100]
+      experience_match_score:
+        type: number
+        range: [0, 100]
+      matched_keywords:
+        type: array
+        items:
+          type: string
+      missing_keywords:
+        type: array
+        items:
+          type: string
+      section_scores:
+        type: object
+        properties:
+          summary:
+            type: number
+          experience:
+            type: number
+          skills:
+            type: number
+          education:
+            type: number
+      recommendations:
+        type: array
+        items:
+          type: string
+      summary:
+        type: string
+
+  keyword_gap:
+    enabled: true
+    endpoint: chat
+    description: "Find keywords in a JD that are missing from the resume"
+    input:
+      resume_text:
+        type: string
+        required: true
+      job_description:
+        type: string
+        required: true
+    output:
+      critical_missing:
+        type: array
+        items:
+          keyword:
+            type: string
+          frequency_in_jd:
+            type: number
+          suggested_context:
+            type: string
+      nice_to_have_missing:
+        type: array
+        items:
+          keyword:
+            type: string
+          suggested_context:
+            type: string
+      already_present:
+        type: array
+        items:
+          type: string
+      skills_gap:
+        type: object
+        properties:
+          technical:
+            type: array
+          soft:
+            type: array
+          domain:
+            type: array
+      summary:
+        type: string
+
+  import_parse:
+    enabled: true
+    endpoint: chat
+    description: "Parse raw resume text into structured AuraCV section format"
+    input:
+      raw_text:
+        type: string
+        required: true
+        description: "Raw extracted text from PDF or pasted content"
+    output:
+      name:
+        type: string
+      sections:
+        type: array
+        items:
+          section_type:
+            type: string
+            enum: [header, summary, experience, education, skills, projects, certifications, custom]
+          title:
+            type: string
+          content:
+            type: array

@@ -1,0 +1,154 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# AuraCV - NVIDIA NIM Provider Contract
+# High-throughput AI inference via NVIDIA build.nvidia.com API
+# Get your API key at: https://build.nvidia.com
+# ─────────────────────────────────────────────────────────────────────────────
+
+provider: nvidia
+name: NVIDIA NIM
+icon: nvidia
+description: Enterprise-grade models hosted on NVIDIA DGX Cloud (Llama 3.3, Nemotron, DeepSeek R1)
+
+# ─── API Connection ───────────────────────────────────────────────────────────
+api:
+  base_url: https://integrate.api.nvidia.com/v1
+  content_type: application/json
+  accept: application/json
+  auth:
+    type: bearer
+    header: Authorization
+    prefix: "Bearer "
+
+# ─── Models ──────────────────────────────────────────────────────────────────
+models:
+  default: meta/llama-3.2-11b-vision-instruct
+  options:
+    - id: meta/llama-3.2-11b-vision-instruct
+      name: "Llama 3.2 11B Vision"
+      context_window: 128000
+      recommended: true
+    - id: deepseek-ai/deepseek-r1
+      name: "DeepSeek R1 (Reasoning)"
+      context_window: 64000
+    - id: nvidia/llama-3.1-nemotron-70b-instruct
+      name: "NVIDIA Nemotron 70B"
+      context_window: 128000
+    - id: mistralai/mistral-large-2-instruct
+      name: "Mistral Large 2"
+      context_window: 128000
+    - id: meta/llama-3.1-8b-instruct
+      name: "Llama 3.1 8B (Fast)"
+      context_window: 128000
+
+# ─── Endpoints ───────────────────────────────────────────────────────────────
+endpoints:
+  chat:
+    path: /chat/completions
+    method: POST
+    content_type: application/json
+    request:
+      model: "{{model}}"
+      messages:
+        - role: user
+          content: "{{prompt}}"
+      temperature: 0.6
+      max_tokens: 4096
+    response:
+      extract: "choices[0].message.content"
+      parse: json
+      strip_markdown_fences: true
+
+  test:
+    path: /chat/completions
+    method: POST
+    content_type: application/json
+    request:
+      model: "{{model}}"
+      messages:
+        - role: user
+          content: 'Reply with only this JSON object and no other text: {"ok":true}'
+      max_tokens: 20
+      temperature: 0.1
+    response:
+      extract: "choices[0].message.content"
+      parse: json
+      strip_markdown_fences: true
+
+  list_models:
+    path: /models
+    method: GET
+    response:
+      extract: "data"
+      parse: json
+
+# ─── Features ────────────────────────────────────────────────────────────────
+features:
+  redline:
+    enabled: true
+    endpoint: chat
+    description: "Annotate a resume section with improvement suggestions"
+    input:
+      section_title: { type: string, required: true }
+      section_content: { type: string, required: true }
+      context: { type: string, required: false }
+    output:
+      overall_score: { type: number, range: [0, 100] }
+      suggestions: { type: array }
+      strengths: { type: array }
+      summary: { type: string }
+
+  rewrite:
+    enabled: true
+    endpoint: chat
+    description: "Rewrite a resume bullet point"
+    input:
+      bullet: { type: string, required: true }
+      tone: { type: string, required: false, default: professional }
+      role: { type: string, required: false }
+    output:
+      rewritten: { type: string }
+      alternatives: { type: array }
+      action_verb_used: { type: string }
+      improvement_notes: { type: string }
+
+  ats_score:
+    enabled: true
+    endpoint: chat
+    description: "Score resume against a job description"
+    input:
+      resume_text: { type: string, required: true }
+      job_description: { type: string, required: true }
+    output:
+      overall_score: { type: number, range: [0, 100] }
+      keyword_match_score: { type: number }
+      format_score: { type: number }
+      experience_match_score: { type: number }
+      matched_keywords: { type: array }
+      missing_keywords: { type: array }
+      section_scores: { type: object }
+      recommendations: { type: array }
+      summary: { type: string }
+
+  keyword_gap:
+    enabled: true
+    endpoint: chat
+    description: "Find keyword gaps"
+    input:
+      resume_text: { type: string, required: true }
+      job_description: { type: string, required: true }
+    output:
+      critical_missing: { type: array }
+      nice_to_have_missing: { type: array }
+      already_present: { type: array }
+      skills_gap: { type: object }
+      summary: { type: string }
+
+  import_parse:
+    enabled: true
+    endpoint: chat
+    description: "Parse raw resume text into structured sections"
+    input:
+      raw_text: { type: string, required: true }
+    output:
+      name: { type: string }
+      sections: { type: array }

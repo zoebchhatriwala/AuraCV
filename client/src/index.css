@@ -1,0 +1,198 @@
+@import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  --font-display: 'Outfit', 'Plus Jakarta Sans', sans-serif;
+  
+  --radius-xl: 1rem;
+  --radius-2xl: 1.5rem;
+  --radius-3xl: 2rem;
+}
+
+/* ─── Light / Dark Theme Tokens ────────────────────────────────────────── */
+:root {
+  color-scheme: light;
+
+  --bg-app:              #f4f6f9;
+  --bg-surface:          #ffffff;
+  --bg-surface-elevated: #eef1f6;
+  --bg-surface-hover:    #e2e8f0;
+  --bg-glass:            rgba(255, 255, 255, 0.94);
+
+  --border-subtle:  #c8d4e0;
+  --border-default: #94a3b8;
+  --border-hover:   #5a7a9a;
+  --border-focus:   #2563eb;
+
+  --text-primary:   #0d1520;
+  --text-secondary: #2d4059;
+  --text-muted:     #4a6080;
+  --text-disabled:  #7a96b0;
+
+  --brand:        #2563eb;
+  --brand-hover:  #1d4ed8;
+  --brand-active: #1e40af;
+
+  --color-success: #059669;
+  --color-warning: #d97706;
+  --color-danger:  #e11d48;
+  --color-info:    #0284c7;
+
+  --shadow-card:  0 1px 3px rgba(13,21,32,0.07), 0 1px 2px rgba(13,21,32,0.04);
+  --shadow-float: 0 8px 24px -4px rgba(13,21,32,0.10), 0 4px 8px -2px rgba(13,21,32,0.05);
+  --shadow-glow:  none;
+}
+
+html.dark {
+  color-scheme: dark;
+
+  --bg-app:              #0a0c10;
+  --bg-surface:          #10131a;
+  --bg-surface-elevated: #161a24;
+  --bg-surface-hover:    #1e2330;
+  --bg-glass:            rgba(16, 19, 26, 0.90);
+
+  --border-subtle:  rgba(255, 255, 255, 0.08);
+  --border-default: rgba(255, 255, 255, 0.13);
+  --border-hover:   rgba(255, 255, 255, 0.24);
+  --border-focus:   #3b82f6;
+
+  --text-primary:   #f0f4f8;
+  --text-secondary: #8fadc8;
+  --text-muted:     #5a7a9a;
+  --text-disabled:  #3a5570;
+
+  --brand:        #3b82f6;
+  --brand-hover:  #2563eb;
+  --brand-active: #1d4ed8;
+
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
+  --color-danger:  #f43f5e;
+  --color-info:    #38bdf8;
+
+  --shadow-card:  0 1px 3px rgba(0,0,0,0.50), 0 4px 16px -2px rgba(0,0,0,0.40);
+  --shadow-float: 0 12px 30px -4px rgba(0,0,0,0.70);
+  --shadow-glow:  none;
+}
+
+/* ─── Global Reset & Base ───────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+
+body {
+  background-color: var(--bg-app);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  min-height: 100vh;
+  overflow-x: hidden;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* ── Fix browser default link/button colour greys ─────────────────── */
+/* Must be in @layer base so Tailwind @layer utilities (text-white, etc.) wins */
+@layer base {
+  a      { color: inherit; text-decoration: none; }
+  button { color: inherit; }
+}
+
+/* ─── Scrollbars ─────────────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-default); border-radius: 9999px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+/* ─── Surfaces ───────────────────────────────────────────────────────────── */
+.surface          { background: var(--bg-surface); }
+.surface-elevated { background: var(--bg-surface-elevated); }
+
+.glass {
+  background: var(--bg-glass);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border-subtle);
+}
+
+.glass-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-card);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+.glass-card:hover { border-color: var(--border-hover); box-shadow: var(--shadow-float); }
+
+/* ─── Buttons ─────────────────────────────────────────────────────────────── */
+.btn-primary {
+  background: var(--brand);
+  color: #ffffff !important;
+  font-weight: 600;
+  border: 1px solid rgba(255,255,255,0.16);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.10), inset 0 1px 0 rgba(255,255,255,0.15);
+  transition: all 0.15s ease;
+}
+.btn-primary:hover  { background: var(--brand-hover) !important; color: #ffffff !important; box-shadow: 0 4px 12px rgba(37,99,235,0.35); transform: translateY(-0.5px); }
+.btn-primary:active { background: var(--brand-active) !important; transform: translateY(0.5px); }
+
+.btn-secondary {
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  border: 1px solid var(--border-default);
+  font-weight: 500;
+  transition: all 0.15s ease;
+}
+.btn-secondary:hover { background: var(--bg-surface-hover); border-color: var(--border-hover); color: var(--text-primary); }
+
+.btn-ghost { background: transparent; color: var(--text-primary); transition: background-color 0.15s ease; }
+.btn-ghost:hover { background: var(--bg-surface-hover); }
+
+.btn-ghost-danger { background: transparent; color: var(--text-muted); transition: all 0.15s ease; }
+.btn-ghost-danger:hover { background: rgba(225,29,72,0.08); color: var(--color-danger); }
+
+/* ─── Tabs ────────────────────────────────────────────────────────────────── */
+.tab-group { background: var(--bg-surface-elevated); border: 1px solid var(--border-default); padding: 2px; border-radius: 0.75rem; }
+.tab-active { background: var(--brand) !important; color: #ffffff !important; font-weight: 600; box-shadow: 0 1px 3px rgba(37,99,235,0.30); }
+.tab-inactive { color: var(--text-primary); background: transparent; font-weight: 500; transition: background-color 0.15s ease; }
+.tab-inactive:hover { background: var(--bg-surface-hover); }
+
+/* ─── Pills ───────────────────────────────────────────────────────────────── */
+.pill-active  { background: var(--brand); color: #ffffff !important; font-weight: 600; }
+.pill-inactive { color: var(--text-secondary); background: transparent; transition: all 0.15s ease; }
+.pill-inactive:hover { background: var(--bg-surface-hover); color: var(--text-primary); }
+
+/* ─── Nav Items ───────────────────────────────────────────────────────────── */
+.nav-item { color: var(--text-primary); font-weight: 600; transition: background-color 0.15s ease; }
+.nav-item:hover { background: var(--bg-surface-hover); }
+.nav-item-active { background: var(--brand) !important; color: #ffffff !important; font-weight: 600; }
+
+/* ─── Badges ──────────────────────────────────────────────────────────────── */
+.badge       { background: var(--bg-surface-elevated); color: var(--text-secondary); border: 1px solid var(--border-default); }
+.badge-brand { background: rgba(37,99,235,0.10); color: var(--brand); border: 1px solid rgba(37,99,235,0.20); font-weight: 600; }
+
+/* ─── Text Utilities ─────────────────────────────────────────────────────── */
+.t-primary   { color: var(--text-primary)   !important; }
+.t-secondary { color: var(--text-secondary) !important; }
+.t-muted     { color: var(--text-muted)     !important; }
+.t-disabled  { color: var(--text-disabled)  !important; }
+.t-brand     { color: var(--brand)          !important; }
+
+/* ─── Misc ────────────────────────────────────────────────────────────────── */
+.gradient-text {
+  background: linear-gradient(180deg, var(--text-primary) 0%, var(--text-secondary) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in-up { animation: fadeInUp 0.2s cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+.score-ring {
+  --score: 0;
+  --stroke-dash: calc(var(--score) * 2.51327);
+  stroke-dasharray: var(--stroke-dash) 251.327;
+  transition: stroke-dasharray 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
