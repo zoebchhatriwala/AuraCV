@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { AlertTriangle, Trash2, X } from 'lucide-react';
 
 interface ConfirmModalProps {
@@ -33,17 +34,13 @@ export default function ConfirmModal({
 
   if (!isOpen) return null;
 
-  return (
+  return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/25 dark:bg-black/70 backdrop-blur-xs animate-fade-in-up"
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 dark:bg-black/70 backdrop-blur-sm animate-fade-in-up"
       onClick={onCancel}
     >
       <div
-        className="w-full max-w-md rounded-2xl border glass-card p-6 space-y-5 shadow-2xl relative"
-        style={{
-          backgroundColor: 'var(--bg-surface)',
-          borderColor: 'var(--border-default)',
-        }}
+        className="w-full max-w-md rounded-3xl border glass-card p-6 md:p-8 space-y-6 shadow-2xl relative"
         onClick={e => e.stopPropagation()}
       >
         <button
@@ -66,25 +63,21 @@ export default function ConfirmModal({
           >
             {variant === 'danger' ? <Trash2 className="w-5 h-5" /> : <AlertTriangle className="w-5 h-5" />}
           </div>
-          <div className="space-y-1.5 pr-4">
-            <h3 className="font-display font-bold text-base" style={{ color: 'var(--text-primary)' }}>
+          <div className="space-y-2 pr-4">
+            <h3 className="font-display font-bold text-xl" style={{ color: 'var(--text-primary)' }}>
               {title}
             </h3>
-            <p className="text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+            <p className="text-sm leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
               {message}
             </p>
           </div>
         </div>
 
-        <div className="flex items-center justify-end gap-2.5 pt-2 border-t" style={{ borderColor: 'var(--border-subtle)' }}>
+        <div className="flex items-center justify-end gap-3 pt-4 border-t" style={{ borderColor: 'var(--border-subtle)' }}>
           <button
             type="button"
             onClick={onCancel}
-            className="px-4 py-2 rounded-xl text-xs font-semibold border transition-all hover:bg-slate-100 dark:hover:bg-neutral-700 cursor-pointer"
-            style={{
-              borderColor: 'var(--border-default)',
-              color: 'var(--text-primary)',
-            }}
+            className="btn-secondary px-5 py-2.5 rounded-xl text-sm font-semibold cursor-pointer"
           >
             {cancelLabel}
           </button>
@@ -93,16 +86,17 @@ export default function ConfirmModal({
             onClick={() => {
               onConfirm();
             }}
-            className={`px-4 py-2 rounded-xl text-xs font-semibold text-white transition-all cursor-pointer shadow-sm ${
+            className={`px-5 py-2.5 rounded-xl text-sm font-semibold cursor-pointer shadow-sm ${
               variant === 'danger'
-                ? 'bg-rose-600 hover:bg-rose-700 active:bg-rose-800'
-                : 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800'
+                ? 'btn-danger'
+                : 'btn-primary'
             }`}
           >
             {confirmLabel}
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

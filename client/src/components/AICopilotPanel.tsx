@@ -170,7 +170,7 @@ export default function AICopilotPanel({
               }}
               title={`${activeProvider.name} · ${activeProvider.model}`}
             >
-              {activeProvider.model.split('/').pop() || activeProvider.model}
+              {activeProvider.models?.find(m => m.id === activeProvider.model)?.name || activeProvider.model.split('/').pop() || activeProvider.model}
             </span>
           )}
         </div>

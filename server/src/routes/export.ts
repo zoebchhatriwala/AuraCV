@@ -2,7 +2,14 @@ import { Router, Request, Response } from 'express';
 import { join } from 'path';
 import { readFileSync, existsSync } from 'fs';
 import Handlebars from 'handlebars';
+import { marked } from 'marked';
 import { resumeQueries, sectionQueries } from '../db/database';
+
+Handlebars.registerHelper('markdown', function (text) {
+  if (!text) return '';
+  // parseInline renders markdown without wrapping it in a <p> tag
+  return new Handlebars.SafeString(marked.parseInline(text as string) as string);
+});
 
 const router = Router();
 const TEMPLATES_DIR = join(__dirname, '..', 'templates');

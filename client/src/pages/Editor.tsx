@@ -62,10 +62,10 @@ export default function Editor() {
     }
   }, [currentResume?.id]);
 
-  // Refresh preview
-  const refreshPreview = () => {
+  const refreshPreview = (overrideTemplateId?: string) => {
     if (previewRef.current && id && currentResume) {
-      const base = exportApi.preview(id, currentResume.template_id);
+      const templateId = overrideTemplateId || currentResume.template_id;
+      const base = exportApi.preview(id, templateId);
       const sep = base.includes('?') ? '&' : '?';
       previewRef.current.src = `${base}${sep}_t=${Date.now()}`;
     }
@@ -184,7 +184,7 @@ export default function Editor() {
   const handleTemplateChange = async (templateId: string) => {
     if (!id) return;
     await updateResume(id, { template_id: templateId });
-    setTimeout(refreshPreview, 100);
+    refreshPreview(templateId);
   };
 
   const handleTitleSubmit = async () => {
@@ -327,33 +327,18 @@ export default function Editor() {
 
           {/* Quick template selector */}
           <div className="flex items-center gap-1.5 shrink-0">
-            <select
-              value={currentResume.template_id}
-              onChange={e => handleTemplateChange(e.target.value)}
-              className="text-xs font-semibold px-2 py-1 rounded-lg border transition-all focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer"
-              style={{
-                backgroundColor: 'var(--bg-surface)',
-                borderColor: 'var(--border-default)',
-                color: 'var(--text-primary)',
-              }}
-            >
-              <option value="modern">Modern</option>
-              <option value="executive">Executive</option>
-              <option value="compact">Compact</option>
-              <option value="classic">Classic</option>
-              <option value="minimal">Minimal</option>
-              <option value="ats">ATS Pure</option>
-            </select>
-
             <button
               type="button"
               onClick={() => setShowTemplatePreview(true)}
-              className="p-1 sm:px-2 sm:py-1 rounded-lg border bg-[var(--bg-surface)] hover:bg-slate-100 dark:hover:bg-blue-950/40 transition-colors inline-flex items-center gap-1 text-xs text-blue-700 dark:text-blue-400 font-medium cursor-pointer"
-              style={{ borderColor: 'var(--border-default)' }}
-              title="Preview all templates with sample data"
+              className="p-1 sm:px-3 sm:py-1.5 rounded-lg border bg-[var(--bg-surface)] hover:bg-slate-100 dark:hover:bg-neutral-800 transition-colors inline-flex items-center gap-1.5 text-xs font-medium cursor-pointer"
+              style={{ borderColor: 'var(--border-default)', color: 'var(--text-primary)' }}
+              title="Change Template"
             >
-              <Eye className="w-3.5 h-3.5" />
-              <span className="hidden xl:inline">Sample Preview</span>
+              <span className="opacity-70 hidden sm:inline">Template:</span>
+              <span className="font-semibold capitalize text-blue-600 dark:text-blue-400">
+                {currentResume.template_id}
+              </span>
+              <SlidersHorizontal className="w-3 h-3 ml-0.5 opacity-70" />
             </button>
           </div>
 
@@ -696,6 +681,19 @@ function SectionCard({
   onOpenCopilotWithBullet,
 }: SectionCardProps) {
   const isVisible = Boolean(section.is_visible);
+  const [titleValue, setTitleValue] = useState(section.title);
+
+  useEffect(() => {
+    setTitleValue(section.title);
+  }, [section.title]);
+
+  const handleTitleSubmit = () => {
+    if (titleValue.trim() && titleValue.trim() !== section.title) {
+      onUpdate({ title: titleValue.trim() });
+    } else {
+      setTitleValue(section.title);
+    }
+  };
 
   return (
     <div
@@ -753,12 +751,21 @@ function SectionCard({
           </button>
         </div>
 
-        <span
-          className={`flex-1 text-sm font-semibold truncate ${!isVisible ? 'line-through opacity-70' : ''}`}
+        <input
+          type="text"
+          value={titleValue}
+          onChange={e => setTitleValue(e.target.value)}
+          onBlur={handleTitleSubmit}
+          onKeyDown={e => {
+            if (e.key === 'Enter') {
+              e.currentTarget.blur();
+            }
+          }}
+          onClick={e => e.stopPropagation()}
+          className={`flex-1 text-sm font-semibold truncate bg-transparent border-none focus:outline-none focus:ring-1 focus:ring-blue-500/50 rounded px-1 -mx-1 ${!isVisible ? 'line-through opacity-70' : ''}`}
           style={{ color: 'var(--text-primary)' }}
-        >
-          {section.title}
-        </span>
+          title="Click to edit section title"
+        />
         {!isVisible && (
           <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 shrink-0">
             Hidden

@@ -20,10 +20,11 @@ router.get('/providers/active', (_req: Request, res: Response) => {
     const name = getActiveProviderName();
     const config = readProviderConfig(name);
     const hasKey = !!apiKeyQueries.get(config.provider);
+    const selectedModel = settingsQueries.get(`provider_model_${config.provider}`);
     res.json({
       provider: config.provider,
       name: config.name,
-      model: config.models?.default,
+      model: selectedModel || config.models?.default,
       models: config.models?.options,
       features: Object.entries(config.features ?? {}).filter(([, v]) => (v as { enabled?: boolean })?.enabled).map(([k]) => k),
       has_api_key: hasKey,

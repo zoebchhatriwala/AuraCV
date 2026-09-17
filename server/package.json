@@ -7,28 +7,29 @@
     "start": "node dist/index.js"
   },
   "dependencies": {
-    "express": "^4.21.2",
-    "cors": "^2.8.5",
     "better-sqlite3": "^11.10.0",
-    "js-yaml": "^4.1.0",
+    "cors": "^2.8.5",
+    "docx": "^9.0.1",
+    "express": "^4.21.2",
     "handlebars": "^4.7.8",
+    "js-yaml": "^4.1.0",
+    "marked": "^18.0.13",
     "multer": "^1.4.5-lts.1",
     "pdf-parse": "^1.1.1",
     "puppeteer": "^23.11.1",
-    "docx": "^9.0.1",
     "uuid": "^11.0.5"
   },
   "devDependencies": {
-    "typescript": "^5.7.3",
-    "tsx": "^4.19.2",
-    "@types/express": "^5.0.0",
-    "@types/cors": "^2.8.17",
     "@types/better-sqlite3": "^7.6.12",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^5.0.0",
     "@types/js-yaml": "^4.0.9",
     "@types/multer": "^1.4.12",
+    "@types/node": "^22.10.5",
     "@types/pdf-parse": "^1.1.4",
     "@types/uuid": "^10.0.0",
-    "@types/node": "^22.10.5"
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3"
   },
   "allowScripts": {
     "better-sqlite3@11.10.0": true,

@@ -298,8 +298,8 @@
   {{#with summary}}
   {{#if text}}
   <div class="section">
-    <div class="section-title">Professional Summary</div>
-    <p class="summary-text">{{text}}</p>
+    <div class="section-title">{{@root.sectionMap.summary.title}}</div>
+    <div class="summary-text">{{{markdown text}}}</div>
   </div>
   {{/if}}
   {{/with}}
@@ -307,7 +307,7 @@
   <!-- Experience -->
   {{#if experience.length}}
   <div class="section">
-    <div class="section-title">Work Experience</div>
+    <div class="section-title">{{sectionMap.experience.title}}</div>
     {{#each experience}}
     <div class="exp-entry">
       <div class="exp-top">
@@ -317,7 +317,7 @@
       <div class="exp-company">{{company}}{{#if location}} · {{location}}{{/if}}</div>
       {{#if bullets.length}}
       <ul class="exp-bullets">
-        {{#each bullets}}<li>{{this}}</li>{{/each}}
+        {{#each bullets}}<li>{{{markdown this}}}</li>{{/each}}
       </ul>
       {{/if}}
     </div>
@@ -328,7 +328,7 @@
   <!-- Education -->
   {{#if education.length}}
   <div class="section">
-    <div class="section-title">Education</div>
+    <div class="section-title">{{sectionMap.education.title}}</div>
     {{#each education}}
     <div class="edu-entry">
       <div class="edu-left">
@@ -344,7 +344,7 @@
   <!-- Skills -->
   {{#if skills.length}}
   <div class="section">
-    <div class="section-title">Skills and Technologies</div>
+    <div class="section-title">{{sectionMap.skills.title}}</div>
     <div class="skills-wrap">
       {{#each skills}}
       <div class="skill-group">
@@ -361,14 +361,19 @@
   <!-- Projects -->
   {{#if projects.length}}
   <div class="section">
-    <div class="section-title">Key Projects</div>
+    <div class="section-title">{{sectionMap.projects.title}}</div>
     {{#each projects}}
     <div class="project-entry">
       <div class="project-top">
         <span class="project-title">{{name}}</span>
         {{#if url}}<a class="project-url" href="https://{{url}}" target="_blank">{{url}}</a>{{/if}}
       </div>
-      {{#if description}}<div class="project-desc">{{description}}</div>{{/if}}
+      {{#if tech.length}}
+      <div style="font-size: 8.5pt; color: #64748b; margin-top: 2px;">
+        {{#each tech}}{{this}}{{#unless @last}}, {{/unless}}{{/each}}
+      </div>
+      {{/if}}
+      {{#if description}}<div class="project-desc">{{{markdown description}}}</div>{{/if}}
     </div>
     {{/each}}
   </div>
@@ -377,7 +382,7 @@
   <!-- Certifications -->
   {{#if certifications.length}}
   <div class="section">
-    <div class="section-title">Certifications</div>
+    <div class="section-title">{{sectionMap.certifications.title}}</div>
     {{#each certifications}}
     <div class="cert-row">
       <span class="cert-title">{{name}} <span style="font-weight:400;color:#64748b;">· {{issuer}}</span></span>

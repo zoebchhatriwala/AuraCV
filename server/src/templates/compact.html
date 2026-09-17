@@ -203,16 +203,16 @@
       {{#if location}}<span>{{location}}</span>{{/if}}
       {{#if linkedin}}<span><a href="https://{{linkedin}}">{{linkedin}}</a></span>{{/if}}
       {{#if github}}<span><a href="https://{{github}}">{{github}}</a></span>{{/if}}
+      {{#if website}}<span><a href="https://{{website}}">{{website}}</a></span>{{/if}}
     </div>
   </header>
   {{/with}}
 
-  <!-- Summary -->
   {{#with summary}}
   {{#if text}}
   <div class="compact-section">
-    <div class="section-badge">Summary</div>
-    <p class="summary-text">{{text}}</p>
+    <div class="section-badge">{{@root.sectionMap.summary.title}}</div>
+    <div class="summary-text">{{{markdown text}}}</div>
   </div>
   {{/if}}
   {{/with}}
@@ -220,7 +220,7 @@
   <!-- Experience -->
   {{#if experience.length}}
   <div class="compact-section">
-    <div class="section-badge">Experience</div>
+    <div class="section-badge">{{sectionMap.experience.title}}</div>
     {{#each experience}}
     <div class="exp-item">
       <div class="exp-top">
@@ -230,7 +230,7 @@
       <div class="exp-company-line">{{company}}{{#if location}} · {{location}}{{/if}}</div>
       {{#if bullets.length}}
       <ul class="exp-bullets">
-        {{#each bullets}}<li>{{this}}</li>{{/each}}
+        {{#each bullets}}<li>{{{markdown this}}}</li>{{/each}}
       </ul>
       {{/if}}
     </div>
@@ -243,7 +243,7 @@
     <!-- Skills -->
     {{#if skills.length}}
     <div>
-      <div class="section-badge">Technical Skills</div>
+      <div class="section-badge">{{sectionMap.skills.title}}</div>
       {{#each skills}}
       <div class="skill-line">
         <strong>{{category}}:</strong> {{#each items}}{{this}}{{#unless @last}}, {{/unless}}{{/each}}
@@ -255,7 +255,7 @@
     <!-- Education -->
     <div>
       {{#if education.length}}
-      <div class="section-badge">Education</div>
+      <div class="section-badge">{{sectionMap.education.title}}</div>
       {{#each education}}
       <div class="edu-row">
         <div class="edu-deg">{{degree}} in {{field}}</div>
@@ -265,7 +265,7 @@
       {{/if}}
 
       {{#if certifications.length}}
-      <div class="section-badge" style="margin-top: 8px;">Certifications</div>
+      <div class="section-badge" style="margin-top: 8px;">{{sectionMap.certifications.title}}</div>
       {{#each certifications}}
       <div class="edu-row" style="font-size: 8pt;">
         <strong>{{name}}</strong> — {{issuer}}{{#if date}} ({{date}}){{/if}}
@@ -278,14 +278,19 @@
   <!-- Key Projects -->
   {{#if projects.length}}
   <div class="compact-section">
-    <div class="section-badge">Projects</div>
+    <div class="section-badge">{{sectionMap.projects.title}}</div>
     {{#each projects}}
     <div class="proj-row">
       <div class="proj-row-head">
         <span>{{name}}</span>
         {{#if url}}<span style="font-size: 7.5pt; font-weight: 500; color: #2563eb;">{{url}}</span>{{/if}}
       </div>
-      {{#if description}}<div class="proj-desc">{{description}}</div>{{/if}}
+      {{#if tech.length}}
+      <div style="font-size: 7.5pt; color: #64748b; margin-bottom: 2px;">
+        {{#each tech}}{{this}}{{#unless @last}}, {{/unless}}{{/each}}
+      </div>
+      {{/if}}
+      {{#if description}}<div class="proj-desc">{{{markdown description}}}</div>{{/if}}
     </div>
     {{/each}}
   </div>

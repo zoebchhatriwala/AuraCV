@@ -30,18 +30,34 @@ function Field({
         {label}
       </label>
       {multiline ? (
-        <textarea
-          value={value ?? ''}
-          onChange={e => onChange(e.target.value)}
-          placeholder={placeholder}
-          rows={3}
-          className="w-full rounded-xl px-3.5 py-2.5 text-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500/20 border resize-y"
-          style={{
-            backgroundColor: 'var(--bg-surface-elevated)',
-            borderColor: 'var(--border-default)',
-            color: 'var(--text-primary)',
-          }}
-        />
+        <div className="space-y-1.5">
+          <textarea
+            value={value ?? ''}
+            onChange={e => onChange(e.target.value)}
+            onInput={e => {
+              const target = e.currentTarget;
+              target.style.height = 'auto';
+              target.style.height = `${target.scrollHeight}px`;
+            }}
+            ref={el => {
+              if (el) {
+                el.style.height = 'auto';
+                el.style.height = `${el.scrollHeight}px`;
+              }
+            }}
+            placeholder={placeholder}
+            rows={2}
+            className="w-full rounded-xl px-3.5 py-2.5 text-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500/20 border resize-none overflow-hidden"
+            style={{
+              backgroundColor: 'var(--bg-surface-elevated)',
+              borderColor: 'var(--border-default)',
+              color: 'var(--text-primary)',
+            }}
+          />
+          <div className="text-[10px] opacity-60 italic" style={{ color: 'var(--text-muted)' }}>
+            Markdown supported: **bold**, *italic*, [link](url)
+          </div>
+        </div>
       ) : (
         <input
           type="text"
@@ -63,7 +79,7 @@ function Field({
 export default function SectionEditor({ section, resumeId, onUpdate, onOpenCopilotWithBullet }: Props) {
   const [localContent, setLocalContent] = useState<Record<string, unknown>[]>((section.content || []) as Record<string, unknown>[]);
   const [rewriting, setRewriting] = useState<number | null>(null);
-  const updateTimeout = useRef<NodeJS.Timeout | null>(null);
+  const updateTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isTyping = useRef(false);
 
   useEffect(() => {
@@ -161,18 +177,34 @@ export default function SectionEditor({ section, resumeId, onUpdate, onOpenCopil
             </button>
           )}
         </div>
-        <textarea
-          value={text}
-          onChange={e => updateEntry(idx, { text: e.target.value })}
-          placeholder="High-impact engineering leader with 8+ years building distributed cloud platforms…"
-          rows={3}
-          className="w-full rounded-xl px-3.5 py-2.5 text-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500/20 border resize-y"
-          style={{
-            backgroundColor: 'var(--bg-surface-elevated)',
-            borderColor: 'var(--border-default)',
-            color: 'var(--text-primary)',
-          }}
-        />
+        <div className="space-y-1.5">
+          <textarea
+            value={text}
+            onChange={e => updateEntry(idx, { text: e.target.value })}
+            onInput={e => {
+              const target = e.currentTarget;
+              target.style.height = 'auto';
+              target.style.height = `${target.scrollHeight}px`;
+            }}
+            ref={el => {
+              if (el) {
+                el.style.height = 'auto';
+                el.style.height = `${el.scrollHeight}px`;
+              }
+            }}
+            placeholder="High-impact engineering leader with 8+ years building distributed cloud platforms…"
+            rows={3}
+            className="w-full rounded-xl px-3.5 py-2.5 text-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500/20 border resize-none overflow-hidden"
+            style={{
+              backgroundColor: 'var(--bg-surface-elevated)',
+              borderColor: 'var(--border-default)',
+              color: 'var(--text-primary)',
+            }}
+          />
+          <div className="text-[10px] opacity-60 italic" style={{ color: 'var(--text-muted)' }}>
+            Markdown supported: **bold**, *italic*, [link](url)
+          </div>
+        </div>
       </div>
     );
   };
@@ -221,23 +253,39 @@ export default function SectionEditor({ section, resumeId, onUpdate, onOpenCopil
             const isRewriting = rewriting === idx * 1000 + bIdx;
             return (
               <div key={bIdx} className="flex items-start gap-2">
-                <GripVertical className="w-4 h-4 mt-2.5 text-slate-400/40 shrink-0" />
-                <textarea
-                  value={bullet}
-                  onChange={e => {
-                    const next = [...bullets];
-                    next[bIdx] = e.target.value;
-                    updateEntry(idx, { bullets: next });
-                  }}
-                  rows={2}
-                  className="flex-1 rounded-xl px-3.5 py-2 text-xs transition-all border focus:outline-none focus:ring-2 focus:ring-blue-500/20 resize-none"
-                  style={{
-                    backgroundColor: 'var(--bg-surface-elevated)',
-                    borderColor: 'var(--border-default)',
-                    color: 'var(--text-primary)',
-                  }}
-                  placeholder="Led migration of core payments service, reducing latency by 35%…"
-                />
+                <GripVertical className="w-4 h-4 mt-2.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 cursor-grab active:cursor-grabbing shrink-0" />
+                <div className="flex-1 space-y-1">
+                  <textarea
+                    value={bullet}
+                    onChange={e => {
+                      const next = [...bullets];
+                      next[bIdx] = e.target.value;
+                      updateEntry(idx, { bullets: next });
+                    }}
+                    onInput={e => {
+                      const target = e.currentTarget;
+                      target.style.height = 'auto';
+                      target.style.height = `${target.scrollHeight}px`;
+                    }}
+                    ref={el => {
+                      if (el) {
+                        el.style.height = 'auto';
+                        el.style.height = `${el.scrollHeight}px`;
+                      }
+                    }}
+                    rows={2}
+                    className="w-full rounded-xl px-3.5 py-2 text-xs transition-all border focus:outline-none focus:ring-2 focus:ring-blue-500/20 resize-none overflow-hidden"
+                    style={{
+                      backgroundColor: 'var(--bg-surface-elevated)',
+                      borderColor: 'var(--border-default)',
+                      color: 'var(--text-primary)',
+                    }}
+                    placeholder="Led migration of core payments service, reducing latency by 35%…"
+                  />
+                  <div className="text-[10px] opacity-60 italic" style={{ color: 'var(--text-muted)' }}>
+                    Markdown supported: **bold**, *italic*, [link](url)
+                  </div>
+                </div>
                 <div className="flex flex-col gap-1">
                   <button
                     type="button"
