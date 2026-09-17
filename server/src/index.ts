@@ -37,6 +37,8 @@ app.get('/api/templates', (_req, res) => {
   res.json([
     { id: 'modern',    name: 'Modern',    description: 'Clean two-column layout with sidebar and clear sections', category: 'modern',    is_ats_safe: false },
     { id: 'executive', name: 'Executive', description: 'Authoritative leadership format with dark banner and gold accents', category: 'executive', is_ats_safe: false },
+    { id: 'tech',      name: 'Tech Lead', description: 'Developer-first terminal aesthetic with git timelines and monospace details', category: 'tech', is_ats_safe: false },
+    { id: 'creative',  name: 'Creative',  description: 'Nordic editorial layout with gradient accents and contemporary card styling', category: 'creative', is_ats_safe: false },
     { id: 'compact',   name: 'Compact',   description: 'High-density single-page engineering format with concise spacing', category: 'compact',   is_ats_safe: false },
     { id: 'classic',   name: 'Classic',   description: 'Traditional serif typography with formal centered headings',    category: 'classic',   is_ats_safe: false },
     { id: 'minimal',   name: 'Minimal',   description: 'Clean balanced layout focused on your career experience',      category: 'minimal',   is_ats_safe: false },

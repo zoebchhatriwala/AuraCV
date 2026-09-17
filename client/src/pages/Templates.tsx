@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { templatesApi, type Template } from '../api';
 import { useAppStore } from '../store';
-import { CheckCircle2, Zap, FileText, Type, AlignLeft, ShieldCheck, Layers, Eye, Check, Briefcase, Code } from 'lucide-react';
+import { CheckCircle2, Zap, FileText, Type, AlignLeft, ShieldCheck, Layers, Eye, Check, Briefcase, Code, Terminal, Sparkles } from 'lucide-react';
 import TemplatePreviewModal from '../components/TemplatePreviewModal';
 
 const TEMPLATE_META: Record<string, { icon: typeof FileText; accent: string; preview: string; tag: string }> = {
@@ -16,6 +16,18 @@ const TEMPLATE_META: Record<string, { icon: typeof FileText; accent: string; pre
     accent: '#d97706',
     tag: 'Leadership',
     preview: 'Authoritative dark banner with gold accents, prominent leadership summary, and dual-column competencies.',
+  },
+  tech: {
+    icon: Terminal,
+    accent: '#0284c7',
+    tag: 'Developer',
+    preview: 'Developer-first terminal aesthetic with git timelines, monospace details, and clean tag badges.',
+  },
+  creative: {
+    icon: Sparkles,
+    accent: '#6366f1',
+    tag: 'Editorial',
+    preview: 'Contemporary Nordic editorial layout with vibrant gradient accents and refined card typography.',
   },
   compact: {
     icon: Code,
@@ -47,7 +59,7 @@ export default function Templates() {
   const { settings, updateSettings } = useAppStore();
   const [templates, setTemplates] = useState<Template[]>([]);
   const [selected, setSelected] = useState(settings.default_template ?? 'modern');
-  const [activeFilter, setActiveFilter] = useState<'all' | 'ats' | 'modern' | 'executive' | 'compact' | 'classic' | 'minimal'>('all');
+  const [activeFilter, setActiveFilter] = useState<'all' | 'ats' | 'modern' | 'executive' | 'tech' | 'creative' | 'compact' | 'classic' | 'minimal'>('all');
   const [previewTemplateId, setPreviewTemplateId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -62,6 +74,8 @@ export default function Templates() {
   const list = templates.length ? templates : [
     { id: 'modern',    name: 'Modern',    description: 'Clean contemporary design', category: 'modern',    is_ats_safe: false },
     { id: 'executive', name: 'Executive', description: 'Authoritative leadership format', category: 'executive', is_ats_safe: false },
+    { id: 'tech',      name: 'Tech Lead', description: 'Developer terminal format with git timeline', category: 'tech', is_ats_safe: false },
+    { id: 'creative',  name: 'Creative',  description: 'Contemporary Nordic editorial layout', category: 'creative', is_ats_safe: false },
     { id: 'compact',   name: 'Compact',   description: 'High-density tech layout', category: 'compact',   is_ats_safe: false },
     { id: 'classic',   name: 'Classic',   description: 'Traditional professional', category: 'classic',   is_ats_safe: false },
     { id: 'minimal',   name: 'Minimal',   description: 'Ultra-minimal layout',     category: 'minimal',   is_ats_safe: false },

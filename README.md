@@ -18,18 +18,21 @@ AuraCV is a modern, privacy-first AI resume building studio. It combines the spe
 ## Getting Started
 
 ### Prerequisites
+
 - [Node.js](https://nodejs.org/) (v18 or higher)
 - [Yarn](https://yarnpkg.com/) or npm
 
 ### Installation
 
 1. Clone the repository:
+
    ```bash
-   git clone https://github.com/yourusername/auracv.git
-   cd auracv
+   git clone https://github.com/zoebchhatriwala/AuraCV.git
+   cd AuraCV
    ```
 
 2. Install dependencies for both the client and server:
+
    ```bash
    cd server && yarn install
    cd ../client && yarn install
@@ -37,14 +40,16 @@ AuraCV is a modern, privacy-first AI resume building studio. It combines the spe
 
 3. Start the development servers:
    You will need two terminal tabs.
-   
+
    **Terminal 1 (Backend API):**
+
    ```bash
    cd server
    yarn dev
    ```
-   
+
    **Terminal 2 (Frontend Client):**
+
    ```bash
    cd client
    yarn dev
@@ -53,7 +58,8 @@ AuraCV is a modern, privacy-first AI resume building studio. It combines the spe
 4. Open your browser and navigate to `http://localhost:5173`.
 
 ## Configuration
-Configure your AI providers (like NVIDIA, OpenAI, or Ollama) directly in the **Settings** page of the UI. Your API keys are encrypted and saved locally in your SQLite database (`server/auracv.db`). 
+
+Configure your AI providers (like NVIDIA, OpenAI, or Ollama) directly in the **Settings** page of the UI. Your API keys are encrypted and saved locally in your SQLite database (`server/auracv.db`).
 
 To add or modify providers at a system level, you can edit the YAML files located in the `providers/` directory.
 

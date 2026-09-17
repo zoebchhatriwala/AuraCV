@@ -15,6 +15,8 @@ import {
   AlignLeft,
   Briefcase,
   Code,
+  Terminal,
+  Sparkles,
 } from 'lucide-react';
 
 interface TemplatePreviewModalProps {
@@ -43,6 +45,24 @@ const TEMPLATES = [
     isAtsSafe: false,
     icon: Briefcase,
     color: '#d97706',
+  },
+  {
+    id: 'tech',
+    name: 'Tech Lead',
+    tag: 'Developer',
+    desc: 'Developer-first terminal aesthetic with git timelines, monospace details, and clean tag badges.',
+    isAtsSafe: false,
+    icon: Terminal,
+    color: '#0284c7',
+  },
+  {
+    id: 'creative',
+    name: 'Creative',
+    tag: 'Editorial',
+    desc: 'Contemporary Nordic editorial layout with vibrant gradient accents and refined card typography.',
+    isAtsSafe: false,
+    icon: Sparkles,
+    color: '#6366f1',
   },
   {
     id: 'compact',

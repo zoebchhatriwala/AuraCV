@@ -158,34 +158,52 @@ export const sectionQueries = {
     return row ? parseSection(row) : undefined;
   },
 
-  upsert(data: Partial<ResumeSection> & { resume_id: string; section_type: SectionType; title: string }): string {
+  upsert(data: Partial<ResumeSection> & { resume_id: string; section_type?: SectionType; title?: string }): string {
     const db = getDb();
     if (data.id) {
-      db.prepare(`
-        UPDATE resume_sections
-        SET title=?, content=?, position=?, is_visible=?, updated_at=datetime('now')
-        WHERE id=?
-      `).run(data.title, JSON.stringify(data.content ?? []), data.position ?? 0, data.is_visible ?? 1, data.id);
-      return data.id;
+      const existing = sectionQueries.get(data.id);
+      if (existing) {
+        const title = data.title !== undefined ? data.title : existing.title;
+        const content = data.content !== undefined ? JSON.stringify(data.content) : JSON.stringify(existing.content);
+        const position = data.position !== undefined ? data.position : existing.position;
+        const is_visible = data.is_visible !== undefined ? (data.is_visible ? 1 : 0) : existing.is_visible;
+        db.prepare(`
+          UPDATE resume_sections
+          SET title=?, content=?, position=?, is_visible=?, updated_at=datetime('now')
+          WHERE id=?
+        `).run(title, content, position, is_visible, data.id);
+        return data.id;
+      }
     }
     const id = crypto.randomUUID();
     db.prepare(`
       INSERT INTO resume_sections (id, resume_id, section_type, title, content, position, is_visible)
       VALUES (?, ?, ?, ?, ?, ?, ?)
-    `).run(id, data.resume_id, data.section_type, data.title, JSON.stringify(data.content ?? []), data.position ?? 0, data.is_visible ?? 1);
+    `).run(id, data.resume_id, data.section_type ?? 'custom', data.title ?? 'Custom Section', JSON.stringify(data.content ?? []), data.position ?? 0, data.is_visible ?? 1);
     return id;
   },
 
   delete(id: string): void {
-    getDb().prepare(`DELETE FROM resume_sections WHERE id=?`).run(id);
+    const db = getDb();
+    const row = db.prepare(`SELECT section_type FROM resume_sections WHERE id=?`).get(id) as { section_type: string } | undefined;
+    if (row && row.section_type === 'header') {
+      return; // Cannot delete header section
+    }
+    db.prepare(`DELETE FROM resume_sections WHERE id=?`).run(id);
   },
 
   reorder(resumeId: string, orderedIds: string[]): void {
     const db = getDb();
+    // Verify if header section exists and ensure it is always anchored at position 0
+    const headerRow = db.prepare(`SELECT id FROM resume_sections WHERE resume_id=? AND section_type='header'`).get(resumeId) as { id: string } | undefined;
+    let finalOrderedIds = [...orderedIds];
+    if (headerRow) {
+      finalOrderedIds = [headerRow.id, ...finalOrderedIds.filter(id => id !== headerRow.id)];
+    }
     const stmt = db.prepare(`UPDATE resume_sections SET position=? WHERE id=? AND resume_id=?`);
     db.exec('BEGIN TRANSACTION');
     try {
-      orderedIds.forEach((id, idx) => stmt.run(idx, id, resumeId));
+      finalOrderedIds.forEach((id, idx) => stmt.run(idx, id, resumeId));
       db.exec('COMMIT');
     } catch (err) {
       db.exec('ROLLBACK');

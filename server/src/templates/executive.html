@@ -152,14 +152,6 @@
     line-height: 1.5;
   }
 
-  /* Two Column Grid for Skills & Education */
-  .dual-grid {
-    display: grid;
-    grid-cols: 1fr 1fr;
-    grid-template-columns: 1fr 1fr;
-    gap: 24px;
-  }
-
   /* Skills Badges */
   .skill-group {
     margin-bottom: 10px;
@@ -173,17 +165,17 @@
     text-transform: uppercase;
     letter-spacing: 0.5px;
     color: #64748b;
-    margin-bottom: 4px;
+    margin-bottom: 5px;
   }
   .skill-wrap {
     display: flex;
     flex-wrap: wrap;
-    gap: 4px;
+    gap: 5px;
   }
   .skill-pill {
     font-size: 8pt;
     font-weight: 500;
-    padding: 2px 7px;
+    padding: 2.5px 8px;
     background: #f1f5f9;
     border: 1px solid #e2e8f0;
     border-radius: 4px;
@@ -192,10 +184,15 @@
 
   /* Education */
   .edu-entry {
-    margin-bottom: 8px;
+    margin-bottom: 10px;
   }
   .edu-entry:last-child {
     margin-bottom: 0;
+  }
+  .edu-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
   }
   .edu-title {
     font-size: 9.5pt;
@@ -205,6 +202,7 @@
   .edu-school {
     font-size: 8.5pt;
     color: #475569;
+    margin-top: 1px;
   }
   .edu-dates {
     font-size: 8pt;
@@ -261,101 +259,119 @@
   </header>
 
   <div class="exec-body">
-    <!-- Executive Summary -->
-    {{#with summary}}
-    {{#if text}}
-    <section>
-      <div class="sec-heading">{{@root.sectionMap.summary.title}}</div>
-      <div class="exec-summary-box">{{{markdown text}}}</div>
-    </section>
-    {{/if}}
-    {{/with}}
-
-    <!-- Experience -->
-    {{#if experience.length}}
-    <section>
-      <div class="sec-heading">{{sectionMap.experience.title}}</div>
-      {{#each experience}}
-      <div class="exp-card">
-        <div class="exp-head">
-          <span class="exp-role-title">{{role}}</span>
-          <span class="exp-period">{{start_date}} – {{end_date}}</span>
-        </div>
-        <div class="exp-subhead">{{company}}{{#if location}} · {{location}}{{/if}}</div>
-        {{#if bullets.length}}
-        <ul class="exp-bullet-list">
-          {{#each bullets}}<li>{{{markdown this}}}</li>{{/each}}
-        </ul>
+    {{#each bodySections}}
+      {{#if isSummary}}
+        {{#if summaryText}}
+        <section>
+          <div class="sec-heading">{{title}}</div>
+          <div class="exec-summary-box">{{{markdown summaryText}}}</div>
+        </section>
         {{/if}}
-      </div>
-      {{/each}}
-    </section>
-    {{/if}}
-
-    <!-- Dual Column: Skills & Education -->
-    <div class="dual-grid">
-      <!-- Skills -->
-      {{#if skills.length}}
-      <section>
-        <div class="sec-heading">{{sectionMap.skills.title}}</div>
-        {{#each skills}}
-        <div class="skill-group">
-          <div class="skill-cat">{{category}}</div>
-          <div class="skill-wrap">
-            {{#each items}}<span class="skill-pill">{{this}}</span>{{/each}}
-          </div>
-        </div>
-        {{/each}}
-      </section>
       {{/if}}
 
-      <!-- Education & Credentials -->
-      <div>
-        {{#if education.length}}
-        <section style="margin-bottom: 18px;">
-          <div class="sec-heading">{{sectionMap.education.title}}</div>
-          {{#each education}}
-          <div class="edu-entry">
-            <div class="edu-title">{{degree}} in {{field}}</div>
-            <div class="edu-school">{{institution}}</div>
-            <div class="edu-dates">{{start_date}} – {{end_date}}{{#if gpa}} · GPA {{gpa}}{{/if}}</div>
+      {{#if isExperience}}
+        {{#if content.length}}
+        <section>
+          <div class="sec-heading">{{title}}</div>
+          {{#each content}}
+          <div class="exp-card">
+            <div class="exp-head">
+              <span class="exp-role-title">{{role}}</span>
+              <span class="exp-period">{{start_date}} – {{end_date}}</span>
+            </div>
+            <div class="exp-subhead">{{company}}{{#if location}} · {{location}}{{/if}}</div>
+            {{#if bullets.length}}
+            <ul class="exp-bullet-list">
+              {{#each bullets}}<li>{{{markdown this}}}</li>{{/each}}
+            </ul>
+            {{/if}}
           </div>
           {{/each}}
         </section>
         {{/if}}
+      {{/if}}
 
-        {{#if certifications.length}}
+      {{#if isSkills}}
+        {{#if content.length}}
         <section>
-          <div class="sec-heading">{{sectionMap.certifications.title}}</div>
-          {{#each certifications}}
+          <div class="sec-heading">{{title}}</div>
+          {{#each content}}
+          <div class="skill-group">
+            <div class="skill-cat">{{category}}</div>
+            <div class="skill-wrap">
+              {{#each items}}<span class="skill-pill">{{this}}</span>{{/each}}
+            </div>
+          </div>
+          {{/each}}
+        </section>
+        {{/if}}
+      {{/if}}
+
+      {{#if isEducation}}
+        {{#if content.length}}
+        <section>
+          <div class="sec-heading">{{title}}</div>
+          {{#each content}}
+          <div class="edu-entry">
+            <div class="edu-head">
+              <span class="edu-title">{{degree}} in {{field}}</span>
+              <span class="edu-dates">{{start_date}} – {{end_date}}{{#if gpa}} · GPA {{gpa}}{{/if}}</span>
+            </div>
+            <div class="edu-school">{{institution}}</div>
+          </div>
+          {{/each}}
+        </section>
+        {{/if}}
+      {{/if}}
+
+      {{#if isCertifications}}
+        {{#if content.length}}
+        <section>
+          <div class="sec-heading">{{title}}</div>
+          {{#each content}}
           <div class="cert-row">
             <strong>{{name}}</strong> — {{issuer}}{{#if date}} ({{date}}){{/if}}
           </div>
           {{/each}}
         </section>
         {{/if}}
-      </div>
-    </div>
+      {{/if}}
 
-    <!-- Projects -->
-    {{#if projects.length}}
-    <section>
-      <div class="sec-heading">{{sectionMap.projects.title}}</div>
-      {{#each projects}}
-      <div class="proj-card">
-        <div class="proj-title">
-          {{name}} {{#if url}}<span style="font-size: 8pt; font-weight: 500; color: #d97706;">({{url}})</span>{{/if}}
-        </div>
-        {{#if tech.length}}
-        <div style="font-size: 8pt; color: #64748b; margin-top: 2px;">
-          {{#each tech}}{{this}}{{#unless @last}}, {{/unless}}{{/each}}
-        </div>
+      {{#if isProjects}}
+        {{#if content.length}}
+        <section>
+          <div class="sec-heading">{{title}}</div>
+          {{#each content}}
+          <div class="proj-card">
+            <div class="proj-title">
+              {{name}} {{#if url}}<span style="font-size: 8pt; font-weight: 500; color: #d97706;">({{url}})</span>{{/if}}
+            </div>
+            {{#if tech.length}}
+            <div style="font-size: 8pt; color: #64748b; margin-top: 2px;">
+              {{#each tech}}{{this}}{{#unless @last}}, {{/unless}}{{/each}}
+            </div>
+            {{/if}}
+            {{#if description}}<div class="proj-desc">{{{markdown description}}}</div>{{/if}}
+          </div>
+          {{/each}}
+        </section>
         {{/if}}
-        {{#if description}}<div class="proj-desc">{{{markdown description}}}</div>{{/if}}
-      </div>
-      {{/each}}
-    </section>
-    {{/if}}
+      {{/if}}
+
+      {{#if isCustom}}
+        {{#if content.length}}
+        <section>
+          <div class="sec-heading">{{title}}</div>
+          {{#each content}}
+          <div class="proj-card">
+            {{#if title}}<div class="proj-title">{{title}}</div>{{/if}}
+            {{#if description}}<div class="proj-desc">{{{markdown description}}}</div>{{/if}}
+          </div>
+          {{/each}}
+        </section>
+        {{/if}}
+      {{/if}}
+    {{/each}}
   </div>
 </div>
 </body>

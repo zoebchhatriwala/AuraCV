@@ -258,99 +258,121 @@
     {{/with}}
   </div>
 
-  {{#with summary}}
-  {{#if text}}
-  <div class="section">
-    <div class="section-title">{{@root.sectionMap.summary.title}}</div>
-    <div class="summary-text">{{{markdown text}}}</div>
-  </div>
-  {{/if}}
-  {{/with}}
-
-  {{#if experience.length}}
-  <div class="section">
-    <div class="section-title">{{sectionMap.experience.title}}</div>
-    {{#each experience}}
-    <div class="exp-entry">
-      <div class="exp-header">
-        <span class="exp-role">{{role}}</span>
-        <span class="exp-dates">{{start_date}} - {{end_date}}</span>
-      </div>
-      <div class="exp-company-line">{{company}}{{#if location}} · {{location}}{{/if}}</div>
-      {{#if bullets.length}}
-      <ul class="exp-bullets">
-        {{#each bullets}}<li>{{{markdown this}}}</li>{{/each}}
-      </ul>
-      {{/if}}
-    </div>
-    {{/each}}
-  </div>
-  {{/if}}
-
-  <!-- Education -->
-  {{#if education.length}}
-  <div class="section">
-    <div class="section-title">{{sectionMap.education.title}}</div>
-    {{#each education}}
-    <div class="edu-entry">
-      <div>
-        <span class="edu-degree">{{degree}} in {{field}}</span>
-        <div class="edu-inst-line">{{institution}}{{#if gpa}} · GPA {{gpa}}{{/if}}</div>
-      </div>
-      <span class="edu-dates">{{start_date}} - {{end_date}}</span>
-    </div>
-    {{/each}}
-  </div>
-  {{/if}}
-
-  <!-- Skills -->
-  {{#if skills.length}}
-  <div class="section">
-    <div class="section-title">{{sectionMap.skills.title}}</div>
-    <div class="skills-container">
-      {{#each skills}}
-      <div class="skill-row">
-        <span class="skill-category">{{category}}:</span>
-        <span class="skill-items">{{#each items}}{{this}}{{#unless @last}}, {{/unless}}{{/each}}</span>
-      </div>
-      {{/each}}
-    </div>
-  </div>
-  {{/if}}
-
-  <!-- Projects -->
-  {{#if projects.length}}
-  <div class="section">
-    <div class="section-title">{{sectionMap.projects.title}}</div>
-    {{#each projects}}
-    <div class="project-entry">
-      <div class="project-header">
-        <span class="project-name">{{name}}</span>
-        {{#if url}}<span class="project-url">{{url}}</span>{{/if}}
-      </div>
-      {{#if tech.length}}
-      <div style="font-size: 8.5pt; color: #64748b; margin-bottom: 4px;">
-        {{#each tech}}{{this}}{{#unless @last}}, {{/unless}}{{/each}}
+  {{#each bodySections}}
+    {{#if isSummary}}
+      {{#if summaryText}}
+      <div class="section">
+        <div class="section-title">{{title}}</div>
+        <div class="summary-text">{{{markdown summaryText}}}</div>
       </div>
       {{/if}}
-      {{#if description}}<div class="project-desc">{{{markdown description}}}</div>{{/if}}
-    </div>
-    {{/each}}
-  </div>
-  {{/if}}
+    {{/if}}
 
-  <!-- Certifications -->
-  {{#if certifications.length}}
-  <div class="section">
-    <div class="section-title">{{sectionMap.certifications.title}}</div>
-    {{#each certifications}}
-    <div class="cert-entry">
-      <div><span class="cert-name">{{name}}</span> <span class="cert-issuer">· {{issuer}}</span></div>
-      <span class="cert-date">{{date}}</span>
-    </div>
-    {{/each}}
-  </div>
-  {{/if}}
+    {{#if isExperience}}
+      {{#if content.length}}
+      <div class="section">
+        <div class="section-title">{{title}}</div>
+        {{#each content}}
+        <div class="exp-entry">
+          <div class="exp-header">
+            <span class="exp-role">{{role}}</span>
+            <span class="exp-dates">{{start_date}} - {{end_date}}</span>
+          </div>
+          <div class="exp-company-line">{{company}}{{#if location}} · {{location}}{{/if}}</div>
+          {{#if bullets.length}}
+          <ul class="exp-bullets">
+            {{#each bullets}}<li>{{{markdown this}}}</li>{{/each}}
+          </ul>
+          {{/if}}
+        </div>
+        {{/each}}
+      </div>
+      {{/if}}
+    {{/if}}
+
+    {{#if isEducation}}
+      {{#if content.length}}
+      <div class="section">
+        <div class="section-title">{{title}}</div>
+        {{#each content}}
+        <div class="edu-entry">
+          <div>
+            <span class="edu-degree">{{degree}} in {{field}}</span>
+            <div class="edu-inst-line">{{institution}}{{#if gpa}} · GPA {{gpa}}{{/if}}</div>
+          </div>
+          <span class="edu-dates">{{start_date}} - {{end_date}}</span>
+        </div>
+        {{/each}}
+      </div>
+      {{/if}}
+    {{/if}}
+
+    {{#if isSkills}}
+      {{#if content.length}}
+      <div class="section">
+        <div class="section-title">{{title}}</div>
+        <div class="skills-container">
+          {{#each content}}
+          <div class="skill-row">
+            <span class="skill-category">{{category}}:</span>
+            <span class="skill-items">{{#each items}}{{this}}{{#unless @last}}, {{/unless}}{{/each}}</span>
+          </div>
+          {{/each}}
+        </div>
+      </div>
+      {{/if}}
+    {{/if}}
+
+    {{#if isProjects}}
+      {{#if content.length}}
+      <div class="section">
+        <div class="section-title">{{title}}</div>
+        {{#each content}}
+        <div class="project-entry">
+          <div class="project-header">
+            <span class="project-name">{{name}}</span>
+            {{#if url}}<span class="project-url">{{url}}</span>{{/if}}
+          </div>
+          {{#if tech.length}}
+          <div style="font-size: 8.5pt; color: #64748b; margin-bottom: 4px;">
+            {{#each tech}}{{this}}{{#unless @last}}, {{/unless}}{{/each}}
+          </div>
+          {{/if}}
+          {{#if description}}<div class="project-desc">{{{markdown description}}}</div>{{/if}}
+        </div>
+        {{/each}}
+      </div>
+      {{/if}}
+    {{/if}}
+
+    {{#if isCertifications}}
+      {{#if content.length}}
+      <div class="section">
+        <div class="section-title">{{title}}</div>
+        {{#each content}}
+        <div class="cert-entry">
+          <div><span class="cert-name">{{name}}</span> <span class="cert-issuer">· {{issuer}}</span></div>
+          <span class="cert-date">{{date}}</span>
+        </div>
+        {{/each}}
+      </div>
+      {{/if}}
+    {{/if}}
+
+    {{#if isCustom}}
+      {{#if content.length}}
+      <div class="section">
+        <div class="section-title">{{title}}</div>
+        {{#each content}}
+        <div class="project-entry">
+          {{#if title}}<div class="project-name">{{title}}</div>{{/if}}
+          {{#if description}}<div class="project-desc">{{{markdown description}}}</div>{{/if}}
+        </div>
+        {{/each}}
+      </div>
+      {{/if}}
+    {{/if}}
+  {{/each}}
 </div>
 </body>
 </html>

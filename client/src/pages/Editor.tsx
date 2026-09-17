@@ -4,7 +4,8 @@ import { useAppStore } from '../store';
 import { resumeApi, exportApi, type Section } from '../api';
 import {
   Download, Eye, EyeOff, ChevronDown, ChevronUp, Plus, Trash2,
-  RefreshCw, ZoomIn, ZoomOut, Check, SlidersHorizontal,
+  RefreshCw, ZoomIn, ZoomOut, Check, SlidersHorizontal, Lock,
+  Cloud, CloudOff,
 } from 'lucide-react';
 import ExportModal from '../components/ExportModal';
 import SectionEditor from '../components/SectionEditor';
@@ -14,7 +15,9 @@ import ConfirmModal from '../components/ConfirmModal';
 
 export default function Editor() {
   const { id } = useParams<{ id: string }>();
-  const { fetchResume, currentResume, updateResume } = useAppStore();
+  const { fetchResume, currentResume, updateResume, settings, updateSettings } = useAppStore();
+  const autoSave = settings.auto_save !== 'false';
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
   const [activeSection, setActiveSection] = useState<string | null>(null);
   const [previewMode, setPreviewMode] = useState<'split' | 'full-editor' | 'full-preview'>('split');
   const [mobileTab, setMobileTab] = useState<'editor' | 'preview' | 'copilot'>('editor');
@@ -23,7 +26,6 @@ export default function Editor() {
   const [showCopilot, setShowCopilot] = useState(false);
   const [copilotInitialBullet, setCopilotInitialBullet] = useState('');
   const [copilotInitialContext, setCopilotInitialContext] = useState<{ sectionId: string; index: number } | undefined>(undefined);
-  const [saveDot, setSaveDot] = useState(false);
   const [zoomLevel, setZoomLevel] = useState<number>(100);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [titleValue, setTitleValue] = useState('');
@@ -76,9 +78,10 @@ export default function Editor() {
 
   const handleSectionUpdate = async (sectionId: string, data: Partial<Section>) => {
     if (!id) return;
+    setSaveStatus('saving');
     await resumeApi.updateSection(id, sectionId, data);
-    setSaveDot(true);
-    setTimeout(() => setSaveDot(false), 1500);
+    setSaveStatus('saved');
+    setTimeout(() => setSaveStatus('idle'), 2000);
     await fetchResume(id);
     refreshPreview();
   };
@@ -93,12 +96,18 @@ export default function Editor() {
 
   const handleDeleteSection = (sectionId: string) => {
     const sec = currentResume?.sections.find(s => s.id === sectionId);
+    if (!sec || sec.section_type === 'header') return;
     setSectionToDelete({ id: sectionId, title: sec?.title || 'this section' });
   };
 
   const confirmDeleteSection = async () => {
     if (!id || !sectionToDelete) return;
     const sId = sectionToDelete.id;
+    const sec = currentResume?.sections.find(s => s.id === sId);
+    if (sec?.section_type === 'header') {
+      setSectionToDelete(null);
+      return;
+    }
     setSectionToDelete(null);
     await resumeApi.deleteSection(id, sId);
     await fetchResume(id);
@@ -118,8 +127,14 @@ export default function Editor() {
     const sorted = currentResume.sections.slice().sort((a, b) => a.position - b.position);
     const idx = sorted.findIndex(s => s.id === sectionId);
     if (idx === -1) return;
+
+    // Header section is permanently locked at the top
+    if (sorted[idx].section_type === 'header') return;
+
+    // If header exists at index 0, non-header sections cannot move into index 0
+    const minMovableIdx = sorted[0]?.section_type === 'header' ? 1 : 0;
     const targetIdx = direction === 'up' ? idx - 1 : idx + 1;
-    if (targetIdx < 0 || targetIdx >= sorted.length) return;
+    if (targetIdx < minMovableIdx || targetIdx >= sorted.length) return;
 
     const reordered = [...sorted];
     const [moved] = reordered.splice(idx, 1);
@@ -140,9 +155,10 @@ export default function Editor() {
   const handleTitleSubmit = async () => {
     setIsEditingTitle(false);
     if (!id || !titleValue.trim() || titleValue === currentResume?.name) return;
+    setSaveStatus('saving');
     await updateResume(id, { name: titleValue.trim() });
-    setSaveDot(true);
-    setTimeout(() => setSaveDot(false), 1500);
+    setSaveStatus('saved');
+    setTimeout(() => setSaveStatus('idle'), 2000);
   };
 
   const handleOpenCopilotWithBullet = (bullet: string, context: { sectionId: string; index: number }) => {
@@ -292,11 +308,40 @@ export default function Editor() {
             </button>
           </div>
 
-          {saveDot && (
-            <span className="text-xs text-emerald-500 font-medium animate-pulse flex items-center gap-1 shrink-0">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> Saved
-            </span>
-          )}
+          {/* Auto-Save status & toggle pill */}
+          <div className="flex items-center gap-1.5 shrink-0">
+            {saveStatus === 'saving' ? (
+              <span className="text-xs text-blue-500 font-medium flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-500/10 border border-blue-500/20 animate-pulse">
+                <RefreshCw className="w-3 h-3 animate-spin" />
+                <span>Saving…</span>
+              </span>
+            ) : saveStatus === 'saved' ? (
+              <span className="text-xs text-emerald-500 font-medium flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+                <Check className="w-3.5 h-3.5 text-emerald-500" />
+                <span>Saved</span>
+              </span>
+            ) : autoSave ? (
+              <button
+                type="button"
+                onClick={() => updateSettings({ auto_save: 'false' })}
+                className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 hover:bg-emerald-500/20 transition-all cursor-pointer"
+                title="Auto-Save is ON. Changes save automatically as you type. Click to switch to manual saving."
+              >
+                <Cloud className="w-3.5 h-3.5" />
+                <span>Auto-Save: On</span>
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => updateSettings({ auto_save: 'true' })}
+                className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium text-amber-600 dark:text-amber-400 bg-amber-500/10 border border-amber-500/20 hover:bg-amber-500/20 transition-all cursor-pointer"
+                title="Auto-Save is OFF. Click to enable automatic saving."
+              >
+                <CloudOff className="w-3.5 h-3.5" />
+                <span>Auto-Save: Off</span>
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Mobile Segmented Switcher (Editor vs Preview vs Copilot) */}
@@ -409,26 +454,37 @@ export default function Editor() {
           }}
         >
           <div className="p-4 sm:p-5 space-y-3 max-w-3xl mx-auto w-full">
-            {currentResume.sections
-              .slice()
-              .sort((a, b) => a.position - b.position)
-              .map((section, idx, arr) => (
-                <SectionCard
-                  key={section.id}
-                  section={section}
-                  isActive={activeSection === section.id}
-                  isFirst={idx === 0}
-                  isLast={idx === arr.length - 1}
-                  onToggle={() => setActiveSection(activeSection === section.id ? null : section.id)}
-                  onUpdate={data => handleSectionUpdate(section.id, data)}
-                  onDelete={() => handleDeleteSection(section.id)}
-                  onToggleVisibility={() => handleToggleVisibility(section)}
-                  onMoveUp={() => handleMoveSection(section.id, 'up')}
-                  onMoveDown={() => handleMoveSection(section.id, 'down')}
-                  onOpenCopilotWithBullet={handleOpenCopilotWithBullet}
-                  resumeId={id!}
-                />
-              ))}
+            {(() => {
+              const sortedSections = currentResume.sections
+                .slice()
+                .sort((a, b) => a.position - b.position);
+              const headerIndex = sortedSections.findIndex(s => s.section_type === 'header');
+
+              return sortedSections.map((section, idx, arr) => {
+                const isHeader = section.section_type === 'header';
+                // First movable section below header cannot move up
+                const isFirst = isHeader || (headerIndex === 0 ? idx <= 1 : idx === 0);
+                const isLast = isHeader || idx === arr.length - 1;
+
+                return (
+                  <SectionCard
+                    key={section.id}
+                    section={section}
+                    isActive={activeSection === section.id}
+                    isFirst={isFirst}
+                    isLast={isLast}
+                    onToggle={() => setActiveSection(activeSection === section.id ? null : section.id)}
+                    onUpdate={data => handleSectionUpdate(section.id, data)}
+                    onDelete={() => handleDeleteSection(section.id)}
+                    onToggleVisibility={() => handleToggleVisibility(section)}
+                    onMoveUp={() => handleMoveSection(section.id, 'up')}
+                    onMoveDown={() => handleMoveSection(section.id, 'down')}
+                    onOpenCopilotWithBullet={handleOpenCopilotWithBullet}
+                    resumeId={id!}
+                  />
+                );
+              });
+            })()}
 
             {/* Add Section Button */}
             <AddSectionDropdown onAdd={handleAddSection} />
@@ -641,27 +697,37 @@ function SectionCard({
         className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-3 cursor-pointer select-none"
         onClick={onToggle}
       >
-        {/* 1-Click Move Up / Down Buttons */}
-        <div className="flex items-center gap-0.5 shrink-0" onClick={e => e.stopPropagation()}>
-          <button
-            type="button"
-            disabled={isFirst}
-            onClick={onMoveUp}
-            className="p-1 rounded text-slate-400 hover:text-slate-900 dark:hover:text-white disabled:opacity-20 disabled:hover:text-slate-400 cursor-pointer transition-colors"
-            title="Move section up"
+        {/* Lock indicator for header, or 1-Click Move Up / Down Buttons for movable sections */}
+        {section.section_type === 'header' ? (
+          <div
+            className="flex items-center justify-center w-7 h-7 rounded-lg text-slate-400 dark:text-neutral-500 bg-slate-100 dark:bg-neutral-800/80 shrink-0 border border-slate-200/50 dark:border-neutral-700/50"
+            title="Header section is locked at the top"
+            onClick={e => e.stopPropagation()}
           >
-            <ChevronUp className="w-3.5 h-3.5" />
-          </button>
-          <button
-            type="button"
-            disabled={isLast}
-            onClick={onMoveDown}
-            className="p-1 rounded text-slate-400 hover:text-slate-900 dark:hover:text-white disabled:opacity-20 disabled:hover:text-slate-400 cursor-pointer transition-colors"
-            title="Move section down"
-          >
-            <ChevronDown className="w-3.5 h-3.5" />
-          </button>
-        </div>
+            <Lock className="w-3.5 h-3.5 text-slate-400 dark:text-neutral-400" />
+          </div>
+        ) : (
+          <div className="flex items-center gap-0.5 shrink-0" onClick={e => e.stopPropagation()}>
+            <button
+              type="button"
+              disabled={isFirst}
+              onClick={onMoveUp}
+              className="p-1 rounded text-slate-400 hover:text-slate-900 dark:hover:text-white disabled:opacity-20 disabled:hover:text-slate-400 cursor-pointer transition-colors"
+              title="Move section up"
+            >
+              <ChevronUp className="w-3.5 h-3.5" />
+            </button>
+            <button
+              type="button"
+              disabled={isLast}
+              onClick={onMoveDown}
+              className="p-1 rounded text-slate-400 hover:text-slate-900 dark:hover:text-white disabled:opacity-20 disabled:hover:text-slate-400 cursor-pointer transition-colors"
+              title="Move section down"
+            >
+              <ChevronDown className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        )}
 
         <input
           type="text"
@@ -684,13 +750,14 @@ function SectionCard({
           </span>
         )}
         <span
-          className="text-[11px] font-medium px-2 py-0.5 rounded-md capitalize border shrink-0"
+          className="text-[11px] font-medium px-2 py-0.5 rounded-md capitalize border shrink-0 inline-flex items-center gap-1"
           style={{
             backgroundColor: 'var(--bg-surface)',
             borderColor: 'var(--border-subtle)',
             color: 'var(--text-muted)',
           }}
         >
+          {section.section_type === 'header' && <Lock className="w-2.5 h-2.5 opacity-60" />}
           {section.section_type}
         </span>
         <button
@@ -709,17 +776,19 @@ function SectionCard({
         >
           {isVisible ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
         </button>
-        <button
-          type="button"
-          onClick={e => {
-            e.stopPropagation();
-            onDelete();
-          }}
-          className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-500/10 transition-colors cursor-pointer"
-          title="Delete section"
-        >
-          <Trash2 className="w-4 h-4" />
-        </button>
+        {section.section_type !== 'header' && (
+          <button
+            type="button"
+            onClick={e => {
+              e.stopPropagation();
+              onDelete();
+            }}
+            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-500/10 transition-colors cursor-pointer"
+            title="Delete section"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+        )}
         <div style={{ color: 'var(--text-muted)' }} className="shrink-0">
           {isActive ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
         </div>
@@ -756,8 +825,26 @@ const SECTION_TYPES = [
 
 function AddSectionDropdown({ onAdd }: { onAdd: (type: string, title: string) => void }) {
   const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const handleKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false); };
+    const handleClick = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener('keydown', handleKey);
+    document.addEventListener('mousedown', handleClick);
+    return () => {
+      document.removeEventListener('keydown', handleKey);
+      document.removeEventListener('mousedown', handleClick);
+    };
+  }, [open]);
+
   return (
-    <div className="relative pt-2">
+    <div className="relative pt-2" ref={containerRef}>
       <button
         type="button"
         onClick={() => setOpen(!open)}

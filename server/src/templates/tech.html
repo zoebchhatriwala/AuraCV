@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>{{resume.name}} - Developer CV</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Outfit:wght@600;700;800&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: #f1f5f9;
+    color: #0f172a;
+    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+    font-size: 9pt;
+    line-height: 1.5;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .page {
+    width: 210mm;
+    min-height: 297mm;
+    margin: 0 auto;
+    background: #ffffff;
+    padding: 32px 36px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  }
+
+  /* ─── Tech Terminal Header ─────────────────────────────────────────────── */
+  .tech-header {
+    background: #0f172a;
+    border-radius: 12px;
+    padding: 20px 24px;
+    color: #f8fafc;
+    margin-bottom: 22px;
+    position: relative;
+    overflow: hidden;
+    border: 1px solid #1e293b;
+  }
+  .tech-header::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 140px;
+    height: 100%;
+    background: linear-gradient(135deg, transparent 20%, rgba(14, 165, 233, 0.12) 100%);
+    pointer-events: none;
+  }
+  .tech-prompt {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8pt;
+    color: #38bdf8;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .tech-prompt::before {
+    content: '❯';
+    color: #10b981;
+    font-weight: 700;
+  }
+  .tech-name {
+    font-family: 'Outfit', sans-serif;
+    font-size: 22pt;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    color: #ffffff;
+    line-height: 1.1;
+    margin-bottom: 4px;
+  }
+  .tech-role {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9.5pt;
+    font-weight: 600;
+    color: #38bdf8;
+    margin-bottom: 12px;
+  }
+  .tech-contacts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 14px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 7.75pt;
+    color: #94a3b8;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    padding-top: 10px;
+  }
+  .tech-contact-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: #cbd5e1;
+    text-decoration: none;
+  }
+  .tech-contact-item a {
+    color: #38bdf8;
+    text-decoration: none;
+  }
+
+  /* ─── Section Styling ─────────────────────────────────────────────────── */
+  .tech-section {
+    margin-bottom: 20px;
+  }
+  .tech-section:last-child {
+    margin-bottom: 0;
+  }
+  .tech-sec-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9.5pt;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: #0f172a;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+    padding-bottom: 4px;
+    border-bottom: 2px solid #e2e8f0;
+  }
+  .tech-sec-title::before {
+    content: '//';
+    color: #0284c7;
+    font-weight: 800;
+  }
+
+  /* Summary Box */
+  .tech-summary-box {
+    background: #f8fafc;
+    border-left: 3px solid #0284c7;
+    border-radius: 0 8px 8px 0;
+    padding: 12px 16px;
+    font-size: 8.75pt;
+    color: #334155;
+    line-height: 1.55;
+  }
+
+  /* Experience Entries */
+  .tech-exp-item {
+    margin-bottom: 14px;
+    position: relative;
+    padding-left: 16px;
+    border-left: 2px solid #e2e8f0;
+  }
+  .tech-exp-item:last-child {
+    margin-bottom: 0;
+  }
+  .tech-exp-item::before {
+    content: '';
+    position: absolute;
+    left: -5px;
+    top: 4px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #0284c7;
+    border: 2px solid #ffffff;
+    box-shadow: 0 0 0 1px #0284c7;
+  }
+  .tech-exp-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 2px;
+  }
+  .tech-exp-role {
+    font-size: 9.75pt;
+    font-weight: 700;
+    color: #0f172a;
+  }
+  .tech-exp-dates {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 7.75pt;
+    font-weight: 600;
+    color: #0284c7;
+    background: #f0f9ff;
+    border: 1px solid #bae6fd;
+    padding: 1px 6px;
+    border-radius: 4px;
+  }
+  .tech-exp-company {
+    font-size: 8.5pt;
+    font-weight: 600;
+    color: #475569;
+    margin-bottom: 4px;
+  }
+  .tech-exp-bullets {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+  .tech-exp-bullets li {
+    font-size: 8.5pt;
+    color: #334155;
+    line-height: 1.45;
+    position: relative;
+    padding-left: 14px;
+  }
+  .tech-exp-bullets li::before {
+    content: '❯';
+    position: absolute;
+    left: 0;
+    color: #10b981;
+    font-size: 7pt;
+    top: 2px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* Skills Categories */
+  .tech-skills-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .tech-skill-group {
+    display: grid;
+    grid-template-columns: 180px 1fr;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  .tech-skill-cat {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8pt;
+    font-weight: 700;
+    color: #0f172a;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding-top: 2px;
+    word-break: break-word;
+  }
+  .tech-skill-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+  }
+  .tech-skill-pill {
+    background: #f8fafc;
+    border: 1px solid #cbd5e1;
+    color: #1e293b;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 7.75pt;
+    font-weight: 500;
+    padding: 2px 7px;
+    border-radius: 4px;
+  }
+
+  /* Education */
+  .tech-edu-item {
+    margin-bottom: 10px;
+    padding: 10px 14px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+  }
+  .tech-edu-item:last-child {
+    margin-bottom: 0;
+  }
+  .tech-edu-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+  .tech-edu-degree {
+    font-size: 9.5pt;
+    font-weight: 700;
+    color: #0f172a;
+  }
+  .tech-edu-dates {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 7.75pt;
+    color: #64748b;
+  }
+  .tech-edu-inst {
+    font-size: 8.5pt;
+    color: #475569;
+    margin-top: 1px;
+  }
+
+  /* Projects */
+  .tech-proj-item {
+    margin-bottom: 12px;
+    padding: 12px 14px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background: #ffffff;
+  }
+  .tech-proj-item:last-child {
+    margin-bottom: 0;
+  }
+  .tech-proj-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 3px;
+  }
+  .tech-proj-name {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9pt;
+    font-weight: 700;
+    color: #0f172a;
+  }
+  .tech-proj-name::before {
+    content: '📦 ';
+    font-size: 8.5pt;
+  }
+  .tech-proj-url {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 7.5pt;
+    color: #0284c7;
+    text-decoration: none;
+  }
+  .tech-proj-tech {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 7.5pt;
+    color: #64748b;
+    margin-bottom: 4px;
+  }
+  .tech-proj-desc {
+    font-size: 8.5pt;
+    color: #475569;
+    line-height: 1.45;
+  }
+
+  /* Certifications */
+  .tech-cert-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-size: 8.5pt;
+    padding: 6px 0;
+    border-bottom: 1px dashed #e2e8f0;
+  }
+  .tech-cert-row:last-child {
+    border-bottom: none;
+  }
+
+  @media print {
+    body { background: white; }
+    .page { width: 100%; box-shadow: none; padding: 0; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <!-- Header -->
+  {{#with header}}
+  <header class="tech-header">
+    <div class="tech-prompt">init --profile --role="{{#if role}}{{role}}{{else}}Software Engineer{{/if}}"</div>
+    <h1 class="tech-name">{{name}}</h1>
+    {{#if role}}<div class="tech-role">{{role}}</div>{{/if}}
+    <div class="tech-contacts">
+      {{#if email}}<span class="tech-contact-item">✉ {{email}}</span>{{/if}}
+      {{#if phone}}<span class="tech-contact-item">☏ {{phone}}</span>{{/if}}
+      {{#if location}}<span class="tech-contact-item">📍 {{location}}</span>{{/if}}
+      {{#if github}}<span class="tech-contact-item">🐙 <a href="https://{{github}}">{{github}}</a></span>{{/if}}
+      {{#if linkedin}}<span class="tech-contact-item">💼 <a href="https://{{linkedin}}">{{linkedin}}</a></span>{{/if}}
+      {{#if website}}<span class="tech-contact-item">🌐 <a href="https://{{website}}">{{website}}</a></span>{{/if}}
+    </div>
+  </header>
+  {{/with}}
+
+  <!-- Body Sections ordered dynamically -->
+  {{#each bodySections}}
+    {{#if isSummary}}
+      {{#if summaryText}}
+      <section class="tech-section">
+        <div class="tech-sec-title">{{title}}</div>
+        <div class="tech-summary-box">{{{markdown summaryText}}}</div>
+      </section>
+      {{/if}}
+    {{/if}}
+
+    {{#if isExperience}}
+      {{#if content.length}}
+      <section class="tech-section">
+        <div class="tech-sec-title">{{title}}</div>
+        {{#each content}}
+        <div class="tech-exp-item">
+          <div class="tech-exp-head">
+            <span class="tech-exp-role">{{role}}</span>
+            <span class="tech-exp-dates">{{start_date}} – {{end_date}}</span>
+          </div>
+          <div class="tech-exp-company">{{company}}{{#if location}} · {{location}}{{/if}}</div>
+          {{#if bullets.length}}
+          <ul class="tech-exp-bullets">
+            {{#each bullets}}<li>{{{markdown this}}}</li>{{/each}}
+          </ul>
+          {{/if}}
+        </div>
+        {{/each}}
+      </section>
+      {{/if}}
+    {{/if}}
+
+    {{#if isSkills}}
+      {{#if content.length}}
+      <section class="tech-section">
+        <div class="tech-sec-title">{{title}}</div>
+        <div class="tech-skills-wrap">
+          {{#each content}}
+          <div class="tech-skill-group">
+            <span class="tech-skill-cat">{{category}}</span>
+            <div class="tech-skill-tags">
+              {{#each items}}<span class="tech-skill-pill">{{this}}</span>{{/each}}
+            </div>
+          </div>
+          {{/each}}
+        </div>
+      </section>
+      {{/if}}
+    {{/if}}
+
+    {{#if isEducation}}
+      {{#if content.length}}
+      <section class="tech-section">
+        <div class="tech-sec-title">{{title}}</div>
+        {{#each content}}
+        <div class="tech-edu-item">
+          <div class="tech-edu-head">
+            <span class="tech-edu-degree">{{degree}} in {{field}}</span>
+            <span class="tech-edu-dates">{{start_date}} – {{end_date}}{{#if gpa}} · GPA {{gpa}}{{/if}}</span>
+          </div>
+          <div class="tech-edu-inst">{{institution}}</div>
+        </div>
+        {{/each}}
+      </section>
+      {{/if}}
+    {{/if}}
+
+    {{#if isProjects}}
+      {{#if content.length}}
+      <section class="tech-section">
+        <div class="tech-sec-title">{{title}}</div>
+        {{#each content}}
+        <div class="tech-proj-item">
+          <div class="tech-proj-head">
+            <span class="tech-proj-name">{{name}}</span>
+            {{#if url}}<a class="tech-proj-url" href="https://{{url}}" target="_blank">{{url}}</a>{{/if}}
+          </div>
+          {{#if tech.length}}
+          <div class="tech-proj-tech">
+            Stack: {{#each tech}}{{this}}{{#unless @last}}, {{/unless}}{{/each}}
+          </div>
+          {{/if}}
+          {{#if description}}<div class="tech-proj-desc">{{{markdown description}}}</div>{{/if}}
+        </div>
+        {{/each}}
+      </section>
+      {{/if}}
+    {{/if}}
+
+    {{#if isCertifications}}
+      {{#if content.length}}
+      <section class="tech-section">
+        <div class="tech-sec-title">{{title}}</div>
+        {{#each content}}
+        <div class="tech-cert-row">
+          <span><strong>{{name}}</strong> — {{issuer}}</span>
+          {{#if date}}<span style="font-family: 'JetBrains Mono', monospace; font-size: 7.75pt; color: #64748b;">{{date}}</span>{{/if}}
+        </div>
+        {{/each}}
+      </section>
+      {{/if}}
+    {{/if}}
+
+    {{#if isCustom}}
+      {{#if content.length}}
+      <section class="tech-section">
+        <div class="tech-sec-title">{{title}}</div>
+        {{#each content}}
+        <div class="tech-proj-item">
+          {{#if title}}<div class="tech-proj-name">{{title}}</div>{{/if}}
+          {{#if description}}<div class="tech-proj-desc">{{{markdown description}}}</div>{{/if}}
+        </div>
+        {{/each}}
+      </section>
+      {{/if}}
+    {{/if}}
+  {{/each}}
+</div>
+</body>
+</html>

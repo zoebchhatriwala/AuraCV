@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { type Section } from '../api';
-import { Plus, Trash2, SlidersHorizontal, Loader2, Bold, Italic, Link as LinkIcon, ChevronDown, ChevronUp, GripVertical } from 'lucide-react';
+import { Plus, Trash2, SlidersHorizontal, Loader2, Bold, Italic, Link as LinkIcon, ChevronDown, ChevronUp, GripVertical, Check, Cloud, Save } from 'lucide-react';
 import { aiApi } from '../api';
+import { useAppStore } from '../store';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import type { DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
@@ -137,7 +138,19 @@ function MarkdownArea({
   );
 }
 
-function SortableBullet({ id, bullet, bIdx, idx, rewriting, onOpenCopilotWithBullet, rewriteBullet, updateEntry, bullets, sectionId }: any) {
+function SortableBullet({
+  id,
+  bullet,
+  bIdx,
+  idx,
+  rewriting,
+  onOpenCopilotWithBullet,
+  rewriteBullet,
+  updateEntry,
+  bullets,
+  sectionId,
+  onRemove,
+}: any) {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id });
   const style = { transform: CSS.Transform.toString(transform), transition };
   const isRewriting = rewriting === idx * 1000 + bIdx;
@@ -178,10 +191,7 @@ function SortableBullet({ id, bullet, bIdx, idx, rewriting, onOpenCopilotWithBul
         </button>
         <button
           type="button"
-          onClick={() => {
-            const next = bullets.filter((_: string, i: number) => i !== bIdx);
-            updateEntry(idx, { bullets: next });
-          }}
+          onClick={onRemove}
           className="p-2 rounded-xl text-slate-400 hover:text-rose-500 hover:bg-rose-500/10 transition-all cursor-pointer"
           title="Remove bullet"
         >
@@ -232,11 +242,28 @@ function Field({
 }
 
 export default function SectionEditor({ section, resumeId, onUpdate, onOpenCopilotWithBullet }: Props) {
+  const { settings } = useAppStore();
+  const autoSave = settings.auto_save !== 'false';
   const [localContent, setLocalContent] = useState<Record<string, unknown>[]>((section.content || []) as Record<string, unknown>[]);
+  const [isDirty, setIsDirty] = useState(false);
   const [rewriting, setRewriting] = useState<number | null>(null);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const updateTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isTyping = useRef(false);
+  // Prevents the date-sort useEffect from reordering a freshly-added blank entry
+  const addingEntry = useRef(false);
+
+  const localContentRef = useRef(localContent);
+  const isDirtyRef = useRef(isDirty);
+  const onUpdateRef = useRef(onUpdate);
+  const sectionRef = useRef(section);
+
+  useEffect(() => {
+    localContentRef.current = localContent;
+    isDirtyRef.current = isDirty;
+    onUpdateRef.current = onUpdate;
+    sectionRef.current = section;
+  }, [localContent, isDirty, onUpdate, section]);
 
   const toggleExpanded = (idx: number, type: string) => {
     const key = `${type}-${idx}`;
@@ -244,10 +271,45 @@ export default function SectionEditor({ section, resumeId, onUpdate, onOpenCopil
   };
   const isExpanded = (idx: number, type: string) => expanded[`${type}-${idx}`] ?? true;
 
+  const handleSaveNow = () => {
+    if (updateTimeout.current) clearTimeout(updateTimeout.current);
+    isTyping.current = false;
+    setIsDirty(false);
+    onUpdate({ ...section, content: localContent });
+  };
+
   useEffect(() => {
-    if (!isTyping.current) {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
+        e.preventDefault();
+        handleSaveNow();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  });
+
+  useEffect(() => {
+    return () => {
+      if (updateTimeout.current) clearTimeout(updateTimeout.current);
+      if (isDirtyRef.current) {
+        onUpdateRef.current({ ...sectionRef.current, content: localContentRef.current });
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!isTyping.current && !addingEntry.current && !isDirty) {
       let incoming = [...(section.content || [])] as Record<string, unknown>[];
-      if (section.section_type === 'experience' || section.section_type === 'education') {
+      // Only sort when every entry has at least one date populated — avoid
+      // sending a freshly-added blank entry to the bottom (timestamp 0).
+      const hasBlankDates = incoming.some(
+        a => !a.start_date && !a.end_date
+      );
+      if (
+        !hasBlankDates &&
+        (section.section_type === 'experience' || section.section_type === 'education')
+      ) {
         incoming.sort((a, b) => {
           const aEnd = parseDate(a.end_date as string);
           const bEnd = parseDate(b.end_date as string);
@@ -259,16 +321,21 @@ export default function SectionEditor({ section, resumeId, onUpdate, onOpenCopil
       }
       setLocalContent(incoming);
     }
-  }, [section.content, section.section_type]);
+    addingEntry.current = false;
+  }, [section.content, section.section_type, isDirty]);
 
   const updateContent = (newContent: unknown[]) => {
     setLocalContent(newContent as Record<string, unknown>[]);
+    setIsDirty(true);
     isTyping.current = true;
     if (updateTimeout.current) clearTimeout(updateTimeout.current);
-    updateTimeout.current = setTimeout(() => {
-      isTyping.current = false;
-      onUpdate({ ...section, content: newContent });
-    }, 700);
+    if (autoSave) {
+      updateTimeout.current = setTimeout(() => {
+        isTyping.current = false;
+        setIsDirty(false);
+        onUpdate({ ...section, content: newContent });
+      }, 700);
+    }
   };
 
   const updateEntry = (idx: number, patch: Record<string, unknown>) => {
@@ -278,6 +345,7 @@ export default function SectionEditor({ section, resumeId, onUpdate, onOpenCopil
   };
 
   const addEntry = (template: Record<string, unknown>) => {
+    addingEntry.current = true;
     updateContent([...localContent, template]);
   };
 
@@ -365,25 +433,31 @@ export default function SectionEditor({ section, resumeId, onUpdate, onOpenCopil
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
-  const getBulletId = (bullet: string, bIdx: number, arr: string[]) => {
-    const occurence = arr.slice(0, bIdx).filter(b => b === bullet).length;
-    return `${bullet}_${occurence}`;
-  };
-
   const renderExperience = (entry: Record<string, unknown>, idx: number) => {
     const bullets = (entry.bullets as string[]) ?? [];
+    
+    // Ensure stable unique IDs for bullets that do NOT change when text is typed
+    if (!entry._bulletIds || !Array.isArray(entry._bulletIds) || (entry._bulletIds as string[]).length !== bullets.length) {
+      const existing = ((entry._bulletIds as string[]) || []);
+      entry._bulletIds = bullets.map((_, i) => existing[i] || `bullet_${idx}_${i}_${Math.random().toString(36).slice(2, 9)}`);
+    }
+    const bulletIds = entry._bulletIds as string[];
+
     const expanded = isExpanded(idx, 'experience');
     
     const handleDragEnd = (event: DragEndEvent) => {
       const { active, over } = event;
       if (over && active.id !== over.id) {
-        const oldIndex = bullets.findIndex((b, i) => getBulletId(b, i, bullets) === active.id);
-        const newIndex = bullets.findIndex((b, i) => getBulletId(b, i, bullets) === over.id);
+        const oldIndex = bulletIds.indexOf(String(active.id));
+        const newIndex = bulletIds.indexOf(String(over.id));
         if (oldIndex !== -1 && newIndex !== -1) {
           const newBullets = [...bullets];
-          const [moved] = newBullets.splice(oldIndex, 1);
-          newBullets.splice(newIndex, 0, moved);
-          updateEntry(idx, { bullets: newBullets });
+          const newIds = [...bulletIds];
+          const [movedB] = newBullets.splice(oldIndex, 1);
+          const [movedId] = newIds.splice(oldIndex, 1);
+          newBullets.splice(newIndex, 0, movedB);
+          newIds.splice(newIndex, 0, movedId);
+          updateEntry(idx, { bullets: newBullets, _bulletIds: newIds });
         }
       }
     };
@@ -440,11 +514,11 @@ export default function SectionEditor({ section, resumeId, onUpdate, onOpenCopil
             Accomplishments and Bullets
           </label>
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-            <SortableContext items={bullets.map((b, i) => getBulletId(b, i, bullets))} strategy={verticalListSortingStrategy}>
+            <SortableContext items={bulletIds} strategy={verticalListSortingStrategy}>
               {bullets.map((bullet, bIdx) => (
                 <SortableBullet
-                  key={getBulletId(bullet, bIdx, bullets)}
-                  id={getBulletId(bullet, bIdx, bullets)}
+                  key={bulletIds[bIdx]}
+                  id={bulletIds[bIdx]}
                   bullet={bullet}
                   bIdx={bIdx}
                   idx={idx}
@@ -454,13 +528,24 @@ export default function SectionEditor({ section, resumeId, onUpdate, onOpenCopil
                   updateEntry={updateEntry}
                   bullets={bullets}
                   sectionId={section.id}
+                  onRemove={() => {
+                    const nextBullets = bullets.filter((_, i) => i !== bIdx);
+                    const nextIds = bulletIds.filter((_, i) => i !== bIdx);
+                    updateEntry(idx, { bullets: nextBullets, _bulletIds: nextIds });
+                  }}
                 />
               ))}
             </SortableContext>
           </DndContext>
           <button
             type="button"
-            onClick={() => updateEntry(idx, { bullets: [...bullets, ''] })}
+            onClick={() => {
+              const newId = `bullet_${idx}_${bullets.length}_${Math.random().toString(36).slice(2, 9)}`;
+              updateEntry(idx, {
+                bullets: [...bullets, ''],
+                _bulletIds: [...bulletIds, newId],
+              });
+            }}
             className="inline-flex items-center gap-1.5 text-xs text-blue-600 dark:text-blue-400 font-medium hover:underline pt-1 cursor-pointer"
           >
             <Plus className="w-3.5 h-3.5" /> Add bullet point
@@ -575,6 +660,33 @@ export default function SectionEditor({ section, resumeId, onUpdate, onOpenCopil
     );
   };
 
+  const renderCustom = (entry: Record<string, unknown>, idx: number) => (
+    <div
+      key={idx}
+      className="p-4 rounded-2xl border space-y-3 mb-3"
+      style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-subtle)' }}
+    >
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-bold uppercase tracking-wider text-purple-500">Item #{idx + 1}</span>
+        <button
+          type="button"
+          onClick={() => removeEntry(idx)}
+          className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-500/10 transition-colors cursor-pointer"
+        >
+          <Trash2 className="w-3.5 h-3.5" />
+        </button>
+      </div>
+      <Field label="Title / Heading" value={(entry.title as string) ?? ''} onChange={v => updateEntry(idx, { title: v })} placeholder="Item title or heading" />
+      <Field
+        label="Description / Content"
+        value={(entry.description as string) ?? ''}
+        onChange={v => updateEntry(idx, { description: v })}
+        multiline
+        placeholder="Describe this item…"
+      />
+    </div>
+  );
+
   const renderCertifications = (entry: Record<string, unknown>, idx: number) => (
     <div
       key={idx}
@@ -666,6 +778,66 @@ export default function SectionEditor({ section, resumeId, onUpdate, onOpenCopil
           >
             <Plus className="w-3.5 h-3.5" /> Add Certification
           </button>
+        </div>
+      )}
+      {section.section_type === 'custom' && (
+        <div>
+          {localContent.map(renderCustom)}
+          <button
+            type="button"
+            onClick={() => addEntry({ title: '', description: '' })}
+            className="w-full py-2.5 rounded-xl border border-dashed text-xs font-semibold transition-all hover:border-purple-500 hover:bg-purple-500/5 text-purple-500 flex items-center justify-center gap-1.5 cursor-pointer"
+            style={{ borderColor: 'var(--border-default)' }}
+          >
+            <Plus className="w-3.5 h-3.5" /> Add Item
+          </button>
+        </div>
+      )}
+
+      {/* Save status footer */}
+      {!autoSave ? (
+        <div
+          className="flex items-center justify-between pt-3 mt-4 border-t"
+          style={{ borderColor: 'var(--border-subtle)' }}
+        >
+          {isDirty ? (
+            <div className="flex items-center gap-1.5 text-xs text-amber-500 font-medium">
+              <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+              <span>Unsaved changes in this section</span>
+            </div>
+          ) : (
+            <div className="flex items-center gap-1.5 text-xs text-slate-400">
+              <Check className="w-3.5 h-3.5 text-emerald-500" />
+              <span>Section up to date</span>
+            </div>
+          )}
+
+          <button
+            type="button"
+            onClick={handleSaveNow}
+            disabled={!isDirty}
+            className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+              isDirty
+                ? 'bg-amber-500 hover:bg-amber-600 text-white shadow-xs'
+                : 'opacity-40 bg-slate-100 dark:bg-neutral-800 text-slate-400 cursor-not-allowed'
+            }`}
+            title="Save changes in this section (Ctrl+S)"
+          >
+            <Save className="w-3.5 h-3.5" />
+            <span>Save Section</span>
+            <span className="text-[10px] opacity-75 font-mono ml-0.5">Ctrl+S</span>
+          </button>
+        </div>
+      ) : (
+        <div
+          className="flex items-center justify-between pt-3 mt-3 border-t text-[11px]"
+          style={{ borderColor: 'var(--border-subtle)', color: 'var(--text-muted)' }}
+        >
+          <span className="flex items-center gap-1">
+            <Cloud className="w-3 h-3 text-emerald-500" />
+            Auto-save active
+          </span>
+          <span className="opacity-70">Changes save automatically as you type</span>
         </div>
       )}
     </div>

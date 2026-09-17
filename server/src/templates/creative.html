@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>{{resume.name}} - Creative Editorial CV</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Outfit:wght@500;600;700;800;900&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: #f8fafc;
+    color: #1e293b;
+    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+    font-size: 9pt;
+    line-height: 1.55;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .page {
+    width: 210mm;
+    min-height: 297mm;
+    margin: 0 auto;
+    background: #ffffff;
+    padding: 36px 40px;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.07);
+    position: relative;
+  }
+  .page::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 5px;
+    background: linear-gradient(90deg, #4f46e5 0%, #7c3aed 50%, #ec4899 100%);
+  }
+
+  /* ─── Header ──────────────────────────────────────────────────────────── */
+  .nordic-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    padding-bottom: 20px;
+    margin-bottom: 22px;
+    border-bottom: 1.5px solid #f1f5f9;
+  }
+  .nordic-name {
+    font-family: 'Outfit', sans-serif;
+    font-size: 24pt;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    color: #0f172a;
+    line-height: 1.1;
+  }
+  .nordic-role {
+    font-family: 'Outfit', sans-serif;
+    font-size: 10.5pt;
+    font-weight: 600;
+    color: #4f46e5;
+    margin-top: 3px;
+    letter-spacing: 0.3px;
+  }
+  .nordic-contacts {
+    text-align: right;
+    font-size: 8pt;
+    color: #64748b;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+  .nordic-contacts a {
+    color: #4f46e5;
+    text-decoration: none;
+  }
+
+  /* ─── Section Header ─────────────────────────────────────────────────── */
+  .nordic-section {
+    margin-bottom: 20px;
+  }
+  .nordic-section:last-child {
+    margin-bottom: 0;
+  }
+  .nordic-title {
+    font-family: 'Outfit', sans-serif;
+    font-size: 9.5pt;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #0f172a;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .nordic-title-badge {
+    width: 6px;
+    height: 14px;
+    border-radius: 3px;
+    background: linear-gradient(180deg, #4f46e5, #ec4899);
+  }
+
+  /* Summary */
+  .nordic-summary {
+    background: #fbfbfe;
+    border: 1px solid #eef2ff;
+    border-left: 3.5px solid #4f46e5;
+    border-radius: 0 10px 10px 0;
+    padding: 12px 18px;
+    font-size: 8.75pt;
+    color: #334155;
+    line-height: 1.6;
+  }
+
+  /* Experience Cards */
+  .nordic-exp-card {
+    background: #ffffff;
+    border: 1px solid #f1f5f9;
+    border-radius: 10px;
+    padding: 12px 16px;
+    margin-bottom: 10px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+  }
+  .nordic-exp-card:last-child {
+    margin-bottom: 0;
+  }
+  .nordic-exp-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 2px;
+  }
+  .nordic-exp-role {
+    font-size: 10pt;
+    font-weight: 700;
+    color: #0f172a;
+  }
+  .nordic-exp-dates {
+    font-size: 7.75pt;
+    font-weight: 600;
+    color: #6366f1;
+    background: #eef2ff;
+    padding: 2px 8px;
+    border-radius: 20px;
+  }
+  .nordic-exp-company {
+    font-size: 8.5pt;
+    font-weight: 600;
+    color: #475569;
+    margin-bottom: 6px;
+  }
+  .nordic-exp-bullets {
+    margin: 0 0 0 14px;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+  .nordic-exp-bullets li {
+    font-size: 8.5pt;
+    color: #334155;
+    line-height: 1.45;
+  }
+
+  /* Skills Grid */
+  .nordic-skills-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .nordic-skill-group {
+    display: grid;
+    grid-template-columns: 180px 1fr;
+    gap: 14px;
+    align-items: flex-start;
+  }
+  .nordic-skill-cat {
+    font-family: 'Outfit', sans-serif;
+    font-size: 8.5pt;
+    font-weight: 700;
+    color: #334155;
+    padding-top: 2px;
+    word-break: break-word;
+  }
+  .nordic-skill-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+  }
+  .nordic-skill-pill {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    color: #1e293b;
+    padding: 2.5px 8px;
+    border-radius: 6px;
+    font-size: 8pt;
+    font-weight: 500;
+  }
+
+  /* Education */
+  .nordic-edu-row {
+    background: #ffffff;
+    border: 1px solid #f1f5f9;
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+  .nordic-edu-row:last-child {
+    margin-bottom: 0;
+  }
+  .nordic-edu-title {
+    font-size: 9.5pt;
+    font-weight: 700;
+    color: #0f172a;
+  }
+  .nordic-edu-school {
+    font-size: 8.5pt;
+    color: #64748b;
+    margin-top: 1px;
+  }
+  .nordic-edu-dates {
+    font-size: 8pt;
+    color: #6366f1;
+    font-weight: 600;
+  }
+
+  /* Projects */
+  .nordic-proj-card {
+    background: #ffffff;
+    border: 1px solid #f1f5f9;
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin-bottom: 8px;
+  }
+  .nordic-proj-card:last-child {
+    margin-bottom: 0;
+  }
+  .nordic-proj-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 3px;
+  }
+  .nordic-proj-name {
+    font-size: 9.5pt;
+    font-weight: 700;
+    color: #0f172a;
+  }
+  .nordic-proj-url {
+    font-size: 7.75pt;
+    font-weight: 600;
+    color: #4f46e5;
+    text-decoration: none;
+  }
+  .nordic-proj-desc {
+    font-size: 8.5pt;
+    color: #475569;
+    line-height: 1.45;
+  }
+
+  /* Certifications */
+  .nordic-cert-item {
+    padding: 6px 10px;
+    border-bottom: 1px solid #f1f5f9;
+    display: flex;
+    justify-content: space-between;
+    font-size: 8.5pt;
+  }
+  .nordic-cert-item:last-child {
+    border-bottom: none;
+  }
+
+  @media print {
+    body { background: white; }
+    .page { width: 100%; box-shadow: none; padding: 0; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <!-- Header -->
+  {{#with header}}
+  <header class="nordic-header">
+    <div>
+      <h1 class="nordic-name">{{name}}</h1>
+      {{#if role}}<div class="nordic-role">{{role}}</div>{{/if}}
+    </div>
+    <div class="nordic-contacts">
+      {{#if email}}<span>{{email}}</span>{{/if}}
+      {{#if phone}}<span>{{phone}}</span>{{/if}}
+      {{#if location}}<span>{{location}}</span>{{/if}}
+      {{#if linkedin}}<span><a href="https://{{linkedin}}">{{linkedin}}</a></span>{{/if}}
+      {{#if github}}<span><a href="https://{{github}}">{{github}}</a></span>{{/if}}
+      {{#if website}}<span><a href="https://{{website}}">{{website}}</a></span>{{/if}}
+    </div>
+  </header>
+  {{/with}}
+
+  <!-- Body Sections ordered dynamically -->
+  {{#each bodySections}}
+    {{#if isSummary}}
+      {{#if summaryText}}
+      <section class="nordic-section">
+        <div class="nordic-title"><span class="nordic-title-badge"></span>{{title}}</div>
+        <div class="nordic-summary">{{{markdown summaryText}}}</div>
+      </section>
+      {{/if}}
+    {{/if}}
+
+    {{#if isExperience}}
+      {{#if content.length}}
+      <section class="nordic-section">
+        <div class="nordic-title"><span class="nordic-title-badge"></span>{{title}}</div>
+        {{#each content}}
+        <div class="nordic-exp-card">
+          <div class="nordic-exp-top">
+            <span class="nordic-exp-role">{{role}}</span>
+            <span class="nordic-exp-dates">{{start_date}} – {{end_date}}</span>
+          </div>
+          <div class="nordic-exp-company">{{company}}{{#if location}} · {{location}}{{/if}}</div>
+          {{#if bullets.length}}
+          <ul class="nordic-exp-bullets">
+            {{#each bullets}}<li>{{{markdown this}}}</li>{{/each}}
+          </ul>
+          {{/if}}
+        </div>
+        {{/each}}
+      </section>
+      {{/if}}
+    {{/if}}
+
+    {{#if isSkills}}
+      {{#if content.length}}
+      <section class="nordic-section">
+        <div class="nordic-title"><span class="nordic-title-badge"></span>{{title}}</div>
+        <div class="nordic-skills-wrap">
+          {{#each content}}
+          <div class="nordic-skill-group">
+            <span class="nordic-skill-cat">{{category}}</span>
+            <div class="nordic-skill-tags">
+              {{#each items}}<span class="nordic-skill-pill">{{this}}</span>{{/each}}
+            </div>
+          </div>
+          {{/each}}
+        </div>
+      </section>
+      {{/if}}
+    {{/if}}
+
+    {{#if isEducation}}
+      {{#if content.length}}
+      <section class="nordic-section">
+        <div class="nordic-title"><span class="nordic-title-badge"></span>{{title}}</div>
+        {{#each content}}
+        <div class="nordic-edu-row">
+          <div>
+            <div class="nordic-edu-title">{{degree}} in {{field}}</div>
+            <div class="nordic-edu-school">{{institution}}{{#if gpa}} · GPA {{gpa}}{{/if}}</div>
+          </div>
+          <span class="nordic-edu-dates">{{start_date}} – {{end_date}}</span>
+        </div>
+        {{/each}}
+      </section>
+      {{/if}}
+    {{/if}}
+
+    {{#if isProjects}}
+      {{#if content.length}}
+      <section class="nordic-section">
+        <div class="nordic-title"><span class="nordic-title-badge"></span>{{title}}</div>
+        {{#each content}}
+        <div class="nordic-proj-card">
+          <div class="nordic-proj-head">
+            <span class="nordic-proj-name">{{name}}</span>
+            {{#if url}}<a class="nordic-proj-url" href="https://{{url}}" target="_blank">{{url}}</a>{{/if}}
+          </div>
+          {{#if tech.length}}
+          <div style="font-size: 7.75pt; color: #64748b; margin-bottom: 4px;">
+            {{#each tech}}{{this}}{{#unless @last}}, {{/unless}}{{/each}}
+          </div>
+          {{/if}}
+          {{#if description}}<div class="nordic-proj-desc">{{{markdown description}}}</div>{{/if}}
+        </div>
+        {{/each}}
+      </section>
+      {{/if}}
+    {{/if}}
+
+    {{#if isCertifications}}
+      {{#if content.length}}
+      <section class="nordic-section">
+        <div class="nordic-title"><span class="nordic-title-badge"></span>{{title}}</div>
+        {{#each content}}
+        <div class="nordic-cert-item">
+          <span><strong>{{name}}</strong> — {{issuer}}</span>
+          <span style="color: #6366f1; font-weight: 500;">{{date}}</span>
+        </div>
+        {{/each}}
+      </section>
+      {{/if}}
+    {{/if}}
+
+    {{#if isCustom}}
+      {{#if content.length}}
+      <section class="nordic-section">
+        <div class="nordic-title"><span class="nordic-title-badge"></span>{{title}}</div>
+        {{#each content}}
+        <div class="nordic-proj-card">
+          {{#if title}}<div class="nordic-proj-name">{{title}}</div>{{/if}}
+          {{#if description}}<div class="nordic-proj-desc">{{{markdown description}}}</div>{{/if}}
+        </div>
+        {{/each}}
+      </section>
+      {{/if}}
+    {{/if}}
+  {{/each}}
+</div>
+</body>
+</html>

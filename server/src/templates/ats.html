@@ -130,55 +130,81 @@
   </div>
   {{/with}}
 
-  {{#with summary}}{{#if text}}
-  <h2>{{@root.sectionMap.summary.title}}</h2>
-  <p>{{{markdown text}}}</p>
-  {{/if}}{{/with}}
+  {{#each bodySections}}
+    {{#if isSummary}}
+      {{#if summaryText}}
+      <h2>{{title}}</h2>
+      <p>{{{markdown summaryText}}}</p>
+      {{/if}}
+    {{/if}}
 
-  {{#if experience.length}}
-  <h2>{{sectionMap.experience.title}}</h2>
-  {{#each experience}}
-  <div class="exp-block">
-    <div class="exp-header"><span>{{role}}</span><span>{{start_date}} - {{end_date}}</span></div>
-    <div class="exp-sub"><span>{{company}}</span>{{#if location}}<span>{{location}}</span>{{/if}}</div>
-    {{#if bullets.length}}<ul>{{#each bullets}}<li>{{{markdown this}}}</li>{{/each}}</ul>{{/if}}
-  </div>
+    {{#if isExperience}}
+      {{#if content.length}}
+      <h2>{{title}}</h2>
+      {{#each content}}
+      <div class="exp-block">
+        <div class="exp-header"><span>{{role}}</span><span>{{start_date}} - {{end_date}}</span></div>
+        <div class="exp-sub"><span>{{company}}</span>{{#if location}}<span>{{location}}</span>{{/if}}</div>
+        {{#if bullets.length}}<ul>{{#each bullets}}<li>{{{markdown this}}}</li>{{/each}}</ul>{{/if}}
+      </div>
+      {{/each}}
+      {{/if}}
+    {{/if}}
+
+    {{#if isEducation}}
+      {{#if content.length}}
+      <h2>{{title}}</h2>
+      {{#each content}}
+      <div class="exp-block">
+        <div class="exp-header"><span>{{degree}} in {{field}}</span><span>{{start_date}} - {{end_date}}</span></div>
+        <p style="margin-top:2px;">{{institution}}{{#if gpa}} | GPA: {{gpa}}{{/if}}</p>
+      </div>
+      {{/each}}
+      {{/if}}
+    {{/if}}
+
+    {{#if isSkills}}
+      {{#if content.length}}
+      <h2>{{title}}</h2>
+      {{#each content}}<div class="skill-row"><strong>{{category}}:</strong>{{#each items}}{{this}}{{#unless @last}}, {{/unless}}{{/each}}</div>{{/each}}
+      {{/if}}
+    {{/if}}
+
+    {{#if isProjects}}
+      {{#if content.length}}
+      <h2>{{title}}</h2>
+      {{#each content}}
+      <div class="exp-block">
+        <div class="exp-header"><span>{{name}}</span></div>
+        <div class="exp-sub">
+          {{#if url}}<span>{{url}}</span>{{/if}}
+          {{#if tech.length}}<span>{{#each tech}}{{this}}{{#unless @last}}, {{/unless}}{{/each}}</span>{{/if}}
+        </div>
+        {{#if description}}<div>{{{markdown description}}}</div>{{/if}}
+      </div>
+      {{/each}}
+      {{/if}}
+    {{/if}}
+
+    {{#if isCertifications}}
+      {{#if content.length}}
+      <h2>{{title}}</h2>
+      {{#each content}}<p><strong>{{name}}</strong> - {{issuer}} ({{date}})</p>{{/each}}
+      {{/if}}
+    {{/if}}
+
+    {{#if isCustom}}
+      {{#if content.length}}
+      <h2>{{title}}</h2>
+      {{#each content}}
+      <div class="exp-block">
+        {{#if title}}<div class="exp-header"><span>{{title}}</span></div>{{/if}}
+        {{#if description}}<div>{{{markdown description}}}</div>{{/if}}
+      </div>
+      {{/each}}
+      {{/if}}
+    {{/if}}
   {{/each}}
-  {{/if}}
-
-  {{#if education.length}}
-  <h2>{{sectionMap.education.title}}</h2>
-  {{#each education}}
-  <div class="exp-block">
-    <div class="exp-header"><span>{{degree}} in {{field}}</span><span>{{start_date}} - {{end_date}}</span></div>
-    <p style="margin-top:2px;">{{institution}}{{#if gpa}} | GPA: {{gpa}}{{/if}}</p>
-  </div>
-  {{/each}}
-  {{/if}}
-
-  {{#if skills.length}}
-  <h2>{{sectionMap.skills.title}}</h2>
-  {{#each skills}}<div class="skill-row"><strong>{{category}}:</strong>{{#each items}}{{this}}{{#unless @last}}, {{/unless}}{{/each}}</div>{{/each}}
-  {{/if}}
-
-  {{#if projects.length}}
-  <h2>{{sectionMap.projects.title}}</h2>
-  {{#each projects}}
-  <div class="exp-block">
-    <div class="exp-header"><span>{{name}}</span></div>
-    <div class="exp-sub">
-      {{#if url}}<span>{{url}}</span>{{/if}}
-      {{#if tech.length}}<span>{{#each tech}}{{this}}{{#unless @last}}, {{/unless}}{{/each}}</span>{{/if}}
-    </div>
-    {{#if description}}<div>{{{markdown description}}}</div>{{/if}}
-  </div>
-  {{/each}}
-  {{/if}}
-
-  {{#if certifications.length}}
-  <h2>{{sectionMap.certifications.title}}</h2>
-  {{#each certifications}}<p><strong>{{name}}</strong> - {{issuer}} ({{date}})</p>{{/each}}
-  {{/if}}
 </div>
 </body>
 </html>

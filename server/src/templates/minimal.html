@@ -75,7 +75,10 @@
 
   /* ─── Sections ────────────────────────────────────────────────────────── */
   .section {
-    margin-bottom: 20px;
+    margin-bottom: 24px;
+  }
+  .section:last-child {
+    margin-bottom: 0;
   }
   .section-title {
     font-family: 'Outfit', sans-serif;
@@ -86,7 +89,7 @@
     color: #0f172a;
     padding-bottom: 5px;
     border-bottom: 1.5px solid #e2e8f0;
-    margin-bottom: 12px;
+    margin-bottom: 14px;
     display: flex;
     align-items: center;
     gap: 8px;
@@ -102,10 +105,10 @@
 
   /* Summary */
   .summary-text {
-    font-size: 9.75pt;
+    font-size: 9.5pt;
     color: #334155;
-    line-height: 1.65;
-    text-align: justify;
+    line-height: 1.6;
+    text-align: left;
   }
 
   /* Experience */
@@ -192,38 +195,42 @@
   .skills-wrap {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 12px;
   }
   .skill-group {
-    display: flex;
-    align-items: baseline;
-    gap: 8px;
+    display: grid;
+    grid-template-columns: 195px 1fr;
+    gap: 16px;
+    align-items: flex-start;
     font-size: 9pt;
   }
   .skill-category {
     font-weight: 700;
     color: #0f172a;
-    min-width: 140px;
-    flex-shrink: 0;
+    font-size: 8.75pt;
+    line-height: 1.35;
+    padding-top: 2px;
+    word-break: break-word;
   }
   .skill-tags {
     display: flex;
     flex-wrap: wrap;
-    gap: 4px;
+    gap: 5px;
   }
   .skill-pill {
     background: #f8fafc;
     border: 1px solid #e2e8f0;
     color: #334155;
-    padding: 1px 7px;
+    padding: 2.5px 7.5px;
     border-radius: 4px;
-    font-size: 8.5pt;
+    font-size: 8.25pt;
     font-weight: 500;
+    line-height: 1.35;
   }
 
   /* Projects */
   .project-entry {
-    margin-bottom: 10px;
+    margin-bottom: 12px;
   }
   .project-entry:last-child {
     margin-bottom: 0;
@@ -239,15 +246,15 @@
     color: #0f172a;
   }
   .project-url {
-    font-size: 8pt;
+    font-size: 8.5pt;
     color: #0284c7;
     text-decoration: none;
   }
   .project-desc {
     font-size: 9pt;
     color: #475569;
-    margin-top: 2px;
-    line-height: 1.5;
+    margin-top: 3px;
+    line-height: 1.55;
   }
 
   /* Certifications */
@@ -294,103 +301,123 @@
     {{/with}}
   </div>
 
-  <!-- Summary -->
-  {{#with summary}}
-  {{#if text}}
-  <div class="section">
-    <div class="section-title">{{@root.sectionMap.summary.title}}</div>
-    <div class="summary-text">{{{markdown text}}}</div>
-  </div>
-  {{/if}}
-  {{/with}}
-
-  <!-- Experience -->
-  {{#if experience.length}}
-  <div class="section">
-    <div class="section-title">{{sectionMap.experience.title}}</div>
-    {{#each experience}}
-    <div class="exp-entry">
-      <div class="exp-top">
-        <span class="exp-role">{{role}}</span>
-        <span class="exp-dates">{{start_date}} - {{end_date}}</span>
+  {{#each bodySections}}
+    {{#if isSummary}}
+      {{#if summaryText}}
+      <div class="section">
+        <div class="section-title">{{title}}</div>
+        <div class="summary-text">{{{markdown summaryText}}}</div>
       </div>
-      <div class="exp-company">{{company}}{{#if location}} · {{location}}{{/if}}</div>
-      {{#if bullets.length}}
-      <ul class="exp-bullets">
-        {{#each bullets}}<li>{{{markdown this}}}</li>{{/each}}
-      </ul>
       {{/if}}
-    </div>
-    {{/each}}
-  </div>
-  {{/if}}
+    {{/if}}
 
-  <!-- Education -->
-  {{#if education.length}}
-  <div class="section">
-    <div class="section-title">{{sectionMap.education.title}}</div>
-    {{#each education}}
-    <div class="edu-entry">
-      <div class="edu-left">
-        <span class="edu-degree">{{degree}} in {{field}}</span>
-        <span class="edu-institution">{{institution}}{{#if gpa}} · GPA {{gpa}}{{/if}}</span>
+    {{#if isExperience}}
+      {{#if content.length}}
+      <div class="section">
+        <div class="section-title">{{title}}</div>
+        {{#each content}}
+        <div class="exp-entry">
+          <div class="exp-top">
+            <span class="exp-role">{{role}}</span>
+            <span class="exp-dates">{{start_date}} - {{end_date}}</span>
+          </div>
+          <div class="exp-company">{{company}}{{#if location}} · {{location}}{{/if}}</div>
+          {{#if bullets.length}}
+          <ul class="exp-bullets">
+            {{#each bullets}}<li>{{{markdown this}}}</li>{{/each}}
+          </ul>
+          {{/if}}
+        </div>
+        {{/each}}
       </div>
-      <span class="edu-dates">{{start_date}} - {{end_date}}</span>
-    </div>
-    {{/each}}
-  </div>
-  {{/if}}
+      {{/if}}
+    {{/if}}
 
-  <!-- Skills -->
-  {{#if skills.length}}
-  <div class="section">
-    <div class="section-title">{{sectionMap.skills.title}}</div>
-    <div class="skills-wrap">
-      {{#each skills}}
-      <div class="skill-group">
-        <span class="skill-category">{{category}}</span>
-        <div class="skill-tags">
-          {{#each items}}<span class="skill-pill">{{this}}</span>{{/each}}
+    {{#if isEducation}}
+      {{#if content.length}}
+      <div class="section">
+        <div class="section-title">{{title}}</div>
+        {{#each content}}
+        <div class="edu-entry">
+          <div class="edu-left">
+            <span class="edu-degree">{{degree}} in {{field}}</span>
+            <span class="edu-institution">{{institution}}{{#if gpa}} · GPA {{gpa}}{{/if}}</span>
+          </div>
+          <span class="edu-dates">{{start_date}} - {{end_date}}</span>
+        </div>
+        {{/each}}
+      </div>
+      {{/if}}
+    {{/if}}
+
+    {{#if isSkills}}
+      {{#if content.length}}
+      <div class="section">
+        <div class="section-title">{{title}}</div>
+        <div class="skills-wrap">
+          {{#each content}}
+          <div class="skill-group">
+            <span class="skill-category">{{category}}</span>
+            <div class="skill-tags">
+              {{#each items}}<span class="skill-pill">{{this}}</span>{{/each}}
+            </div>
+          </div>
+          {{/each}}
         </div>
       </div>
-      {{/each}}
-    </div>
-  </div>
-  {{/if}}
+      {{/if}}
+    {{/if}}
 
-  <!-- Projects -->
-  {{#if projects.length}}
-  <div class="section">
-    <div class="section-title">{{sectionMap.projects.title}}</div>
-    {{#each projects}}
-    <div class="project-entry">
-      <div class="project-top">
-        <span class="project-title">{{name}}</span>
-        {{#if url}}<a class="project-url" href="https://{{url}}" target="_blank">{{url}}</a>{{/if}}
-      </div>
-      {{#if tech.length}}
-      <div style="font-size: 8.5pt; color: #64748b; margin-top: 2px;">
-        {{#each tech}}{{this}}{{#unless @last}}, {{/unless}}{{/each}}
+    {{#if isProjects}}
+      {{#if content.length}}
+      <div class="section">
+        <div class="section-title">{{title}}</div>
+        {{#each content}}
+        <div class="project-entry">
+          <div class="project-top">
+            <span class="project-title">{{name}}</span>
+            {{#if url}}<a class="project-url" href="https://{{url}}" target="_blank">{{url}}</a>{{/if}}
+          </div>
+          {{#if tech.length}}
+          <div style="font-size: 8.5pt; color: #64748b; margin-top: 2px;">
+            {{#each tech}}{{this}}{{#unless @last}}, {{/unless}}{{/each}}
+          </div>
+          {{/if}}
+          {{#if description}}<div class="project-desc">{{{markdown description}}}</div>{{/if}}
+        </div>
+        {{/each}}
       </div>
       {{/if}}
-      {{#if description}}<div class="project-desc">{{{markdown description}}}</div>{{/if}}
-    </div>
-    {{/each}}
-  </div>
-  {{/if}}
+    {{/if}}
 
-  <!-- Certifications -->
-  {{#if certifications.length}}
-  <div class="section">
-    <div class="section-title">{{sectionMap.certifications.title}}</div>
-    {{#each certifications}}
-    <div class="cert-row">
-      <span class="cert-title">{{name}} <span style="font-weight:400;color:#64748b;">· {{issuer}}</span></span>
-      <span class="cert-meta">{{date}}</span>
-    </div>
-    {{/each}}
-  </div>
-  {{/if}}
+    {{#if isCertifications}}
+      {{#if content.length}}
+      <div class="section">
+        <div class="section-title">{{title}}</div>
+        {{#each content}}
+        <div class="cert-row">
+          <span class="cert-title">{{name}} <span style="font-weight:400;color:#64748b;">· {{issuer}}</span></span>
+          <span class="cert-meta">{{date}}</span>
+        </div>
+        {{/each}}
+      </div>
+      {{/if}}
+    {{/if}}
+
+    {{#if isCustom}}
+      {{#if content.length}}
+      <div class="section">
+        <div class="section-title">{{title}}</div>
+        {{#each content}}
+        <div class="project-entry">
+          {{#if title}}<div class="project-title">{{title}}</div>{{/if}}
+          {{#if description}}<div class="summary-text">{{{markdown description}}}</div>{{/if}}
+        </div>
+        {{/each}}
+      </div>
+      {{/if}}
+    {{/if}}
+  {{/each}}
 </div>
 </body>
 </html>
