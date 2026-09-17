@@ -56,9 +56,13 @@ export default function AICopilotPanel({
   // Update when parent requests polishing a specific bullet
   useEffect(() => {
     if (initialBullet) {
+      // eslint-disable-next-line react/set-state-in-effect
       setBulletInput(initialBullet);
+      // eslint-disable-next-line react/set-state-in-effect
       setBulletContext(initialBulletContext);
+      // eslint-disable-next-line react/set-state-in-effect
       setTab('polish');
+      // eslint-disable-next-line react/set-state-in-effect
       setAppliedBullet(false);
     }
   }, [initialBullet, initialBulletContext]);

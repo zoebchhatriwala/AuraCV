@@ -1,13 +1,195 @@
 import { useState, useEffect, useRef } from 'react';
 import { type Section } from '../api';
-import { Plus, Trash2, SlidersHorizontal, Loader2, GripVertical } from 'lucide-react';
+import { Plus, Trash2, SlidersHorizontal, Loader2, Bold, Italic, Link as LinkIcon, ChevronDown, ChevronUp, GripVertical } from 'lucide-react';
 import { aiApi } from '../api';
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import type { DragEndEvent } from '@dnd-kit/core';
+import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+
+function parseDate(dateStr: string | undefined): number {
+  if (!dateStr) return 0;
+  const lower = dateStr.toLowerCase().trim();
+  if (lower === 'present' || lower === 'current' || lower === 'now') return Date.now();
+  const parsed = Date.parse(dateStr);
+  if (!isNaN(parsed)) return parsed;
+  return 0;
+}
 
 interface Props {
   section: Section;
   resumeId: string;
   onUpdate: (data: Partial<Section>) => void;
   onOpenCopilotWithBullet?: (bulletText: string, context: { sectionId: string; index: number }) => void;
+}
+// ─── Markdown Shortcut Helper ─────────────────────────────────────────────
+const handleMarkdownShortcut = (
+  e: React.KeyboardEvent<HTMLTextAreaElement>,
+  value: string,
+  onChange: (v: string) => void
+) => {
+  if (!e.ctrlKey && !e.metaKey) return;
+  const key = e.key.toLowerCase();
+  if (!['b', 'i', 'k'].includes(key)) return;
+  
+  e.preventDefault();
+  const target = e.currentTarget;
+  const start = target.selectionStart;
+  const end = target.selectionEnd;
+  
+  let prefix = '';
+  let suffix = '';
+  if (key === 'b') { prefix = '**'; suffix = '**'; }
+  else if (key === 'i') { prefix = '*'; suffix = '*'; }
+  else if (key === 'k') { prefix = '['; suffix = '](url)'; }
+
+  const selected = value.substring(start, end);
+  const next = value.substring(0, start) + prefix + selected + suffix + value.substring(end);
+  onChange(next);
+
+  setTimeout(() => {
+    target.focus();
+    if (selected) {
+      if (key === 'k') target.setSelectionRange(start + 1, start + 1 + selected.length);
+      else target.setSelectionRange(start + prefix.length, end + prefix.length);
+    } else {
+      target.setSelectionRange(start + prefix.length, start + prefix.length);
+    }
+  }, 0);
+};
+
+// ─── Markdown Area Component ─────────────────────────────────────────────
+function MarkdownArea({
+  value,
+  onChange,
+  placeholder = '',
+  rows = 1,
+  className = "w-full rounded-xl px-3.5 py-2 text-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500/20 border",
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+  rows?: number;
+  className?: string;
+}) {
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const handleFormat = (type: 'bold' | 'italic' | 'link') => {
+    const target = textareaRef.current;
+    if (!target) return;
+    
+    const start = target.selectionStart;
+    const end = target.selectionEnd;
+    
+    let prefix = '';
+    let suffix = '';
+    if (type === 'bold') { prefix = '**'; suffix = '**'; }
+    else if (type === 'italic') { prefix = '*'; suffix = '*'; }
+    else if (type === 'link') { prefix = '['; suffix = '](url)'; }
+
+    const selected = value.substring(start, end);
+    const next = value.substring(0, start) + prefix + selected + suffix + value.substring(end);
+    onChange(next);
+
+    setTimeout(() => {
+      target.focus();
+      if (selected) {
+        if (type === 'link') target.setSelectionRange(start + 1, start + 1 + selected.length);
+        else target.setSelectionRange(start + prefix.length, end + prefix.length);
+      } else {
+        target.setSelectionRange(start + prefix.length, start + prefix.length);
+      }
+    }, 0);
+  };
+
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.height = textareaRef.current.scrollHeight + 'px';
+    }
+  }, [value]);
+
+  return (
+    <div className="relative group flex-1">
+      <textarea
+        ref={textareaRef}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        onKeyDown={(e) => handleMarkdownShortcut(e, value, onChange)}
+        placeholder={placeholder}
+        rows={rows}
+        className={`${className} overflow-hidden resize-none pr-24`}
+        style={{
+          backgroundColor: 'var(--bg-surface-elevated)',
+          borderColor: 'var(--border-default)',
+          color: 'var(--text-primary)',
+        }}
+      />
+      <div 
+        className="absolute right-2 top-1.5 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 rounded-md shadow-sm border p-0.5"
+        style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-subtle)' }}
+      >
+        <button type="button" onClick={() => handleFormat('bold')} className="p-1 hover:bg-slate-500/10 rounded text-slate-500 transition-colors" title="Bold (Ctrl+B)"><Bold className="w-3.5 h-3.5" /></button>
+        <button type="button" onClick={() => handleFormat('italic')} className="p-1 hover:bg-slate-500/10 rounded text-slate-500 transition-colors" title="Italic (Ctrl+I)"><Italic className="w-3.5 h-3.5" /></button>
+        <button type="button" onClick={() => handleFormat('link')} className="p-1 hover:bg-slate-500/10 rounded text-slate-500 transition-colors" title="Link (Ctrl+K)"><LinkIcon className="w-3.5 h-3.5" /></button>
+      </div>
+    </div>
+  );
+}
+
+function SortableBullet({ id, bullet, bIdx, idx, rewriting, onOpenCopilotWithBullet, rewriteBullet, updateEntry, bullets, sectionId }: any) {
+  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id });
+  const style = { transform: CSS.Transform.toString(transform), transition };
+  const isRewriting = rewriting === idx * 1000 + bIdx;
+
+  return (
+    <div ref={setNodeRef} style={style} className="flex items-start gap-2 bg-transparent relative z-10">
+      <div {...attributes} {...listeners} className="mt-2.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 cursor-grab active:cursor-grabbing shrink-0 outline-none">
+        <GripVertical className="w-4 h-4" />
+      </div>
+      <div className="flex-1">
+        <MarkdownArea
+          value={bullet}
+          onChange={v => {
+            const next = [...bullets];
+            next[bIdx] = v;
+            updateEntry(idx, { bullets: next });
+          }}
+          placeholder="Led migration of core payments service, reducing latency by 35%…"
+          className="w-full rounded-xl px-3.5 py-2 text-xs transition-all border focus:outline-none focus:ring-2 focus:ring-blue-500/20 resize-none overflow-hidden"
+        />
+      </div>
+      <div className="flex flex-col gap-1">
+        <button
+          type="button"
+          onClick={() => {
+            if (onOpenCopilotWithBullet && bullet.trim()) {
+              onOpenCopilotWithBullet(bullet, { sectionId, index: bIdx });
+            } else {
+              rewriteBullet(idx, bIdx, bullet);
+            }
+          }}
+          disabled={isRewriting || !bullet.trim()}
+          className="p-2 rounded-xl border transition-all text-slate-400 hover:text-blue-600 hover:bg-blue-500/10 disabled:opacity-40 cursor-pointer"
+          style={{ borderColor: 'var(--border-subtle)' }}
+          title="Polish bullet in Copilot"
+        >
+          {isRewriting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <SlidersHorizontal className="w-3.5 h-3.5" />}
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            const next = bullets.filter((_: string, i: number) => i !== bIdx);
+            updateEntry(idx, { bullets: next });
+          }}
+          className="p-2 rounded-xl text-slate-400 hover:text-rose-500 hover:bg-rose-500/10 transition-all cursor-pointer"
+          title="Remove bullet"
+        >
+          <Trash2 className="w-3.5 h-3.5" />
+        </button>
+      </div>
+    </div>
+  );
 }
 
 // ─── Universal Field Component ─────────────────────────────────────────────
@@ -30,34 +212,7 @@ function Field({
         {label}
       </label>
       {multiline ? (
-        <div className="space-y-1.5">
-          <textarea
-            value={value ?? ''}
-            onChange={e => onChange(e.target.value)}
-            onInput={e => {
-              const target = e.currentTarget;
-              target.style.height = 'auto';
-              target.style.height = `${target.scrollHeight}px`;
-            }}
-            ref={el => {
-              if (el) {
-                el.style.height = 'auto';
-                el.style.height = `${el.scrollHeight}px`;
-              }
-            }}
-            placeholder={placeholder}
-            rows={2}
-            className="w-full rounded-xl px-3.5 py-2.5 text-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500/20 border resize-none overflow-hidden"
-            style={{
-              backgroundColor: 'var(--bg-surface-elevated)',
-              borderColor: 'var(--border-default)',
-              color: 'var(--text-primary)',
-            }}
-          />
-          <div className="text-[10px] opacity-60 italic" style={{ color: 'var(--text-muted)' }}>
-            Markdown supported: **bold**, *italic*, [link](url)
-          </div>
-        </div>
+        <MarkdownArea value={value ?? ''} onChange={onChange} placeholder={placeholder} />
       ) : (
         <input
           type="text"
@@ -79,14 +234,32 @@ function Field({
 export default function SectionEditor({ section, resumeId, onUpdate, onOpenCopilotWithBullet }: Props) {
   const [localContent, setLocalContent] = useState<Record<string, unknown>[]>((section.content || []) as Record<string, unknown>[]);
   const [rewriting, setRewriting] = useState<number | null>(null);
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const updateTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isTyping = useRef(false);
 
+  const toggleExpanded = (idx: number, type: string) => {
+    const key = `${type}-${idx}`;
+    setExpanded(prev => ({ ...prev, [key]: !(prev[key] ?? true) }));
+  };
+  const isExpanded = (idx: number, type: string) => expanded[`${type}-${idx}`] ?? true;
+
   useEffect(() => {
     if (!isTyping.current) {
-      setLocalContent((section.content || []) as Record<string, unknown>[]);
+      let incoming = [...(section.content || [])] as Record<string, unknown>[];
+      if (section.section_type === 'experience' || section.section_type === 'education') {
+        incoming.sort((a, b) => {
+          const aEnd = parseDate(a.end_date as string);
+          const bEnd = parseDate(b.end_date as string);
+          if (aEnd !== bEnd) return bEnd - aEnd;
+          const aStart = parseDate(a.start_date as string);
+          const bStart = parseDate(b.start_date as string);
+          return bStart - aStart;
+        });
+      }
+      setLocalContent(incoming);
     }
-  }, [section.content]);
+  }, [section.content, section.section_type]);
 
   const updateContent = (newContent: unknown[]) => {
     setLocalContent(newContent as Record<string, unknown>[]);
@@ -177,56 +350,71 @@ export default function SectionEditor({ section, resumeId, onUpdate, onOpenCopil
             </button>
           )}
         </div>
-        <div className="space-y-1.5">
-          <textarea
-            value={text}
-            onChange={e => updateEntry(idx, { text: e.target.value })}
-            onInput={e => {
-              const target = e.currentTarget;
-              target.style.height = 'auto';
-              target.style.height = `${target.scrollHeight}px`;
-            }}
-            ref={el => {
-              if (el) {
-                el.style.height = 'auto';
-                el.style.height = `${el.scrollHeight}px`;
-              }
-            }}
-            placeholder="High-impact engineering leader with 8+ years building distributed cloud platforms…"
-            rows={3}
-            className="w-full rounded-xl px-3.5 py-2.5 text-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500/20 border resize-none overflow-hidden"
-            style={{
-              backgroundColor: 'var(--bg-surface-elevated)',
-              borderColor: 'var(--border-default)',
-              color: 'var(--text-primary)',
-            }}
-          />
-          <div className="text-[10px] opacity-60 italic" style={{ color: 'var(--text-muted)' }}>
-            Markdown supported: **bold**, *italic*, [link](url)
-          </div>
-        </div>
+        <MarkdownArea
+          value={text}
+          onChange={v => updateEntry(idx, { text: v })}
+          placeholder="High-impact engineering leader with 8+ years building distributed cloud platforms…"
+          rows={3}
+        />
       </div>
     );
   };
 
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+
+  const getBulletId = (bullet: string, bIdx: number, arr: string[]) => {
+    const occurence = arr.slice(0, bIdx).filter(b => b === bullet).length;
+    return `${bullet}_${occurence}`;
+  };
+
   const renderExperience = (entry: Record<string, unknown>, idx: number) => {
     const bullets = (entry.bullets as string[]) ?? [];
+    const expanded = isExpanded(idx, 'experience');
+    
+    const handleDragEnd = (event: DragEndEvent) => {
+      const { active, over } = event;
+      if (over && active.id !== over.id) {
+        const oldIndex = bullets.findIndex((b, i) => getBulletId(b, i, bullets) === active.id);
+        const newIndex = bullets.findIndex((b, i) => getBulletId(b, i, bullets) === over.id);
+        if (oldIndex !== -1 && newIndex !== -1) {
+          const newBullets = [...bullets];
+          const [moved] = newBullets.splice(oldIndex, 1);
+          newBullets.splice(newIndex, 0, moved);
+          updateEntry(idx, { bullets: newBullets });
+        }
+      }
+    };
+
     return (
       <div
         key={idx}
-        className="p-4 rounded-2xl border space-y-3.5 mb-3 transition-all"
+        className="p-4 rounded-2xl border mb-3 transition-all"
         style={{
           backgroundColor: 'var(--bg-surface)',
           borderColor: 'var(--border-subtle)',
         }}
       >
-        <div className="flex items-center justify-between">
-          <span className="text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">
-            Position #{idx + 1}
-          </span>
+        <div 
+          className="flex items-center justify-between cursor-pointer group"
+          onClick={() => toggleExpanded(idx, 'experience')}
+        >
+          <div className="flex items-center gap-3">
+            <span className="text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400 flex items-center gap-1.5">
+              {expanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+              Position #{idx + 1}
+            </span>
+            {!expanded && Boolean(entry.role || entry.company) && (
+              <span className="text-sm text-slate-500 dark:text-slate-400 truncate max-w-[200px] sm:max-w-[300px]">
+                {String(entry.role || '')} {entry.role && entry.company ? 'at' : ''} {String(entry.company || '')}
+              </span>
+            )}
+          </div>
           <button
             type="button"
-            onClick={() => removeEntry(idx)}
+            onClick={(e) => { e.stopPropagation(); removeEntry(idx); }}
             className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-500/10 transition-colors"
             title="Remove entry"
           >
@@ -234,7 +422,9 @@ export default function SectionEditor({ section, resumeId, onUpdate, onOpenCopil
           </button>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {expanded && (
+          <div className="space-y-3.5 mt-3.5 pt-3.5 border-t" style={{ borderColor: 'var(--border-subtle)' }}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <Field label="Job Title" value={(entry.role as string) ?? ''} onChange={v => updateEntry(idx, { role: v })} placeholder="Senior Software Engineer" />
           <Field label="Company" value={(entry.company as string) ?? ''} onChange={v => updateEntry(idx, { company: v })} placeholder="Stripe" />
           <Field label="Start Date" value={(entry.start_date as string) ?? ''} onChange={v => updateEntry(idx, { start_date: v })} placeholder="Jan 2022" />
@@ -249,75 +439,25 @@ export default function SectionEditor({ section, resumeId, onUpdate, onOpenCopil
           <label className="text-[11px] font-semibold uppercase tracking-wider block" style={{ color: 'var(--text-muted)' }}>
             Accomplishments and Bullets
           </label>
-          {bullets.map((bullet, bIdx) => {
-            const isRewriting = rewriting === idx * 1000 + bIdx;
-            return (
-              <div key={bIdx} className="flex items-start gap-2">
-                <GripVertical className="w-4 h-4 mt-2.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 cursor-grab active:cursor-grabbing shrink-0" />
-                <div className="flex-1 space-y-1">
-                  <textarea
-                    value={bullet}
-                    onChange={e => {
-                      const next = [...bullets];
-                      next[bIdx] = e.target.value;
-                      updateEntry(idx, { bullets: next });
-                    }}
-                    onInput={e => {
-                      const target = e.currentTarget;
-                      target.style.height = 'auto';
-                      target.style.height = `${target.scrollHeight}px`;
-                    }}
-                    ref={el => {
-                      if (el) {
-                        el.style.height = 'auto';
-                        el.style.height = `${el.scrollHeight}px`;
-                      }
-                    }}
-                    rows={2}
-                    className="w-full rounded-xl px-3.5 py-2 text-xs transition-all border focus:outline-none focus:ring-2 focus:ring-blue-500/20 resize-none overflow-hidden"
-                    style={{
-                      backgroundColor: 'var(--bg-surface-elevated)',
-                      borderColor: 'var(--border-default)',
-                      color: 'var(--text-primary)',
-                    }}
-                    placeholder="Led migration of core payments service, reducing latency by 35%…"
-                  />
-                  <div className="text-[10px] opacity-60 italic" style={{ color: 'var(--text-muted)' }}>
-                    Markdown supported: **bold**, *italic*, [link](url)
-                  </div>
-                </div>
-                <div className="flex flex-col gap-1">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (onOpenCopilotWithBullet && bullet.trim()) {
-                        onOpenCopilotWithBullet(bullet, { sectionId: section.id, index: bIdx });
-                      } else {
-                        rewriteBullet(idx, bIdx, bullet);
-                      }
-                    }}
-                    disabled={isRewriting || !bullet.trim()}
-                    className="p-2 rounded-xl border transition-all text-slate-400 hover:text-blue-600 hover:bg-blue-500/10 disabled:opacity-40 cursor-pointer"
-                    style={{ borderColor: 'var(--border-subtle)' }}
-                    title="Polish bullet in Copilot"
-                  >
-                    {isRewriting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <SlidersHorizontal className="w-3.5 h-3.5" />}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const next = bullets.filter((_, i) => i !== bIdx);
-                      updateEntry(idx, { bullets: next });
-                    }}
-                    className="p-2 rounded-xl text-slate-400 hover:text-rose-500 hover:bg-rose-500/10 transition-all cursor-pointer"
-                    title="Remove bullet"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              </div>
-            );
-          })}
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+            <SortableContext items={bullets.map((b, i) => getBulletId(b, i, bullets))} strategy={verticalListSortingStrategy}>
+              {bullets.map((bullet, bIdx) => (
+                <SortableBullet
+                  key={getBulletId(bullet, bIdx, bullets)}
+                  id={getBulletId(bullet, bIdx, bullets)}
+                  bullet={bullet}
+                  bIdx={bIdx}
+                  idx={idx}
+                  rewriting={rewriting}
+                  onOpenCopilotWithBullet={onOpenCopilotWithBullet}
+                  rewriteBullet={rewriteBullet}
+                  updateEntry={updateEntry}
+                  bullets={bullets}
+                  sectionId={section.id}
+                />
+              ))}
+            </SortableContext>
+          </DndContext>
           <button
             type="button"
             onClick={() => updateEntry(idx, { bullets: [...bullets, ''] })}
@@ -326,6 +466,8 @@ export default function SectionEditor({ section, resumeId, onUpdate, onOpenCopil
             <Plus className="w-3.5 h-3.5" /> Add bullet point
           </button>
         </div>
+          </div>
+        )}
       </div>
     );
   };

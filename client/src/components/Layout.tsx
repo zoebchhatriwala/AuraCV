@@ -21,6 +21,7 @@ export default function Layout() {
 
   // Close mobile drawer when route changes
   useEffect(() => {
+    // eslint-disable-next-line react/set-state-in-effect
     setMobileMenuOpen(false);
   }, [location.pathname]);
 

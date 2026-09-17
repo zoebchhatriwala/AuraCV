@@ -4,7 +4,7 @@ import { useAppStore } from '../store';
 import { resumeApi, exportApi, type Section } from '../api';
 import {
   Download, Eye, EyeOff, ChevronDown, ChevronUp, Plus, Trash2,
-  GripVertical, RefreshCw, ZoomIn, ZoomOut, Check, SlidersHorizontal,
+  RefreshCw, ZoomIn, ZoomOut, Check, SlidersHorizontal,
 } from 'lucide-react';
 import ExportModal from '../components/ExportModal';
 import SectionEditor from '../components/SectionEditor';
@@ -28,8 +28,6 @@ export default function Editor() {
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [titleValue, setTitleValue] = useState('');
   const previewRef = useRef<HTMLIFrameElement>(null);
-  const [draggedSectionId, setDraggedSectionId] = useState<string | null>(null);
-  const [dragOverSectionId, setDragOverSectionId] = useState<string | null>(null);
   const [sectionToDelete, setSectionToDelete] = useState<{ id: string; title: string } | null>(null);
 
   useEffect(() => {
@@ -51,15 +49,19 @@ export default function Editor() {
     if (id) {
       fetchResume(id);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   useEffect(() => {
     if (currentResume) {
+      // eslint-disable-next-line react/set-state-in-effect
       setTitleValue(currentResume.name);
       if (!activeSection && currentResume.sections.length > 0) {
+        // eslint-disable-next-line react/set-state-in-effect
         setActiveSection(currentResume.sections[0]?.id ?? null);
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentResume?.id]);
 
   const refreshPreview = (overrideTemplateId?: string) => {
@@ -67,6 +69,7 @@ export default function Editor() {
       const templateId = overrideTemplateId || currentResume.template_id;
       const base = exportApi.preview(id, templateId);
       const sep = base.includes('?') ? '&' : '?';
+      // eslint-disable-next-line react/purity
       previewRef.current.src = `${base}${sep}_t=${Date.now()}`;
     }
   };
@@ -126,59 +129,6 @@ export default function Editor() {
     await resumeApi.reorderSections(id, orderedIds);
     await fetchResume(id);
     refreshPreview();
-  };
-
-  const handleDragStart = (e: React.DragEvent, sectionId: string) => {
-    setDraggedSectionId(sectionId);
-    e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('text/plain', sectionId);
-  };
-
-  const handleDragOver = (e: React.DragEvent, targetSectionId: string) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-    if (dragOverSectionId !== targetSectionId) {
-      setDragOverSectionId(targetSectionId);
-    }
-  };
-
-  const handleDragLeave = (_e: React.DragEvent, targetSectionId: string) => {
-    if (dragOverSectionId === targetSectionId) {
-      setDragOverSectionId(null);
-    }
-  };
-
-  const handleDrop = async (e: React.DragEvent, targetSectionId: string) => {
-    e.preventDefault();
-    setDragOverSectionId(null);
-    if (!draggedSectionId || draggedSectionId === targetSectionId || !currentResume || !id) {
-      setDraggedSectionId(null);
-      return;
-    }
-
-    const sorted = currentResume.sections.slice().sort((a, b) => a.position - b.position);
-    const sourceIdx = sorted.findIndex(s => s.id === draggedSectionId);
-    const targetIdx = sorted.findIndex(s => s.id === targetSectionId);
-
-    if (sourceIdx === -1 || targetIdx === -1) {
-      setDraggedSectionId(null);
-      return;
-    }
-
-    const reordered = [...sorted];
-    const [moved] = reordered.splice(sourceIdx, 1);
-    reordered.splice(targetIdx, 0, moved);
-
-    setDraggedSectionId(null);
-    const orderedIds = reordered.map(s => s.id);
-    await resumeApi.reorderSections(id, orderedIds);
-    await fetchResume(id);
-    refreshPreview();
-  };
-
-  const handleDragEnd = () => {
-    setDraggedSectionId(null);
-    setDragOverSectionId(null);
   };
 
   const handleTemplateChange = async (templateId: string) => {
@@ -469,19 +419,12 @@ export default function Editor() {
                   isActive={activeSection === section.id}
                   isFirst={idx === 0}
                   isLast={idx === arr.length - 1}
-                  isDragging={draggedSectionId === section.id}
-                  isDragOver={dragOverSectionId === section.id}
                   onToggle={() => setActiveSection(activeSection === section.id ? null : section.id)}
                   onUpdate={data => handleSectionUpdate(section.id, data)}
                   onDelete={() => handleDeleteSection(section.id)}
                   onToggleVisibility={() => handleToggleVisibility(section)}
                   onMoveUp={() => handleMoveSection(section.id, 'up')}
                   onMoveDown={() => handleMoveSection(section.id, 'down')}
-                  onDragStart={e => handleDragStart(e, section.id)}
-                  onDragOver={e => handleDragOver(e, section.id)}
-                  onDragLeave={e => handleDragLeave(e, section.id)}
-                  onDrop={e => handleDrop(e, section.id)}
-                  onDragEnd={handleDragEnd}
                   onOpenCopilotWithBullet={handleOpenCopilotWithBullet}
                   resumeId={id!}
                 />
@@ -544,7 +487,7 @@ export default function Editor() {
               </div>
 
               <button
-                onClick={refreshPreview}
+                onClick={() => refreshPreview()}
                 className="p-1.5 rounded-lg border transition-all hover:bg-slate-200/80 dark:hover:bg-neutral-800 cursor-pointer"
                 style={{
                   backgroundColor: 'var(--bg-surface-elevated)',
@@ -643,19 +586,12 @@ interface SectionCardProps {
   resumeId: string;
   isFirst: boolean;
   isLast: boolean;
-  isDragging: boolean;
-  isDragOver: boolean;
   onToggle: () => void;
   onUpdate: (data: Partial<Section>) => void;
   onDelete: () => void;
   onToggleVisibility: () => void;
   onMoveUp: () => void;
   onMoveDown: () => void;
-  onDragStart: (e: React.DragEvent) => void;
-  onDragOver: (e: React.DragEvent) => void;
-  onDragLeave: (e: React.DragEvent) => void;
-  onDrop: (e: React.DragEvent) => void;
-  onDragEnd: () => void;
   onOpenCopilotWithBullet?: (bullet: string, context: { sectionId: string; index: number }) => void;
 }
 
@@ -665,25 +601,19 @@ function SectionCard({
   resumeId,
   isFirst,
   isLast,
-  isDragging,
-  isDragOver,
   onToggle,
   onUpdate,
   onDelete,
   onToggleVisibility,
   onMoveUp,
   onMoveDown,
-  onDragStart,
-  onDragOver,
-  onDragLeave,
-  onDrop,
-  onDragEnd,
   onOpenCopilotWithBullet,
 }: SectionCardProps) {
   const isVisible = Boolean(section.is_visible);
   const [titleValue, setTitleValue] = useState(section.title);
 
   useEffect(() => {
+    // eslint-disable-next-line react/set-state-in-effect
     setTitleValue(section.title);
   }, [section.title]);
 
@@ -697,22 +627,12 @@ function SectionCard({
 
   return (
     <div
-      draggable
-      onDragStart={onDragStart}
-      onDragOver={onDragOver}
-      onDragLeave={onDragLeave}
-      onDrop={onDrop}
-      onDragEnd={onDragEnd}
       className={`rounded-2xl border transition-all overflow-hidden ${
         !isVisible ? 'opacity-75' : ''
-      } ${
-        isDragging ? 'opacity-40 border-dashed border-blue-500 scale-[0.99]' : ''
-      } ${
-        isDragOver ? 'ring-2 ring-blue-500 border-blue-500 bg-blue-50/40 dark:bg-blue-950/30' : ''
       }`}
       style={{
         backgroundColor: isActive ? 'var(--bg-surface)' : 'var(--bg-surface-elevated)',
-        borderColor: isActive ? 'var(--color-brand-500)' : isDragOver ? undefined : 'var(--border-subtle)',
+        borderColor: isActive ? 'var(--color-brand-500)' : 'var(--border-subtle)',
         boxShadow: isActive ? 'var(--shadow-card)' : undefined,
       }}
     >
@@ -721,14 +641,6 @@ function SectionCard({
         className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-3 cursor-pointer select-none"
         onClick={onToggle}
       >
-        <div
-          className="p-1 -ml-1 text-slate-400 hover:text-blue-600 transition-colors cursor-grab active:cursor-grabbing shrink-0"
-          title="Drag to reorder section"
-          onClick={e => e.stopPropagation()}
-        >
-          <GripVertical className="w-4 h-4" />
-        </div>
-
         {/* 1-Click Move Up / Down Buttons */}
         <div className="flex items-center gap-0.5 shrink-0" onClick={e => e.stopPropagation()}>
           <button
