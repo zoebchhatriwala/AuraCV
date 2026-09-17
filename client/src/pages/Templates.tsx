@@ -1,7 +1,25 @@
 import { useState, useEffect } from 'react';
 import { templatesApi, type Template } from '../api';
 import { useAppStore } from '../store';
-import { CheckCircle2, Zap, FileText, Type, AlignLeft, ShieldCheck, Layers, Eye, Check, Briefcase, Code, Terminal, Sparkles } from 'lucide-react';
+import {
+  CheckCircle2,
+  Zap,
+  FileText,
+  Type,
+  AlignLeft,
+  ShieldCheck,
+  Layers,
+  Eye,
+  Check,
+  Briefcase,
+  Code,
+  Terminal,
+  Sparkles,
+  GraduationCap,
+  Compass,
+  TrendingUp,
+  LayoutGrid,
+} from 'lucide-react';
 import TemplatePreviewModal from '../components/TemplatePreviewModal';
 
 const TEMPLATE_META: Record<string, { icon: typeof FileText; accent: string; preview: string; tag: string }> = {
@@ -47,6 +65,30 @@ const TEMPLATE_META: Record<string, { icon: typeof FileText; accent: string; pre
     tag: 'Clean',
     preview: 'Clean spacing and clear headings that put the focus directly on your achievements.',
   },
+  ivy: {
+    icon: GraduationCap,
+    accent: '#1e3a8a',
+    tag: 'Academic',
+    preview: 'Prestigious academic serif standard with diamond small-caps headings, classical double rules, and formal elegance.',
+  },
+  nordic: {
+    icon: Compass,
+    accent: '#0d9488',
+    tag: 'Scandinavian',
+    preview: 'Serene Scandinavian minimalism with soft teal pill badges, generous whitespace, and a refined timeline.',
+  },
+  elevate: {
+    icon: TrendingUp,
+    accent: '#6366f1',
+    tag: 'Product Lead',
+    preview: 'High-impact product and engineering leadership layout with vibrant gradient header and skills matrix.',
+  },
+  swiss: {
+    icon: LayoutGrid,
+    accent: '#e11d48',
+    tag: 'Swiss Grid',
+    preview: 'Iconic International Typographic Style with bold asymmetric grid, heavy grotesque headings, and crimson accents.',
+  },
   ats: {
     icon: AlignLeft,
     accent: '#10b981',
@@ -59,7 +101,7 @@ export default function Templates() {
   const { settings, updateSettings } = useAppStore();
   const [templates, setTemplates] = useState<Template[]>([]);
   const [selected, setSelected] = useState(settings.default_template ?? 'modern');
-  const [activeFilter, setActiveFilter] = useState<'all' | 'ats' | 'modern' | 'executive' | 'tech' | 'creative' | 'compact' | 'classic' | 'minimal'>('all');
+  const [activeFilter, setActiveFilter] = useState<'all' | 'ats' | 'modern' | 'executive' | 'tech' | 'creative' | 'compact' | 'classic' | 'minimal' | 'ivy' | 'nordic' | 'elevate' | 'swiss'>('all');
   const [previewTemplateId, setPreviewTemplateId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -79,6 +121,10 @@ export default function Templates() {
     { id: 'compact',   name: 'Compact',   description: 'High-density tech layout', category: 'compact',   is_ats_safe: false },
     { id: 'classic',   name: 'Classic',   description: 'Traditional professional', category: 'classic',   is_ats_safe: false },
     { id: 'minimal',   name: 'Minimal',   description: 'Ultra-minimal layout',     category: 'minimal',   is_ats_safe: false },
+    { id: 'ivy',       name: 'Ivy League', description: 'Distinguished academic standard', category: 'classic', is_ats_safe: false },
+    { id: 'nordic',    name: 'Nordic',    description: 'Scandinavian warm minimalism', category: 'modern', is_ats_safe: false },
+    { id: 'elevate',   name: 'Elevate',   description: 'High-impact product layout', category: 'executive', is_ats_safe: false },
+    { id: 'swiss',     name: 'Swiss Grid', description: 'International Typographic Style', category: 'creative', is_ats_safe: false },
     { id: 'ats',       name: 'ATS Pure',  description: 'Guaranteed ATS-safe',      category: 'ats',       is_ats_safe: true  },
   ];
 
@@ -112,7 +158,7 @@ export default function Templates() {
             borderColor: 'var(--border-default)',
           }}
         >
-          {(['all', 'modern', 'executive', 'compact', 'classic', 'minimal', 'ats'] as const).map(f => (
+          {(['all', 'modern', 'executive', 'tech', 'creative', 'compact', 'classic', 'minimal', 'ivy', 'nordic', 'elevate', 'swiss', 'ats'] as const).map(f => (
             <button
               key={f}
               onClick={() => setActiveFilter(f)}

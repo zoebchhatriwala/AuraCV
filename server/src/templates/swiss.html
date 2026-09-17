@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>{{resume.name}} - Resume</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Archivo:ital,wght@0,400;0,600;0,700;0,800;0,900;1,400&family=Inter:wght@400;500;600;700&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  
+  html, body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 8.75pt;
+    line-height: 1.5;
+    color: #171717;
+    background: #ffffff;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  ::-webkit-scrollbar { display: none; }
+
+  .page {
+    box-sizing: border-box;
+    width: 794px;
+    min-height: 1123px;
+    margin: 0 auto;
+    padding: 44px 50px;
+    background: #ffffff;
+  }
+
+  /* ─── Header ──────────────────────────────────────────────────────────── */
+  .header {
+    border-bottom: 4px solid #0a0a0a;
+    padding-bottom: 20px;
+    margin-bottom: 24px;
+  }
+  .header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 20px;
+  }
+  .header-name {
+    font-family: 'Archivo', sans-serif;
+    font-size: 32pt;
+    font-weight: 900;
+    letter-spacing: -1.5px;
+    line-height: 0.95;
+    text-transform: uppercase;
+    color: #0a0a0a;
+  }
+  .header-role {
+    font-family: 'Archivo', sans-serif;
+    font-size: 11pt;
+    font-weight: 700;
+    color: #e11d48;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 6px;
+  }
+  .header-contacts {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 3px;
+    font-size: 8pt;
+    font-weight: 600;
+    color: #525252;
+    shrink: 0;
+  }
+  .header-contacts a {
+    color: #0a0a0a;
+    text-decoration: none;
+    border-bottom: 1px solid #e11d48;
+  }
+
+  /* ─── Asymmetric Grid Section ─────────────────────────────────────────── */
+  .section-row {
+    display: grid;
+    grid-template-columns: 180px 1fr;
+    gap: 24px;
+    margin-bottom: 22px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid #e5e5e5;
+  }
+  .section-row:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+  }
+  .section-label {
+    font-family: 'Archivo', sans-serif;
+    font-size: 10.5pt;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: -0.25px;
+    color: #0a0a0a;
+    line-height: 1.2;
+  }
+  .section-label .accent {
+    color: #e11d48;
+  }
+  .section-content {
+    min-width: 0;
+  }
+
+  /* ─── Summary ─────────────────────────────────────────────────────────── */
+  .summary-text {
+    font-size: 9.25pt;
+    line-height: 1.6;
+    color: #262626;
+  }
+
+  /* ─── Experience ──────────────────────────────────────────────────────── */
+  .exp-block {
+    margin-bottom: 16px;
+  }
+  .exp-block:last-child {
+    margin-bottom: 0;
+  }
+  .exp-headline {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 2px;
+  }
+  .exp-role {
+    font-family: 'Archivo', sans-serif;
+    font-weight: 800;
+    font-size: 10.5pt;
+    color: #0a0a0a;
+    letter-spacing: -0.2px;
+  }
+  .exp-period {
+    font-size: 8pt;
+    font-weight: 700;
+    color: #737373;
+    letter-spacing: 0.25px;
+  }
+  .exp-org {
+    font-size: 9pt;
+    font-weight: 600;
+    color: #e11d48;
+    margin-bottom: 5px;
+  }
+  .exp-org .loc {
+    color: #737373;
+    font-weight: 500;
+  }
+  .exp-list {
+    list-style: none;
+    padding: 0;
+    margin: 4px 0 0 0;
+  }
+  .exp-list li {
+    position: relative;
+    padding-left: 14px;
+    font-size: 8.75pt;
+    color: #262626;
+    margin-bottom: 3px;
+    line-height: 1.5;
+  }
+  .exp-list li::before {
+    content: '—';
+    position: absolute;
+    left: 0;
+    color: #0a0a0a;
+    font-weight: 700;
+  }
+
+  /* ─── Education ───────────────────────────────────────────────────────── */
+  .edu-block {
+    margin-bottom: 10px;
+  }
+  .edu-block:last-child {
+    margin-bottom: 0;
+  }
+  .edu-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+  .edu-degree {
+    font-family: 'Archivo', sans-serif;
+    font-weight: 800;
+    font-size: 9.75pt;
+    color: #0a0a0a;
+  }
+  .edu-date {
+    font-size: 8pt;
+    font-weight: 700;
+    color: #737373;
+  }
+  .edu-inst {
+    font-size: 8.75pt;
+    color: #525252;
+    margin-top: 1px;
+  }
+
+  /* ─── Skills ──────────────────────────────────────────────────────────── */
+  .skills-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .skill-line {
+    font-size: 8.75pt;
+    line-height: 1.45;
+  }
+  .skill-group-name {
+    font-weight: 800;
+    color: #0a0a0a;
+    text-transform: uppercase;
+    font-size: 8pt;
+    letter-spacing: 0.5px;
+  }
+  .skill-group-vals {
+    color: #404040;
+  }
+
+  /* ─── Projects ────────────────────────────────────────────────────────── */
+  .proj-block {
+    margin-bottom: 12px;
+  }
+  .proj-block:last-child {
+    margin-bottom: 0;
+  }
+  .proj-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+  .proj-name {
+    font-family: 'Archivo', sans-serif;
+    font-weight: 800;
+    font-size: 10pt;
+    color: #0a0a0a;
+  }
+  .proj-link {
+    font-size: 8pt;
+    font-weight: 700;
+    color: #e11d48;
+    text-decoration: none;
+  }
+  .proj-tech {
+    font-size: 8pt;
+    font-weight: 700;
+    color: #525252;
+    text-transform: uppercase;
+    letter-spacing: 0.25px;
+    margin-top: 1px;
+  }
+  .proj-body {
+    font-size: 8.75pt;
+    color: #262626;
+    margin-top: 3px;
+    line-height: 1.45;
+  }
+
+  /* ─── Certifications ──────────────────────────────────────────────────── */
+  .cert-line {
+    display: flex;
+    justify-content: space-between;
+    font-size: 8.75pt;
+    margin-bottom: 4px;
+  }
+  .cert-name {
+    font-weight: 700;
+    color: #0a0a0a;
+  }
+  .cert-date {
+    font-size: 8pt;
+    font-weight: 700;
+    color: #737373;
+  }
+
+  @media print {
+    body { background: white; }
+    .page { width: 100%; min-height: auto; padding: 36px 42px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <!-- Header -->
+  {{#with header}}
+  <header class="header">
+    <div class="header-top">
+      <div>
+        <h1 class="header-name">{{name}}</h1>
+        {{#if role}}<div class="header-role">{{role}}</div>{{/if}}
+      </div>
+      <div class="header-contacts">
+        {{#if email}}<span><a href="mailto:{{email}}">{{email}}</a></span>{{/if}}
+        {{#if phone}}<span>{{phone}}</span>{{/if}}
+        {{#if location}}<span>{{location}}</span>{{/if}}
+        {{#if linkedin}}<span><a href="{{linkedin}}" target="_blank">LinkedIn</a></span>{{/if}}
+        {{#if github}}<span><a href="{{github}}" target="_blank">GitHub</a></span>{{/if}}
+        {{#if website}}<span><a href="{{website}}" target="_blank">Portfolio</a></span>{{/if}}
+      </div>
+    </div>
+  </header>
+  {{/with}}
+
+  <!-- Body Sections with Swiss 2-Column Asymmetric Grid -->
+  {{#each bodySections}}
+    {{#if isSummary}}
+      {{#if summaryText}}
+      <div class="section-row">
+        <div class="section-label"><span class="accent">// </span>{{title}}</div>
+        <div class="section-content">
+          <div class="summary-text">{{{markdown summaryText}}}</div>
+        </div>
+      </div>
+      {{/if}}
+    {{/if}}
+
+    {{#if isExperience}}
+      {{#if content.length}}
+      <div class="section-row">
+        <div class="section-label"><span class="accent">// </span>{{title}}</div>
+        <div class="section-content">
+          {{#each content}}
+          <div class="exp-block">
+            <div class="exp-headline">
+              <span class="exp-role">{{role}}</span>
+              <span class="exp-period">{{start_date}}{{#if end_date}} – {{end_date}}{{/if}}</span>
+            </div>
+            <div class="exp-org">
+              {{company}}{{#if location}} <span class="loc">/ {{location}}</span>{{/if}}
+            </div>
+            {{#if bullets.length}}
+            <ul class="exp-list">
+              {{#each bullets}}<li>{{{markdown this}}}</li>{{/each}}
+            </ul>
+            {{/if}}
+          </div>
+          {{/each}}
+        </div>
+      </div>
+      {{/if}}
+    {{/if}}
+
+    {{#if isEducation}}
+      {{#if content.length}}
+      <div class="section-row">
+        <div class="section-label"><span class="accent">// </span>{{title}}</div>
+        <div class="section-content">
+          {{#each content}}
+          <div class="edu-block">
+            <div class="edu-top">
+              <span class="edu-degree">{{degree}}{{#if field}} in {{field}}{{/if}}</span>
+              <span class="edu-date">{{start_date}}{{#if end_date}} – {{end_date}}{{/if}}</span>
+            </div>
+            <div class="edu-inst">
+              <strong>{{institution}}</strong>{{#if location}} · {{location}}{{/if}}{{#if gpa}} · GPA: {{gpa}}{{/if}}
+            </div>
+          </div>
+          {{/each}}
+        </div>
+      </div>
+      {{/if}}
+    {{/if}}
+
+    {{#if isSkills}}
+      {{#if content.length}}
+      <div class="section-row">
+        <div class="section-label"><span class="accent">// </span>{{title}}</div>
+        <div class="section-content">
+          <div class="skills-rows">
+            {{#each content}}
+            <div class="skill-line">
+              <span class="skill-group-name">{{category}}: </span>
+              <span class="skill-group-vals">{{#each items}}{{this}}{{#unless @last}}, {{/unless}}{{/each}}</span>
+            </div>
+            {{/each}}
+          </div>
+        </div>
+      </div>
+      {{/if}}
+    {{/if}}
+
+    {{#if isProjects}}
+      {{#if content.length}}
+      <div class="section-row">
+        <div class="section-label"><span class="accent">// </span>{{title}}</div>
+        <div class="section-content">
+          {{#each content}}
+          <div class="proj-block">
+            <div class="proj-head">
+              <span class="proj-name">{{name}}{{#if role}} — {{role}}{{/if}}</span>
+              {{#if url}}<a href="{{url}}" target="_blank" class="proj-link">{{url}}</a>{{/if}}
+            </div>
+            {{#if technologies}}<div class="proj-tech">{{technologies}}</div>{{/if}}
+            {{#if tech}}<div class="proj-tech">{{#each tech}}{{this}}{{#unless @last}}, {{/unless}}{{/each}}</div>{{/if}}
+            {{#if description}}<div class="proj-body">{{{markdown description}}}</div>{{/if}}
+            {{#if bullets.length}}
+            <ul class="exp-list" style="margin-top: 5px;">
+              {{#each bullets}}<li>{{{markdown this}}}</li>{{/each}}
+            </ul>
+            {{/if}}
+          </div>
+          {{/each}}
+        </div>
+      </div>
+      {{/if}}
+    {{/if}}
+
+    {{#if isCertifications}}
+      {{#if content.length}}
+      <div class="section-row">
+        <div class="section-label"><span class="accent">// </span>{{title}}</div>
+        <div class="section-content">
+          {{#each content}}
+          <div class="cert-line">
+            <span class="cert-name">{{name}}{{#if issuer}} — {{issuer}}{{/if}}</span>
+            {{#if date}}<span class="cert-date">{{date}}</span>{{/if}}
+          </div>
+          {{/each}}
+        </div>
+      </div>
+      {{/if}}
+    {{/if}}
+
+    {{#if isCustom}}
+      {{#if content.length}}
+      <div class="section-row">
+        <div class="section-label"><span class="accent">// </span>{{title}}</div>
+        <div class="section-content">
+          {{#each content}}
+          <div style="margin-bottom: 8px;">
+            {{#if title}}<div style="font-family: 'Archivo', sans-serif; font-weight: 800; color: #0a0a0a;">{{title}}</div>{{/if}}
+            {{#if description}}<div style="color: #262626; font-size: 8.75pt; line-height: 1.5;">{{{markdown description}}}</div>{{/if}}
+          </div>
+          {{/each}}
+        </div>
+      </div>
+      {{/if}}
+    {{/if}}
+  {{/each}}
+</div>
+</body>
+</html>

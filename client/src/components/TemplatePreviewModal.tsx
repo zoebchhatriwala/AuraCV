@@ -17,6 +17,10 @@ import {
   Code,
   Terminal,
   Sparkles,
+  GraduationCap,
+  Compass,
+  TrendingUp,
+  LayoutGrid,
 } from 'lucide-react';
 
 interface TemplatePreviewModalProps {
@@ -90,6 +94,42 @@ const TEMPLATES = [
     isAtsSafe: false,
     icon: Type,
     color: '#0284c7',
+  },
+  {
+    id: 'ivy',
+    name: 'Ivy League',
+    tag: 'Academic',
+    desc: 'Prestigious academic serif standard with diamond small-caps headings, classical double rules, and formal elegance.',
+    isAtsSafe: false,
+    icon: GraduationCap,
+    color: '#1e3a8a',
+  },
+  {
+    id: 'nordic',
+    name: 'Nordic',
+    tag: 'Scandinavian',
+    desc: 'Serene Scandinavian minimalism with soft teal pill badges, generous whitespace, and a refined timeline.',
+    isAtsSafe: false,
+    icon: Compass,
+    color: '#0d9488',
+  },
+  {
+    id: 'elevate',
+    name: 'Elevate',
+    tag: 'Product Lead',
+    desc: 'High-impact product and engineering leadership layout with vibrant gradient header and skills matrix.',
+    isAtsSafe: false,
+    icon: TrendingUp,
+    color: '#6366f1',
+  },
+  {
+    id: 'swiss',
+    name: 'Swiss Grid',
+    tag: 'Swiss Grid',
+    desc: 'Iconic International Typographic Style with bold asymmetric grid, heavy grotesque headings, and crimson accents.',
+    isAtsSafe: false,
+    icon: LayoutGrid,
+    color: '#e11d48',
   },
   {
     id: 'ats',

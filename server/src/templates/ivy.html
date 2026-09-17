@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>{{resume.name}} - Resume</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=Inter:wght@400;500;600&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  
+  html, body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Newsreader', 'Georgia', 'Times New Roman', serif;
+    font-size: 9.75pt;
+    line-height: 1.55;
+    color: #1e293b;
+    background: #ffffff;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  ::-webkit-scrollbar { display: none; }
+
+  .page {
+    box-sizing: border-box;
+    width: 794px;
+    min-height: 1123px;
+    margin: 0 auto;
+    padding: 44px 50px;
+    background: #ffffff;
+  }
+
+  /* ─── Header ──────────────────────────────────────────────────────────── */
+  .header {
+    text-align: center;
+    margin-bottom: 20px;
+    border-bottom: 3px double #1e3a8a;
+    padding-bottom: 14px;
+  }
+  .header-name {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 27pt;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #0f172a;
+    line-height: 1.1;
+    margin-bottom: 3px;
+  }
+  .header-role {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 12pt;
+    font-style: italic;
+    letter-spacing: 0.5px;
+    color: #1e3a8a;
+    margin-bottom: 8px;
+  }
+  .header-contacts {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px 14px;
+    font-family: 'Inter', sans-serif;
+    font-size: 8pt;
+    color: #475569;
+  }
+  .contact-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    text-decoration: none;
+    color: #475569;
+  }
+  .contact-item a {
+    color: #1e3a8a;
+    text-decoration: none;
+  }
+  .contact-sep {
+    color: #94a3b8;
+    font-size: 7pt;
+  }
+
+  /* ─── Sections ────────────────────────────────────────────────────────── */
+  .section {
+    margin-bottom: 18px;
+  }
+  .section:last-child {
+    margin-bottom: 0;
+  }
+  .section-title {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 11pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: #0f172a;
+    border-top: 1px solid #cbd5e1;
+    border-bottom: 1px solid #cbd5e1;
+    padding: 3px 0;
+    margin-bottom: 11px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .section-title::after {
+    content: '♦';
+    font-size: 7pt;
+    color: #1e3a8a;
+    letter-spacing: normal;
+  }
+
+  /* ─── Summary ─────────────────────────────────────────────────────────── */
+  .summary-text {
+    font-size: 9.5pt;
+    color: #334155;
+    text-align: justify;
+    line-height: 1.6;
+    margin-bottom: 6px;
+  }
+
+  /* ─── Experience ──────────────────────────────────────────────────────── */
+  .exp-item {
+    margin-bottom: 14px;
+  }
+  .exp-item:last-child {
+    margin-bottom: 0;
+  }
+  .exp-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 2px;
+  }
+  .exp-role {
+    font-weight: 700;
+    font-size: 10.5pt;
+    color: #0f172a;
+  }
+  .exp-dates {
+    font-family: 'Inter', sans-serif;
+    font-size: 8pt;
+    font-weight: 500;
+    color: #64748b;
+    letter-spacing: 0.25px;
+  }
+  .exp-subrow {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 5px;
+    font-style: italic;
+    color: #1e3a8a;
+    font-size: 9.25pt;
+  }
+  .exp-company {
+    font-weight: 600;
+  }
+  .exp-location {
+    font-family: 'Inter', sans-serif;
+    font-size: 8pt;
+    font-style: normal;
+    color: #64748b;
+  }
+  .exp-bullets {
+    list-style: none;
+    padding-left: 0;
+    margin: 4px 0 0 0;
+  }
+  .exp-bullets li {
+    position: relative;
+    padding-left: 15px;
+    font-size: 9pt;
+    color: #334155;
+    margin-bottom: 3px;
+    line-height: 1.5;
+  }
+  .exp-bullets li::before {
+    content: '—';
+    position: absolute;
+    left: 0;
+    color: #1e3a8a;
+    font-weight: 600;
+  }
+
+  /* ─── Education ───────────────────────────────────────────────────────── */
+  .edu-item {
+    margin-bottom: 11px;
+  }
+  .edu-item:last-child {
+    margin-bottom: 0;
+  }
+  .edu-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+  .edu-degree {
+    font-weight: 700;
+    font-size: 10pt;
+    color: #0f172a;
+  }
+  .edu-dates {
+    font-family: 'Inter', sans-serif;
+    font-size: 8pt;
+    color: #64748b;
+  }
+  .edu-subrow {
+    display: flex;
+    justify-content: space-between;
+    font-size: 9pt;
+    font-style: italic;
+    color: #334155;
+    margin-top: 1px;
+  }
+  .edu-meta {
+    font-family: 'Inter', sans-serif;
+    font-style: normal;
+    font-size: 8pt;
+    color: #64748b;
+  }
+
+  /* ─── Skills ──────────────────────────────────────────────────────────── */
+  .skills-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .skill-group {
+    font-size: 9pt;
+    line-height: 1.45;
+  }
+  .skill-category {
+    font-weight: 700;
+    color: #0f172a;
+  }
+  .skill-items {
+    color: #334155;
+  }
+
+  /* ─── Projects ────────────────────────────────────────────────────────── */
+  .proj-item {
+    margin-bottom: 11px;
+  }
+  .proj-item:last-child {
+    margin-bottom: 0;
+  }
+  .proj-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+  .proj-name {
+    font-weight: 700;
+    font-size: 10pt;
+    color: #0f172a;
+  }
+  .proj-url {
+    font-family: 'Inter', sans-serif;
+    font-size: 8pt;
+    color: #1e3a8a;
+    text-decoration: none;
+  }
+  .proj-tech {
+    font-family: 'Inter', sans-serif;
+    font-size: 8pt;
+    color: #64748b;
+    margin-top: 1px;
+  }
+  .proj-desc {
+    font-size: 9pt;
+    color: #334155;
+    margin-top: 3px;
+    line-height: 1.45;
+  }
+
+  /* ─── Certifications & Custom ─────────────────────────────────────────── */
+  .cert-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 5px;
+    font-size: 9pt;
+  }
+  .cert-name {
+    font-weight: 600;
+    color: #0f172a;
+  }
+  .cert-date {
+    font-family: 'Inter', sans-serif;
+    font-size: 8pt;
+    color: #64748b;
+  }
+  .custom-item {
+    margin-bottom: 8px;
+    font-size: 9pt;
+  }
+  .custom-title {
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 2px;
+  }
+  .custom-desc {
+    color: #334155;
+    line-height: 1.5;
+  }
+
+  @media print {
+    body { background: white; }
+    .page { width: 100%; min-height: auto; padding: 36px 44px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <!-- Header -->
+  {{#with header}}
+  <header class="header">
+    <h1 class="header-name">{{name}}</h1>
+    {{#if role}}<div class="header-role">{{role}}</div>{{/if}}
+    <div class="header-contacts">
+      {{#if email}}<span class="contact-item"><a href="mailto:{{email}}">{{email}}</a></span>{{/if}}
+      {{#if phone}}{{#if email}}<span class="contact-sep">•</span>{{/if}}<span class="contact-item">{{phone}}</span>{{/if}}
+      {{#if location}}{{#if phone}}<span class="contact-sep">•</span>{{/if}}<span class="contact-item">{{location}}</span>{{/if}}
+      {{#if linkedin}}{{#if location}}<span class="contact-sep">•</span>{{/if}}<span class="contact-item"><a href="{{linkedin}}" target="_blank">LinkedIn</a></span>{{/if}}
+      {{#if github}}{{#if linkedin}}<span class="contact-sep">•</span>{{/if}}<span class="contact-item"><a href="{{github}}" target="_blank">GitHub</a></span>{{/if}}
+      {{#if website}}{{#if github}}<span class="contact-sep">•</span>{{/if}}<span class="contact-item"><a href="{{website}}" target="_blank">Portfolio</a></span>{{/if}}
+    </div>
+  </header>
+  {{/with}}
+
+  <!-- Body Sections ordered by user position -->
+  {{#each bodySections}}
+    {{#if isSummary}}
+      {{#if summaryText}}
+      <section class="section">
+        <div class="section-title">{{title}}</div>
+        <div class="summary-text">{{{markdown summaryText}}}</div>
+      </section>
+      {{/if}}
+    {{/if}}
+
+    {{#if isExperience}}
+      {{#if content.length}}
+      <section class="section">
+        <div class="section-title">{{title}}</div>
+        {{#each content}}
+        <div class="exp-item">
+          <div class="exp-header">
+            <span class="exp-role">{{role}}</span>
+            <span class="exp-dates">{{start_date}}{{#if end_date}} – {{end_date}}{{/if}}</span>
+          </div>
+          <div class="exp-subrow">
+            <span class="exp-company">{{company}}</span>
+            {{#if location}}<span class="exp-location">{{location}}</span>{{/if}}
+          </div>
+          {{#if bullets.length}}
+          <ul class="exp-bullets">
+            {{#each bullets}}<li>{{{markdown this}}}</li>{{/each}}
+          </ul>
+          {{/if}}
+        </div>
+        {{/each}}
+      </section>
+      {{/if}}
+    {{/if}}
+
+    {{#if isEducation}}
+      {{#if content.length}}
+      <section class="section">
+        <div class="section-title">{{title}}</div>
+        {{#each content}}
+        <div class="edu-item">
+          <div class="edu-header">
+            <span class="edu-degree">{{degree}}{{#if field}} in {{field}}{{/if}}</span>
+            <span class="edu-dates">{{start_date}}{{#if end_date}} – {{end_date}}{{/if}}</span>
+          </div>
+          <div class="edu-subrow">
+            <span>{{institution}}</span>
+            <span class="edu-meta">{{#if location}}{{location}}{{/if}}{{#if gpa}}{{#if location}} · {{/if}}GPA: {{gpa}}{{/if}}</span>
+          </div>
+        </div>
+        {{/each}}
+      </section>
+      {{/if}}
+    {{/if}}
+
+    {{#if isSkills}}
+      {{#if content.length}}
+      <section class="section">
+        <div class="section-title">{{title}}</div>
+        <div class="skills-list">
+          {{#each content}}
+          <div class="skill-group">
+            <span class="skill-category">{{category}}:</span>
+            <span class="skill-items">{{#each items}}{{this}}{{#unless @last}}, {{/unless}}{{/each}}</span>
+          </div>
+          {{/each}}
+        </div>
+      </section>
+      {{/if}}
+    {{/if}}
+
+    {{#if isProjects}}
+      {{#if content.length}}
+      <section class="section">
+        <div class="section-title">{{title}}</div>
+        {{#each content}}
+        <div class="proj-item">
+          <div class="proj-header">
+            <span class="proj-name">{{name}}{{#if role}} — {{role}}{{/if}}</span>
+            {{#if url}}<a href="{{url}}" target="_blank" class="proj-url">{{url}}</a>{{/if}}
+          </div>
+          {{#if technologies}}<div class="proj-tech">Technologies: {{technologies}}</div>{{/if}}
+          {{#if tech}}<div class="proj-tech">Technologies: {{#each tech}}{{this}}{{#unless @last}}, {{/unless}}{{/each}}</div>{{/if}}
+          {{#if description}}<div class="proj-desc">{{{markdown description}}}</div>{{/if}}
+          {{#if bullets.length}}
+          <ul class="exp-bullets">
+            {{#each bullets}}<li>{{{markdown this}}}</li>{{/each}}
+          </ul>
+          {{/if}}
+        </div>
+        {{/each}}
+      </section>
+      {{/if}}
+    {{/if}}
+
+    {{#if isCertifications}}
+      {{#if content.length}}
+      <section class="section">
+        <div class="section-title">{{title}}</div>
+        {{#each content}}
+        <div class="cert-item">
+          <span class="cert-name">{{name}}{{#if issuer}} — <em>{{issuer}}</em>{{/if}}</span>
+          {{#if date}}<span class="cert-date">{{date}}</span>{{/if}}
+        </div>
+        {{/each}}
+      </section>
+      {{/if}}
+    {{/if}}
+
+    {{#if isCustom}}
+      {{#if content.length}}
+      <section class="section">
+        <div class="section-title">{{title}}</div>
+        {{#each content}}
+        <div class="custom-item">
+          {{#if title}}<div class="custom-title">{{title}}</div>{{/if}}
+          {{#if description}}<div class="custom-desc">{{{markdown description}}}</div>{{/if}}
+        </div>
+        {{/each}}
+      </section>
+      {{/if}}
+    {{/if}}
+  {{/each}}
+</div>
+</body>
+</html>

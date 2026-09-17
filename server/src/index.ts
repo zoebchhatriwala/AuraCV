@@ -42,6 +42,10 @@ app.get('/api/templates', (_req, res) => {
     { id: 'compact',   name: 'Compact',   description: 'High-density single-page engineering format with concise spacing', category: 'compact',   is_ats_safe: false },
     { id: 'classic',   name: 'Classic',   description: 'Traditional serif typography with formal centered headings',    category: 'classic',   is_ats_safe: false },
     { id: 'minimal',   name: 'Minimal',   description: 'Clean balanced layout focused on your career experience',      category: 'minimal',   is_ats_safe: false },
+    { id: 'ivy',       name: 'Ivy League', description: 'Distinguished academic serif standard with diamond small-caps headings', category: 'classic', is_ats_safe: false },
+    { id: 'nordic',    name: 'Nordic',    description: 'Scandinavian warm minimalism with teal pill badges and serene timeline', category: 'modern', is_ats_safe: false },
+    { id: 'elevate',   name: 'Elevate',   description: 'High-impact product leadership layout with vibrant gradient header and skills matrix', category: 'executive', is_ats_safe: false },
+    { id: 'swiss',     name: 'Swiss Grid', description: 'Iconic International Typographic Style with asymmetric numeric index grid', category: 'creative', is_ats_safe: false },
     { id: 'ats',       name: 'ATS Pure',  description: 'Simple text format designed for hiring systems',         category: 'ats',       is_ats_safe: true  },
   ]);
 });
