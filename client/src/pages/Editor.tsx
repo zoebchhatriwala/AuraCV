@@ -105,7 +105,7 @@ export default function Editor() {
   const handleToggleVisibility = async (section: Section) => {
     if (!id) return;
     const isCurrentlyVisible = Boolean(section.is_visible);
-    await resumeApi.updateSection(id, section.id, { is_visible: isCurrentlyVisible ? 0 : 1 });
+    await resumeApi.updateSection(id, section.id, { ...section, is_visible: isCurrentlyVisible ? 0 : 1 });
     await fetchResume(id);
     refreshPreview();
   };

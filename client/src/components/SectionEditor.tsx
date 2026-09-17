@@ -10,6 +10,56 @@ interface Props {
   onOpenCopilotWithBullet?: (bulletText: string, context: { sectionId: string; index: number }) => void;
 }
 
+// ─── Universal Field Component ─────────────────────────────────────────────
+function Field({
+  label,
+  value,
+  onChange,
+  multiline = false,
+  placeholder = '',
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  multiline?: boolean;
+  placeholder?: string;
+}) {
+  return (
+    <div className="space-y-1">
+      <label className="text-[11px] font-semibold uppercase tracking-wider block" style={{ color: 'var(--text-muted)' }}>
+        {label}
+      </label>
+      {multiline ? (
+        <textarea
+          value={value ?? ''}
+          onChange={e => onChange(e.target.value)}
+          placeholder={placeholder}
+          rows={3}
+          className="w-full rounded-xl px-3.5 py-2.5 text-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500/20 border resize-y"
+          style={{
+            backgroundColor: 'var(--bg-surface-elevated)',
+            borderColor: 'var(--border-default)',
+            color: 'var(--text-primary)',
+          }}
+        />
+      ) : (
+        <input
+          type="text"
+          value={value ?? ''}
+          onChange={e => onChange(e.target.value)}
+          placeholder={placeholder}
+          className="w-full rounded-xl px-3.5 py-2 text-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500/20 border"
+          style={{
+            backgroundColor: 'var(--bg-surface-elevated)',
+            borderColor: 'var(--border-default)',
+            color: 'var(--text-primary)',
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
 export default function SectionEditor({ section, resumeId, onUpdate, onOpenCopilotWithBullet }: Props) {
   const [localContent, setLocalContent] = useState<Record<string, unknown>[]>((section.content || []) as Record<string, unknown>[]);
   const [rewriting, setRewriting] = useState<number | null>(null);
@@ -67,53 +117,7 @@ export default function SectionEditor({ section, resumeId, onUpdate, onOpenCopil
     }
   };
 
-  // ─── Universal Field Component ─────────────────────────────────────────────
-  const Field = ({
-    label,
-    value,
-    onChange,
-    multiline = false,
-    placeholder = '',
-  }: {
-    label: string;
-    value: string;
-    onChange: (v: string) => void;
-    multiline?: boolean;
-    placeholder?: string;
-  }) => (
-    <div className="space-y-1">
-      <label className="text-[11px] font-semibold uppercase tracking-wider block" style={{ color: 'var(--text-muted)' }}>
-        {label}
-      </label>
-      {multiline ? (
-        <textarea
-          value={value ?? ''}
-          onChange={e => onChange(e.target.value)}
-          placeholder={placeholder}
-          rows={3}
-          className="w-full rounded-xl px-3.5 py-2.5 text-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500/20 border resize-y"
-          style={{
-            backgroundColor: 'var(--bg-surface-elevated)',
-            borderColor: 'var(--border-default)',
-            color: 'var(--text-primary)',
-          }}
-        />
-      ) : (
-        <input
-          type="text"
-          value={value ?? ''}
-          onChange={e => onChange(e.target.value)}
-          placeholder={placeholder}
-          className="w-full rounded-xl px-3.5 py-2 text-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500/20 border"
-          style={{
-            backgroundColor: 'var(--bg-surface-elevated)',
-            borderColor: 'var(--border-default)',
-            color: 'var(--text-primary)',
-          }}
-        />
-      )}
-    </div>
-  );
+
 
   // ─── Section Type Renderers ────────────────────────────────────────────────
 
