@@ -4,6 +4,20 @@ import { readFileSync, existsSync } from 'fs';
 import Handlebars from 'handlebars';
 import { marked } from 'marked';
 import { resumeQueries, sectionQueries } from '../db/database';
+import puppeteer from 'puppeteer';
+import {
+  Document,
+  Paragraph,
+  TextRun,
+  Packer,
+  AlignmentType,
+  BorderStyle,
+  Table,
+  TableRow,
+  TableCell,
+  WidthType,
+  convertInchesToTwip,
+} from 'docx';
 
 Handlebars.registerHelper('markdown', function (text) {
   if (!text) return '';
@@ -195,6 +209,7 @@ router.get('/:id/preview', (req: Request, res: Response) => {
 
 // POST /api/export/:id/pdf
 router.post('/:id/pdf', async (req: Request, res: Response) => {
+  let browser: any = null;
   try {
     const id = String(req.params.id);
     const resume = resumeQueries.get(id);
@@ -205,17 +220,27 @@ router.post('/:id/pdf', async (req: Request, res: Response) => {
     const sections = sectionQueries.list(id);
     const html = renderTemplate(templateId, resume, sections);
 
-    const puppeteer = await import('puppeteer');
-    const browser = await puppeteer.default.launch({ headless: true, args: ['--no-sandbox'] });
+    browser = await puppeteer.launch({
+      headless: true,
+      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu'],
+    });
     const page = await browser.newPage();
-    await page.setContent(html, { waitUntil: 'networkidle0' });
+    await page.setContent(html, { waitUntil: 'domcontentloaded' });
+
+    try {
+      await Promise.race([
+        page.evaluateHandle('document.fonts.ready'),
+        new Promise(resolve => setTimeout(resolve, 3000)),
+      ]);
+    } catch {
+      // Font loading fallback
+    }
 
     const pdfBuffer = await page.pdf({
       format: 'A4',
       margin: { top: '15mm', bottom: '15mm', left: '15mm', right: '15mm' },
       printBackground: true,
     });
-    await browser.close();
 
     const filename = `${resume.name.replace(/[^a-z0-9]/gi, '_')}_cv.pdf`;
     res.setHeader('Content-Type', 'application/pdf');
@@ -224,6 +249,14 @@ router.post('/:id/pdf', async (req: Request, res: Response) => {
   } catch (e) {
     console.error('PDF Export Error:', e);
     res.status(500).json({ error: (e as Error).message });
+  } finally {
+    if (browser) {
+      try {
+        await browser.close();
+      } catch (closeErr) {
+        console.warn('Failed to close browser:', closeErr);
+      }
+    }
   }
 });
 
@@ -234,20 +267,6 @@ router.post('/:id/docx', async (req: Request, res: Response) => {
     const resume = resumeQueries.get(id);
     if (!resume) return void res.status(404).json({ error: 'Not found' });
     const sections = sectionQueries.list(id);
-
-    const {
-      Document,
-      Paragraph,
-      TextRun,
-      Packer,
-      AlignmentType,
-      BorderStyle,
-      Table,
-      TableRow,
-      TableCell,
-      WidthType,
-      convertInchesToTwip,
-    } = await import('docx');
 
     const noBorder = { style: BorderStyle.NONE, size: 0, color: 'auto' };
     const noBorders = {

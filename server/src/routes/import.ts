@@ -1,6 +1,8 @@
 import { Router, Request, Response } from 'express';
 import multer from 'multer';
 import { join } from 'path';
+import { promises as fsPromises } from 'fs';
+import pdfParse from 'pdf-parse';
 import { getActiveProvider } from '../ai/factory';
 import { resumeQueries, sectionQueries } from '../db/database';
 import type { ImportParseResult, SectionType, SectionContent } from '../types';
@@ -308,9 +310,7 @@ router.post('/pdf', upload.single('file'), async (req: Request, res: Response) =
   try {
     if (!req.file) return void res.status(400).json({ error: 'No file uploaded' });
 
-    const pdfParse = (await import('pdf-parse')).default;
-    const fs = await import('fs');
-    const pdfBuffer = await fs.promises.readFile(filePath!);
+    const pdfBuffer = await fsPromises.readFile(filePath!);
     const data = await pdfParse(pdfBuffer);
     const text = data.text || '';
 
@@ -342,7 +342,7 @@ router.post('/pdf', upload.single('file'), async (req: Request, res: Response) =
     res.status(500).json({ error: (e as Error).message || 'Failed to process PDF' });
   } finally {
     if (filePath) {
-      import('fs').then(fs => fs.promises.unlink(filePath).catch(() => {}));
+      fsPromises.unlink(filePath).catch(() => {});
     }
   }
 });

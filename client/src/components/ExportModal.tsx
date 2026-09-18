@@ -17,7 +17,7 @@ export default function ExportModal({ resumeId, resumeName, onClose }: Props) {
     setLoading(format);
     setDownloaded(null);
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15000);
+    const timeoutId = setTimeout(() => controller.abort(), 45000);
 
     try {
       let blob: Blob;
@@ -30,17 +30,17 @@ export default function ExportModal({ resumeId, resumeName, onClose }: Props) {
           body: JSON.stringify({ ats_mode: atsMode }),
           signal: controller.signal,
         });
-        if (!res.ok) throw new Error(await res.text());
+        if (!res.ok) throw new Error((await res.text().catch(() => '')) || `Server returned ${res.status}`);
         blob = await res.blob();
         triggerDownload(blob, `${safeName}_cv.pdf`, 'application/pdf');
       } else if (format === 'docx') {
         const res = await fetch(`/api/export/${resumeId}/docx`, { method: 'POST', signal: controller.signal });
-        if (!res.ok) throw new Error(await res.text());
+        if (!res.ok) throw new Error((await res.text().catch(() => '')) || `Server returned ${res.status}`);
         blob = await res.blob();
         triggerDownload(blob, `${safeName}_cv.docx`, 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
       } else {
         const res = await fetch(`/api/export/${resumeId}/json`, { method: 'POST', signal: controller.signal });
-        if (!res.ok) throw new Error(await res.text());
+        if (!res.ok) throw new Error((await res.text().catch(() => '')) || `Server returned ${res.status}`);
         const data = await res.json();
         blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
         triggerDownload(blob, `${safeName}_backup.json`, 'application/json');
@@ -49,7 +49,10 @@ export default function ExportModal({ resumeId, resumeName, onClose }: Props) {
       setTimeout(() => setDownloaded(null), 2500);
     } catch (e) {
       console.error('Export failed:', e);
-      alert('Export failed. The server might be unreachable or an error occurred.');
+      const msg = e instanceof Error && e.name === 'AbortError'
+        ? 'Export timed out. Please try again.'
+        : e instanceof Error ? e.message : 'The server might be unreachable or an error occurred.';
+      alert(`Export failed: ${msg}`);
     } finally {
       clearTimeout(timeoutId);
       setLoading(null);
