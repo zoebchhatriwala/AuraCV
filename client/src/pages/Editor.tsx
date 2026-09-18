@@ -5,7 +5,7 @@ import { resumeApi, exportApi, type Section } from '../api';
 import {
   Download, Eye, EyeOff, ChevronDown, ChevronUp, Plus, Trash2,
   RefreshCw, ZoomIn, ZoomOut, Check, SlidersHorizontal, Lock,
-  Cloud, CloudOff,
+  Cloud, CloudOff, Pencil,
 } from 'lucide-react';
 import ExportModal from '../components/ExportModal';
 import SectionEditor from '../components/SectionEditor';
@@ -29,6 +29,8 @@ export default function Editor() {
   const [zoomLevel, setZoomLevel] = useState<number>(100);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [titleValue, setTitleValue] = useState('');
+  const [isEditingVersion, setIsEditingVersion] = useState(false);
+  const [versionValue, setVersionValue] = useState('');
   const previewRef = useRef<HTMLIFrameElement>(null);
   const [sectionToDelete, setSectionToDelete] = useState<{ id: string; title: string } | null>(null);
 
@@ -161,6 +163,16 @@ export default function Editor() {
     setTimeout(() => setSaveStatus('idle'), 2000);
   };
 
+  const handleVersionSubmit = async () => {
+    setIsEditingVersion(false);
+    const newTag = versionValue.trim() || 'v1';
+    if (!id || newTag === currentResume?.version_tag) return;
+    setSaveStatus('saving');
+    await updateResume(id, { version_tag: newTag });
+    setSaveStatus('saved');
+    setTimeout(() => setSaveStatus('idle'), 2000);
+  };
+
   const handleOpenCopilotWithBullet = (bullet: string, context: { sectionId: string; index: number }) => {
     setCopilotInitialBullet(bullet);
     setCopilotInitialContext(context);
@@ -289,6 +301,46 @@ export default function Editor() {
             >
               {currentResume.name}
             </h1>
+          )}
+
+          {/* Version tag badge */}
+          {isEditingVersion ? (
+            <div className="flex items-center shrink-0">
+              <input
+                autoFocus
+                type="text"
+                value={versionValue}
+                onChange={e => setVersionValue(e.target.value)}
+                onBlur={handleVersionSubmit}
+                onKeyDown={e => {
+                  if (e.key === 'Enter') handleVersionSubmit();
+                  if (e.key === 'Escape') setIsEditingVersion(false);
+                }}
+                className="px-2 py-0.5 text-xs font-semibold uppercase tracking-wider rounded-full border w-16 text-center focus:outline-none focus:ring-1 focus:ring-blue-500 shadow-xs"
+                style={{
+                  backgroundColor: 'var(--bg-surface-elevated)',
+                  borderColor: 'var(--border-default)',
+                  color: 'var(--text-primary)',
+                }}
+              />
+            </div>
+          ) : (
+            <span
+              onClick={() => {
+                setVersionValue(currentResume.version_tag || 'v1');
+                setIsEditingVersion(true);
+              }}
+              className="px-2 py-0.5 rounded-full text-[11px] font-semibold uppercase tracking-wider border hover:border-blue-500/50 hover:text-blue-600 dark:hover:text-blue-400 transition-all cursor-pointer flex items-center gap-1 group/vtag shrink-0"
+              style={{
+                backgroundColor: 'var(--bg-surface-elevated)',
+                borderColor: 'var(--border-subtle)',
+                color: 'var(--text-secondary)',
+              }}
+              title="Click to edit version tag"
+            >
+              <span>{currentResume.version_tag || 'v1'}</span>
+              <Pencil className="w-2.5 h-2.5 opacity-0 group-hover/vtag:opacity-70 transition-opacity" />
+            </span>
           )}
 
           {/* Quick template selector */}

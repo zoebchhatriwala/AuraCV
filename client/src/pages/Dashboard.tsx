@@ -11,7 +11,7 @@ import TemplatePreviewModal from '../components/TemplatePreviewModal';
 import ConfirmModal from '../components/ConfirmModal';
 
 export default function Dashboard() {
-  const { resumes, loadingResumes, createResume, deleteResume, duplicateResume } = useAppStore();
+  const { resumes, loadingResumes, createResume, deleteResume, duplicateResume, updateResume } = useAppStore();
   const navigate = useNavigate();
   const [creating, setCreating] = useState(false);
   const [newName, setNewName] = useState('');
@@ -20,6 +20,8 @@ export default function Dashboard() {
   const [previewTemplateId, setPreviewTemplateId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [resumeToDelete, setResumeToDelete] = useState<{ id: string; name: string } | null>(null);
+  const [editingVersionId, setEditingVersionId] = useState<string | null>(null);
+  const [versionValue, setVersionValue] = useState('');
 
   const handleCreate = async () => {
     const finalName = newName.trim() || 'Untitled Resume';
@@ -31,6 +33,21 @@ export default function Dashboard() {
       setCreating(false);
       setShowCreate(false);
       setNewName('');
+    }
+  };
+
+  const handleStartEditVersion = (e: React.MouseEvent, resumeId: string, currentTag: string) => {
+    e.stopPropagation();
+    setEditingVersionId(resumeId);
+    setVersionValue(currentTag || 'v1');
+  };
+
+  const handleSaveVersion = async (resumeId: string) => {
+    const newTag = versionValue.trim() || 'v1';
+    setEditingVersionId(null);
+    const existing = resumes.find(r => r.id === resumeId);
+    if (existing && newTag !== existing.version_tag) {
+      await updateResume(resumeId, { version_tag: newTag });
     }
   };
 
@@ -180,16 +197,41 @@ export default function Dashboard() {
                         <FileText className="w-5 h-5" />
                       </div>
                       <div className="flex items-center gap-1.5">
-                        <span
-                          className="px-2.5 py-1 rounded-full text-[11px] font-semibold uppercase tracking-wider border"
-                          style={{
-                            backgroundColor: 'var(--bg-surface-elevated)',
-                            borderColor: 'var(--border-subtle)',
-                            color: 'var(--text-secondary)',
-                          }}
-                        >
-                          {resume.version_tag || 'v1'}
-                        </span>
+                        {editingVersionId === resume.id ? (
+                          <div onClick={e => e.stopPropagation()} className="flex items-center">
+                            <input
+                              autoFocus
+                              type="text"
+                              value={versionValue}
+                              onChange={e => setVersionValue(e.target.value)}
+                              onBlur={() => handleSaveVersion(resume.id)}
+                              onKeyDown={e => {
+                                if (e.key === 'Enter') handleSaveVersion(resume.id);
+                                if (e.key === 'Escape') setEditingVersionId(null);
+                              }}
+                              className="px-2 py-0.5 rounded-full text-[11px] font-semibold uppercase tracking-wider border w-16 text-center focus:outline-none focus:ring-1 focus:ring-blue-500 shadow-xs"
+                              style={{
+                                backgroundColor: 'var(--bg-surface)',
+                                borderColor: 'var(--border-default)',
+                                color: 'var(--text-primary)',
+                              }}
+                            />
+                          </div>
+                        ) : (
+                          <span
+                            onClick={e => handleStartEditVersion(e, resume.id, resume.version_tag)}
+                            className="px-2.5 py-1 rounded-full text-[11px] font-semibold uppercase tracking-wider border hover:border-blue-500/50 hover:text-blue-600 dark:hover:text-blue-400 transition-all cursor-pointer group/tag flex items-center gap-1"
+                            style={{
+                              backgroundColor: 'var(--bg-surface-elevated)',
+                              borderColor: 'var(--border-subtle)',
+                              color: 'var(--text-secondary)',
+                            }}
+                            title="Click to edit version tag"
+                          >
+                            <span>{resume.version_tag || 'v1'}</span>
+                            <Pencil className="w-2.5 h-2.5 opacity-0 group-hover/tag:opacity-70 transition-opacity" />
+                          </span>
+                        )}
                         <span
                           className="px-2.5 py-1 rounded-full text-[11px] font-medium capitalize border"
                           style={{
