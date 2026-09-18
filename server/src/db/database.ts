@@ -1,8 +1,8 @@
 import { DatabaseSync } from 'node:sqlite';
-import { readFileSync } from 'fs';
+import { readFileSync, statSync, existsSync, copyFileSync } from 'fs';
 import { join } from 'path';
-import { createCipheriv, createDecipheriv, randomBytes, createHash } from 'crypto';
-import { networkInterfaces } from 'os';
+import { createCipheriv, createDecipheriv, randomBytes, createHash, randomUUID } from 'crypto';
+import { networkInterfaces, tmpdir } from 'os';
 import type {
   ResumeRow, SectionRow, AISessionRow,
   Resume, ResumeSection, SectionType, SectionContent,
@@ -274,3 +274,61 @@ export const aiSessionQueries = {
     getDb().prepare(`UPDATE ai_sessions SET accepted=1 WHERE id=?`).run(id);
   },
 };
+
+// ─── Database Export & Stats ──────────────────────────────────────────────────
+
+export interface DatabaseStats {
+  resumesCount: number;
+  sectionsCount: number;
+  sessionsCount: number;
+  fileSizeBytes: number;
+  walSizeBytes: number;
+  lastModified: string;
+}
+
+export function getDatabaseStats(): DatabaseStats {
+  const db = getDb();
+  const resumesCount = (db.prepare('SELECT COUNT(*) as cnt FROM resumes').get() as { cnt: number })?.cnt ?? 0;
+  const sectionsCount = (db.prepare('SELECT COUNT(*) as cnt FROM resume_sections').get() as { cnt: number })?.cnt ?? 0;
+  const sessionsCount = (db.prepare('SELECT COUNT(*) as cnt FROM ai_sessions').get() as { cnt: number })?.cnt ?? 0;
+
+  let fileSizeBytes = 0;
+  let lastModified = new Date().toISOString();
+  if (existsSync(DB_PATH)) {
+    const stat = statSync(DB_PATH);
+    fileSizeBytes = stat.size;
+    lastModified = stat.mtime.toISOString();
+  }
+
+  let walSizeBytes = 0;
+  const walPath = `${DB_PATH}-wal`;
+  if (existsSync(walPath)) {
+    walSizeBytes = statSync(walPath).size;
+  }
+
+  return {
+    resumesCount,
+    sectionsCount,
+    sessionsCount,
+    fileSizeBytes,
+    walSizeBytes,
+    lastModified,
+  };
+}
+
+export function exportDatabaseSnapshot(): string {
+  const db = getDb();
+  try {
+    db.exec('PRAGMA wal_checkpoint(PASSIVE)');
+    const tempFile = join(tmpdir(), `auracv_snapshot_${Date.now()}_${randomUUID().slice(0, 8)}.db`);
+    db.prepare('VACUUM INTO ?').run(tempFile);
+    return tempFile;
+  } catch (err) {
+    console.warn('VACUUM INTO failed, falling back to direct checkpoint and copy:', err);
+    db.exec('PRAGMA wal_checkpoint(TRUNCATE)');
+    const tempFile = join(tmpdir(), `auracv_snapshot_${Date.now()}_${randomUUID().slice(0, 8)}.db`);
+    copyFileSync(DB_PATH, tempFile);
+    return tempFile;
+  }
+}
+

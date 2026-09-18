@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
+    "setup": "npm install && npm install --prefix server && npm install --prefix client",
     "dev": "concurrently --names SERVER,CLIENT --prefix-colors magenta,cyan \"npm run dev:server\" \"npm run dev:client\"",
     "dev:server": "cd server && npm run dev",
     "dev:client": "cd client && npm run dev",

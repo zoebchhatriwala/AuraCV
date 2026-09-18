@@ -23,7 +23,7 @@ AuraCV is a modern, privacy-first AI resume building studio. It combines the spe
 ### Prerequisites
 
 - [Node.js](https://nodejs.org/) (v18 or higher)
-- [Yarn](https://yarnpkg.com/) or npm
+- [npm](https://www.npmjs.com/) (bundled with Node.js)
 
 ### Installation
 
@@ -34,29 +34,19 @@ AuraCV is a modern, privacy-first AI resume building studio. It combines the spe
    cd AuraCV
    ```
 
-2. Install dependencies for both the client and server:
+2. Install dependencies (installs root, server, and client packages):
 
    ```bash
-   cd server && yarn install
-   cd ../client && yarn install
+   npm run setup
    ```
 
-3. Start the development servers:
-   You will need two terminal tabs.
-
-   **Terminal 1 (Backend API):**
+3. Start the development environment:
 
    ```bash
-   cd server
-   yarn dev
+   npm run dev
    ```
 
-   **Terminal 2 (Frontend Client):**
-
-   ```bash
-   cd client
-   yarn dev
-   ```
+   This runs both the backend server (port 3847) and frontend client concurrently with a single command.
 
 4. Open your browser and navigate to `http://localhost:5842`.
 
@@ -65,6 +55,38 @@ AuraCV is a modern, privacy-first AI resume building studio. It combines the spe
 Configure your AI providers (like NVIDIA, OpenAI, or Ollama) directly in the **Settings** page of the UI. Your API keys are encrypted and saved locally in your SQLite database (`server/auracv.db`).
 
 To add or modify providers at a system level, you can edit the YAML files located in the `providers/` directory.
+
+## Database Backup & Restore
+
+AuraCV stores all resumes, custom sections, AI writing sessions, and configurations in a single SQLite database (`server/auracv.db`).
+
+### Exporting Database (.db)
+- Click **Export DB** in the Dashboard top bar, or navigate to **Settings > Database & Data Storage** and click **Export Database (.db)**.
+- This creates a consolidated SQLite snapshot using `VACUUM INTO` that can be queried or stored offline.
+
+### Restoring Database (.db)
+1. Stop the server (`Ctrl + C` in the running terminal).
+2. Copy your exported backup file to `server/auracv.db` (overwrite existing).
+3. Delete `server/auracv.db-wal` and `server/auracv.db-shm` if they exist to prevent journal mismatch.
+4. Restart the server (`npm run dev`). All resumes, sections, and settings will be restored.
+
+**macOS / Linux (Bash or Zsh):**
+```bash
+# In the server/ directory:
+rm -f auracv.db-wal auracv.db-shm
+cp /path/to/your_backup.db auracv.db
+cd .. && npm run dev
+```
+
+**Windows (PowerShell):**
+```powershell
+# In the server/ directory:
+Remove-Item auracv.db-wal, auracv.db-shm -ErrorAction SilentlyContinue
+Copy-Item "path\to\your_backup.db" auracv.db -Force
+cd ..; npm run dev
+```
+
+*Note: For single resume backups, you can also use JSON export/import via the **Import** page without replacing the database.*
 
 ## Contributing
 

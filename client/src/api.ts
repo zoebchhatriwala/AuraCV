@@ -75,6 +75,25 @@ export const exportApi = {
     post<Blob>(`/export/${id}/pdf`, opts),
   docx: (id: string) => post<Blob>(`/export/${id}/docx`),
   json: (id: string) => post<unknown>(`/export/${id}/json`),
+  dbUrl: (filename?: string) =>
+    `/api/export/db${filename ? `?filename=${encodeURIComponent(filename)}` : ''}`,
+  dbStats: () => get<DatabaseStats>('/export/db/stats'),
+  downloadDb: async (filename: string = 'auracv.db'): Promise<void> => {
+    const res = await fetch(`/api/export/db?filename=${encodeURIComponent(filename)}`);
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: res.statusText }));
+      throw new Error((err as { error?: string }).error ?? `HTTP ${res.status}`);
+    }
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  },
 };
 
 // ─── Import API ───────────────────────────────────────────────────────────────
@@ -229,3 +248,13 @@ export interface AISession {
   accepted: number;
   created_at: string;
 }
+
+export interface DatabaseStats {
+  resumesCount: number;
+  sectionsCount: number;
+  sessionsCount: number;
+  fileSizeBytes: number;
+  walSizeBytes: number;
+  lastModified: string;
+}
+

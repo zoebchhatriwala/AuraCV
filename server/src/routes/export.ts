@@ -1,9 +1,9 @@
 import { Router, Request, Response } from 'express';
 import { join } from 'path';
-import { readFileSync, existsSync } from 'fs';
+import { readFileSync, existsSync, unlink, unlinkSync } from 'fs';
 import Handlebars from 'handlebars';
 import { marked } from 'marked';
-import { resumeQueries, sectionQueries } from '../db/database';
+import { resumeQueries, sectionQueries, exportDatabaseSnapshot, getDatabaseStats } from '../db/database';
 import puppeteer from 'puppeteer';
 import {
   Document,
@@ -188,6 +188,50 @@ router.get('/sample-preview', (req: Request, res: Response) => {
     res.status(500).json({ error: (e as Error).message });
   }
 });
+
+// GET /api/export/db/stats — database statistics
+router.get('/db/stats', (_req: Request, res: Response) => {
+  try {
+    const stats = getDatabaseStats();
+    res.json(stats);
+  } catch (e) {
+    console.error('Database stats error:', e);
+    res.status(500).json({ error: (e as Error).message });
+  }
+});
+
+// GET /api/export/db — download raw SQLite database file
+const handleDbDownload = (req: Request, res: Response) => {
+  let tempPath: string | null = null;
+  try {
+    tempPath = exportDatabaseSnapshot();
+    const customFilename = req.query.filename as string | undefined;
+    const filename = customFilename || 'auracv.db';
+
+    res.download(tempPath, filename, (err) => {
+      if (tempPath && existsSync(tempPath)) {
+        unlink(tempPath, (unlinkErr) => {
+          if (unlinkErr) console.warn('Failed to delete temp db snapshot:', unlinkErr);
+        });
+      }
+      if (err && !res.headersSent) {
+        console.error('DB Export download error:', err);
+        res.status(500).json({ error: 'Failed to download database file' });
+      }
+    });
+  } catch (e) {
+    console.error('DB Export Error:', e);
+    if (tempPath && existsSync(tempPath)) {
+      try { unlinkSync(tempPath); } catch {}
+    }
+    if (!res.headersSent) {
+      res.status(500).json({ error: (e as Error).message });
+    }
+  }
+};
+
+router.get('/db', handleDbDownload);
+router.get('/database', handleDbDownload);
 
 // GET /api/export/:id/preview — render HTML for live preview
 router.get('/:id/preview', (req: Request, res: Response) => {
