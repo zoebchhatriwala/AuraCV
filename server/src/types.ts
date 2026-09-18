@@ -54,6 +54,7 @@ export type SectionContent =
 
 export interface HeaderContent {
   name: string;
+  role?: string;
   email: string;
   phone: string;
   location: string;

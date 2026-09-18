@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<title>{{header.name}}</title>
+<title>{{header.name}}{{#if header.role}} - {{header.role}}{{/if}}</title>
 <style>
   /* ATS Pure template - clean text layout, parser friendly */
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }

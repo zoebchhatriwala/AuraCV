@@ -740,7 +740,13 @@ function renderTemplate(
     sidebarSections,
     mainSections,
     sectionMap,
-    header: visibleSections.find(s => s.section_type === 'header')?.content[0] ?? {},
+    header: (() => {
+      const h = ((visibleSections.find(s => s.section_type === 'header')?.content[0] ?? {}) as Record<string, unknown>);
+      return {
+        ...h,
+        role: (h.role as string) || (resume as any).meta?.target_role || (resume as any).target_role || '',
+      };
+    })(),
     summary: visibleSections.find(s => s.section_type === 'summary')?.content[0] ?? {},
     experience: visibleSections.filter(s => s.section_type === 'experience').flatMap(s => s.content),
     education: visibleSections.filter(s => s.section_type === 'education').flatMap(s => s.content),
