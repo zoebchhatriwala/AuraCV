@@ -2,6 +2,9 @@
 
 AuraCV is a modern, privacy-first AI resume building studio. It combines the speed of local execution with the intelligence of cloud and local LLMs to help you craft, refine, and export professional resumes.
 
+<img width="2559" height="1270" alt="image" src="https://github.com/user-attachments/assets/e175e843-962a-46d6-a3a9-b7756708ae31" />
+
+
 ## Features
 
 - **Multi-Provider AI Engine:** Bring your own API keys for NVIDIA NIM, OpenAI, Anthropic, Gemini, OpenRouter, or run completely offline with Ollama.
