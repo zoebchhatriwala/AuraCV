@@ -50,7 +50,8 @@ router.post('/providers/test', async (req: Request, res: Response) => {
     const { provider, api_key, model } = req.body as { provider?: string; api_key?: string; model?: string };
     if (!provider) return void res.status(400).json({ error: 'provider is required' });
     const finalKey = api_key || apiKeyQueries.get(provider) || '';
-    const result = await testProvider(provider, finalKey, model);
+    const finalModel = model || settingsQueries.get(`provider_model_${provider}`) || undefined;
+    const result = await testProvider(provider, finalKey, finalModel);
     res.json({ ok: true, result });
   } catch (e) { res.status(400).json({ ok: false, error: (e as Error).message }); }
 });
@@ -94,8 +95,8 @@ function sectionsToPlainText(sections: ResumeSection[]): string {
 
 router.post('/redline', async (req: Request, res: Response) => {
   try {
-    const { resume_id, section_id, context } = req.body as {
-      resume_id?: string; section_id?: string; context?: string;
+    const { resume_id, section_id, context, model } = req.body as {
+      resume_id?: string; section_id?: string; context?: string; model?: string;
     };
     if (!section_id) return void res.status(400).json({ error: 'section_id required' });
     const section = sectionQueries.get(section_id);
@@ -106,7 +107,7 @@ router.post('/redline', async (req: Request, res: Response) => {
       return entry.text ?? JSON.stringify(e);
     }).join('\n');
 
-    const provider = getActiveProvider();
+    const provider = getActiveProvider(model);
     const result = await provider.redline(section.title, sectionText, context);
     const sessionId = aiSessionQueries.create({
       resume_id: resume_id ?? '', section_id,
@@ -119,11 +120,11 @@ router.post('/redline', async (req: Request, res: Response) => {
 
 router.post('/rewrite', async (req: Request, res: Response) => {
   try {
-    const { bullet, tone, role, resume_id, section_id } = req.body as {
-      bullet?: string; tone?: string; role?: string; resume_id?: string; section_id?: string;
+    const { bullet, tone, role, resume_id, section_id, model } = req.body as {
+      bullet?: string; tone?: string; role?: string; resume_id?: string; section_id?: string; model?: string;
     };
     if (!bullet) return void res.status(400).json({ error: 'bullet required' });
-    const provider = getActiveProvider();
+    const provider = getActiveProvider(model);
     const result = await provider.rewrite(bullet, tone, role);
     if (resume_id) {
       aiSessionQueries.create({
@@ -138,11 +139,11 @@ router.post('/rewrite', async (req: Request, res: Response) => {
 
 router.post('/ats-score', async (req: Request, res: Response) => {
   try {
-    const { resume_id, job_description } = req.body as { resume_id?: string; job_description?: string };
+    const { resume_id, job_description, model } = req.body as { resume_id?: string; job_description?: string; model?: string };
     if (!resume_id || !job_description) return void res.status(400).json({ error: 'resume_id and job_description required' });
     const sections = sectionQueries.list(resume_id);
     const resumeText = sectionsToPlainText(sections);
-    const provider = getActiveProvider();
+    const provider = getActiveProvider(model);
     const result = await provider.atsScore(resumeText, job_description);
     aiSessionQueries.create({
       resume_id, section_id: null, task_type: 'ats_score',
@@ -156,11 +157,11 @@ router.post('/ats-score', async (req: Request, res: Response) => {
 
 router.post('/keyword-gap', async (req: Request, res: Response) => {
   try {
-    const { resume_id, job_description } = req.body as { resume_id?: string; job_description?: string };
+    const { resume_id, job_description, model } = req.body as { resume_id?: string; job_description?: string; model?: string };
     if (!resume_id || !job_description) return void res.status(400).json({ error: 'resume_id and job_description required' });
     const sections = sectionQueries.list(resume_id);
     const resumeText = sectionsToPlainText(sections);
-    const provider = getActiveProvider();
+    const provider = getActiveProvider(model);
     const result = await provider.keywordGap(resumeText, job_description);
     aiSessionQueries.create({
       resume_id, section_id: null, task_type: 'keyword_gap',

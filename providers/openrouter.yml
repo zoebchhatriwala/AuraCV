@@ -20,7 +20,7 @@ api:
     prefix: "Bearer "
   # OpenRouter requires these headers for routing and analytics
   extra_headers:
-    HTTP-Referer: "http://localhost:5173"
+    HTTP-Referer: "http://localhost:5842"
     X-Title: "AuraCV"
 
 # ─── Models ──────────────────────────────────────────────────────────────────

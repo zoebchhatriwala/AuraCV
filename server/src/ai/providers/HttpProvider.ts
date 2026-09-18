@@ -54,7 +54,7 @@ export default class HttpProvider {
 
   private buildUrl(endpointCfg: EndpointConfig): string {
     const base = this.config.api.base_url.replace(/\/$/, '');
-    const path = endpointCfg.path.replace('{{model}}', encodeURIComponent(this.model));
+    const path = endpointCfg.path.replace(/\{\{model\}\}/g, encodeURIComponent(this.model));
     let url = base + path;
 
     if (this.config.api.auth.type === 'query-param' && this.apiKey) {
@@ -80,19 +80,21 @@ export default class HttpProvider {
     return headers;
   }
 
-  private buildBody(endpointCfg: EndpointConfig, prompt: string): unknown {
+  private buildBody(endpointCfg: EndpointConfig, prompt: string | null = null): unknown {
     const template = JSON.stringify(endpointCfg.request ?? {});
-    const escaped = prompt
-      .replace(/\\/g, '\\\\')
-      .replace(/"/g, '\\"')
-      .replace(/\n/g, '\\n')
-      .replace(/\r/g, '\\r')
-      .replace(/\t/g, '\\t');
-    return JSON.parse(
-      template
-        .replace(/\{\{prompt\}\}/g, escaped)
-        .replace(/\{\{model\}\}/g, this.model)
-    );
+    let resolved = template.replace(/\{\{model\}\}/g, this.model);
+    if (prompt !== null) {
+      const escaped = prompt
+        .replace(/\\/g, '\\\\')
+        .replace(/"/g, '\\"')
+        .replace(/\n/g, '\\n')
+        .replace(/\r/g, '\\r')
+        .replace(/\t/g, '\\t');
+      resolved = resolved.replace(/\{\{prompt\}\}/g, escaped);
+    } else {
+      resolved = resolved.replace(/\{\{prompt\}\}/g, '');
+    }
+    return JSON.parse(resolved);
   }
 
   /** Dot/bracket notation path extractor: "choices[0].message.content" */
@@ -134,10 +136,8 @@ export default class HttpProvider {
     const method = (endpointCfg.method ?? 'POST').toUpperCase();
 
     const fetchOpts: RequestInit = { method, headers };
-    if (method !== 'GET' && endpointCfg.request && prompt !== null) {
+    if (method !== 'GET' && endpointCfg.request) {
       fetchOpts.body = JSON.stringify(this.buildBody(endpointCfg, prompt));
-    } else if (method !== 'GET' && endpointCfg.request) {
-      fetchOpts.body = JSON.stringify(endpointCfg.request);
     }
 
     const res = await fetch(url, fetchOpts);

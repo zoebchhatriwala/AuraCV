@@ -55,7 +55,7 @@ AuraCV is a modern, privacy-first AI resume building studio. It combines the spe
    yarn dev
    ```
 
-4. Open your browser and navigate to `http://localhost:5173`.
+4. Open your browser and navigate to `http://localhost:5842`.
 
 ## Configuration
 

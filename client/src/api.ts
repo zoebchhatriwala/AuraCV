@@ -47,13 +47,13 @@ export const aiApi = {
   deleteKey:       (provider: string)          => del<{ ok: boolean }>(`/ai/providers/key/${provider}`),
   testProvider:    (provider: string, api_key: string, model?: string) => post<{ ok: boolean }>('/ai/providers/test', { provider, api_key, model }),
 
-  redline:     (data: { resume_id: string; section_id: string; context?: string }) =>
+  redline:     (data: { resume_id: string; section_id: string; context?: string; model?: string }) =>
                  post<RedlineResult & { session_id: string }>('/ai/redline', data),
-  rewrite:     (data: { bullet: string; tone?: string; role?: string; resume_id?: string; section_id?: string }) =>
+  rewrite:     (data: { bullet: string; tone?: string; role?: string; resume_id?: string; section_id?: string; model?: string }) =>
                  post<RewriteResult>('/ai/rewrite', data),
-  atsScore:    (data: { resume_id: string; job_description: string }) =>
+  atsScore:    (data: { resume_id: string; job_description: string; model?: string }) =>
                  post<ATSScoreResult>('/ai/ats-score', data),
-  keywordGap:  (data: { resume_id: string; job_description: string }) =>
+  keywordGap:  (data: { resume_id: string; job_description: string; model?: string }) =>
                  post<KeywordGapResult>('/ai/keyword-gap', data),
   sessions:    (resumeId: string) => get<AISession[]>(`/ai/sessions/${resumeId}`),
   acceptSession: (id: string)     => post<{ ok: boolean }>(`/ai/sessions/${id}/accept`),

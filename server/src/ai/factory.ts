@@ -66,12 +66,12 @@ export function getActiveProviderName(): string {
   return settingsQueries.get('active_provider') ?? 'openai';
 }
 
-export function getActiveProvider(): HttpProvider {
+export function getActiveProvider(modelOverride?: string): HttpProvider {
   const name = getActiveProviderName();
   const config = readProviderConfig(name);
   const apiKey = apiKeyQueries.get(config.provider);
-  const modelOverride = settingsQueries.get(`provider_model_${config.provider}`);
-  return buildProvider(name, apiKey, modelOverride ?? undefined);
+  const storedModel = settingsQueries.get(`provider_model_${config.provider}`);
+  return buildProvider(name, apiKey, modelOverride || storedModel || undefined);
 }
 
 export function buildProvider(providerName: string, apiKey: string | null, modelOverride?: string): HttpProvider {
