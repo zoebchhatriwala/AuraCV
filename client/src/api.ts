@@ -75,6 +75,8 @@ export const exportApi = {
     post<Blob>(`/export/${id}/pdf`, opts),
   docx: (id: string) => post<Blob>(`/export/${id}/docx`),
   json: (id: string) => post<unknown>(`/export/${id}/json`),
+  markdown: (id: string, download = false) =>
+    post<{ ok: boolean; markdown?: string }>(`/export/${id}/markdown`, { download }),
   dbUrl: (filename?: string) =>
     `/api/export/db${filename ? `?filename=${encodeURIComponent(filename)}` : ''}`,
   dbStats: () => get<DatabaseStats>('/export/db/stats'),
@@ -95,6 +97,7 @@ export const exportApi = {
     URL.revokeObjectURL(url);
   },
 };
+
 
 // ─── Import API ───────────────────────────────────────────────────────────────
 export const importApi = {
@@ -118,6 +121,45 @@ export const templatesApi = {
   list: () => get<Template[]>('/templates'),
   samplePreviewUrl: (templateId: string = 'modern') => `/api/export/sample-preview?template=${templateId}`,
 };
+
+// ─── Job Application Vault & Q&A API ──────────────────────────────────────────
+export const vaultApi = {
+  getMeta: () => get<JobMetadata>('/vault/meta'),
+  updateMeta: (data: Partial<JobMetadata>) => put<JobMetadata>('/vault/meta', data),
+
+  listQA: (category?: string) =>
+    get<QAEntry[]>(`/vault/qa${category ? `?category=${encodeURIComponent(category)}` : ''}`),
+  createQA: (data: { question: string; answer: string; category?: string; tags?: string[] }) =>
+    post<QAEntry>('/vault/qa', data),
+  updateQA: (id: string, data: Partial<QAEntry>) =>
+    put<QAEntry>(`/vault/qa/${id}`, data),
+  deleteQA: (id: string) =>
+    del<{ ok: boolean }>(`/vault/qa/${id}`),
+
+  searchQA: (query: string, options?: { limit?: number; min_similarity?: number; category?: string }) =>
+    post<QASearchResult[]>('/vault/qa/search', { query, ...options }),
+  reindexQA: () =>
+    post<{ ok: boolean; count: number }>('/vault/qa/reindex'),
+  seedQA: () =>
+    post<{ ok: boolean; count: number; ids: string[] }>('/vault/qa/seed'),
+
+  morphQA: (data: {
+    originalQuestion?: string;
+    originalAnswer: string;
+    targetQuestion: string;
+    instructions?: string;
+    model?: string;
+  }) =>
+    post<{
+      ok: boolean;
+      morphed_answer: string;
+      key_adaptations?: string[];
+      suggested_tags?: string[];
+      suggested_category?: string;
+      fallback?: boolean;
+    }>('/vault/qa/morph', data),
+};
+
 
 // ─── Shared types (mirrored from server for frontend use) ─────────────────────
 export interface Resume {
@@ -257,4 +299,53 @@ export interface DatabaseStats {
   walSizeBytes: number;
   lastModified: string;
 }
+
+export interface CustomField {
+  id: string;
+  label: string;
+  value: string;
+  category?: string;
+}
+
+export interface JobMetadata {
+  id: string;
+  full_name: string;
+  preferred_name: string;
+  email: string;
+  phone: string;
+  location: string;
+  linkedin_url: string;
+  github_url: string;
+  portfolio_url: string;
+  current_company: string;
+  current_title: string;
+  experience_years: string;
+  notice_period: string;
+  work_authorization: string;
+  salary_current: string;
+  salary_expected: string;
+  willing_to_relocate: string;
+  work_mode_preference: string;
+  highest_education: string;
+  custom_fields: CustomField[];
+  updated_at: string;
+}
+
+export interface QAEntry {
+  id: string;
+  question: string;
+  answer: string;
+  category: string;
+  tags: string[];
+  embedding?: number[] | null;
+  embedding_model?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface QASearchResult extends QAEntry {
+  similarity: number;
+  match_confidence: 'high' | 'medium' | 'low';
+}
+
 

@@ -6,13 +6,15 @@ import { networkInterfaces, tmpdir } from 'os';
 import type {
   ResumeRow, SectionRow, AISessionRow,
   Resume, ResumeSection, SectionType, SectionContent,
-  ResumeMeta
+  ResumeMeta,
+  JobMetadata, JobMetadataRow, QAEntry, QAEntryRow, CustomField
 } from '../types';
 
 // Single source of truth SQLite database
 const DB_PATH = join(__dirname, '..', '..', 'auracv.db');
 
 let _db: DatabaseSync | null = null;
+
 
 // ─── Encryption (AES-256, machine-fingerprint key) ────────────────────────────
 
@@ -76,6 +78,22 @@ function parseResume(row: ResumeRow): Resume {
 function parseSection(row: SectionRow): ResumeSection {
   return { ...row, content: JSON.parse(row.content || '[]') as SectionContent[] };
 }
+
+function parseJobMetadata(row: JobMetadataRow): JobMetadata {
+  return {
+    ...row,
+    custom_fields: JSON.parse(row.custom_fields || '[]') as CustomField[],
+  };
+}
+
+function parseQAEntry(row: QAEntryRow): QAEntry {
+  return {
+    ...row,
+    tags: JSON.parse(row.tags || '[]') as string[],
+    embedding: row.embedding ? (JSON.parse(row.embedding) as number[]) : null,
+  };
+}
+
 
 // ─── Resume queries ───────────────────────────────────────────────────────────
 
@@ -331,4 +349,163 @@ export function exportDatabaseSnapshot(): string {
     return tempFile;
   }
 }
+
+// ─── Job Application Vault queries ───────────────────────────────────────────
+
+export const vaultQueries = {
+  getMetadata(): JobMetadata {
+    const db = getDb();
+    let row = db.prepare(`SELECT * FROM job_metadata WHERE id='default'`).get() as unknown as JobMetadataRow | undefined;
+    if (!row) {
+      db.prepare(`
+        INSERT INTO job_metadata (id, custom_fields)
+        VALUES ('default', '[]')
+      `).run();
+      row = db.prepare(`SELECT * FROM job_metadata WHERE id='default'`).get() as unknown as JobMetadataRow;
+    }
+    return parseJobMetadata(row);
+  },
+
+  updateMetadata(data: Partial<JobMetadata>): JobMetadata {
+    const existing = vaultQueries.getMetadata();
+    const updated: JobMetadata = {
+      ...existing,
+      ...data,
+      custom_fields: data.custom_fields ?? existing.custom_fields,
+      updated_at: new Date().toISOString(),
+    };
+
+    getDb().prepare(`
+      INSERT INTO job_metadata (
+        id, full_name, preferred_name, email, phone, location,
+        linkedin_url, github_url, portfolio_url, current_company, current_title,
+        experience_years, notice_period, work_authorization, salary_current,
+        salary_expected, willing_to_relocate, work_mode_preference, highest_education,
+        custom_fields, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+      ON CONFLICT(id) DO UPDATE SET
+        full_name=excluded.full_name,
+        preferred_name=excluded.preferred_name,
+        email=excluded.email,
+        phone=excluded.phone,
+        location=excluded.location,
+        linkedin_url=excluded.linkedin_url,
+        github_url=excluded.github_url,
+        portfolio_url=excluded.portfolio_url,
+        current_company=excluded.current_company,
+        current_title=excluded.current_title,
+        experience_years=excluded.experience_years,
+        notice_period=excluded.notice_period,
+        work_authorization=excluded.work_authorization,
+        salary_current=excluded.salary_current,
+        salary_expected=excluded.salary_expected,
+        willing_to_relocate=excluded.willing_to_relocate,
+        work_mode_preference=excluded.work_mode_preference,
+        highest_education=excluded.highest_education,
+        custom_fields=excluded.custom_fields,
+        updated_at=datetime('now')
+    `).run(
+      'default',
+      updated.full_name ?? '',
+      updated.preferred_name ?? '',
+      updated.email ?? '',
+      updated.phone ?? '',
+      updated.location ?? '',
+      updated.linkedin_url ?? '',
+      updated.github_url ?? '',
+      updated.portfolio_url ?? '',
+      updated.current_company ?? '',
+      updated.current_title ?? '',
+      updated.experience_years ?? '',
+      updated.notice_period ?? '',
+      updated.work_authorization ?? '',
+      updated.salary_current ?? '',
+      updated.salary_expected ?? '',
+      updated.willing_to_relocate ?? '',
+      updated.work_mode_preference ?? '',
+      updated.highest_education ?? '',
+      JSON.stringify(updated.custom_fields ?? [])
+    );
+
+    return vaultQueries.getMetadata();
+  },
+};
+
+// ─── Q&A Entry queries ───────────────────────────────────────────────────────
+
+export const qaQueries = {
+  list(category?: string): QAEntry[] {
+    const db = getDb();
+    let rows: QAEntryRow[];
+    if (category && category !== 'All') {
+      rows = db.prepare(`SELECT * FROM qa_entries WHERE category=? ORDER BY updated_at DESC`).all(category) as unknown as QAEntryRow[];
+    } else {
+      rows = db.prepare(`SELECT * FROM qa_entries ORDER BY updated_at DESC`).all() as unknown as QAEntryRow[];
+    }
+    return rows.map(parseQAEntry);
+  },
+
+  get(id: string): QAEntry | undefined {
+    const row = getDb().prepare(`SELECT * FROM qa_entries WHERE id=?`).get(id) as unknown as QAEntryRow | undefined;
+    return row ? parseQAEntry(row) : undefined;
+  },
+
+  create(data: {
+    question: string;
+    answer: string;
+    category?: string;
+    tags?: string[];
+    embedding?: number[] | null;
+    embedding_model?: string;
+  }): string {
+    const id = crypto.randomUUID();
+    getDb().prepare(`
+      INSERT INTO qa_entries (id, question, answer, category, tags, embedding, embedding_model)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      id,
+      data.question,
+      data.answer,
+      data.category ?? 'General',
+      JSON.stringify(data.tags ?? []),
+      data.embedding ? JSON.stringify(data.embedding) : null,
+      data.embedding_model ?? 'multilingual'
+    );
+    return id;
+  },
+
+  update(id: string, data: Partial<QAEntry>): void {
+    const existing = qaQueries.get(id);
+    if (!existing) return;
+
+    const question = data.question !== undefined ? data.question : existing.question;
+    const answer = data.answer !== undefined ? data.answer : existing.answer;
+    const category = data.category !== undefined ? data.category : existing.category;
+    const tags = data.tags !== undefined ? JSON.stringify(data.tags) : JSON.stringify(existing.tags);
+    const embedding = data.embedding !== undefined ? (data.embedding ? JSON.stringify(data.embedding) : null) : (existing.embedding ? JSON.stringify(existing.embedding) : null);
+    const embedding_model = data.embedding_model !== undefined ? data.embedding_model : existing.embedding_model;
+
+    getDb().prepare(`
+      UPDATE qa_entries
+      SET question=?, answer=?, category=?, tags=?, embedding=?, embedding_model=?, updated_at=datetime('now')
+      WHERE id=?
+    `).run(question, answer, category, tags, embedding, embedding_model, id);
+  },
+
+  delete(id: string): void {
+    getDb().prepare(`DELETE FROM qa_entries WHERE id=?`).run(id);
+  },
+
+  updateEmbedding(id: string, embedding: number[], model: string = 'multilingual'): void {
+    getDb().prepare(`
+      UPDATE qa_entries SET embedding=?, embedding_model=?, updated_at=datetime('now') WHERE id=?
+    `).run(JSON.stringify(embedding), model, id);
+  },
+
+  getAllForSearch(): QAEntry[] {
+    const rows = getDb().prepare(`SELECT * FROM qa_entries`).all() as unknown as QAEntryRow[];
+    return rows.map(parseQAEntry);
+  },
+};
+
 

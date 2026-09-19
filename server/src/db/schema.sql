@@ -93,3 +93,43 @@ CREATE TABLE IF NOT EXISTS exports (
   file_size   INTEGER,
   created_at  TEXT DEFAULT (datetime('now'))
 );
+
+CREATE TABLE IF NOT EXISTS job_metadata (
+  id                   TEXT PRIMARY KEY DEFAULT 'default',
+  full_name            TEXT DEFAULT '',
+  preferred_name       TEXT DEFAULT '',
+  email                TEXT DEFAULT '',
+  phone                TEXT DEFAULT '',
+  location             TEXT DEFAULT '',
+  linkedin_url         TEXT DEFAULT '',
+  github_url           TEXT DEFAULT '',
+  portfolio_url        TEXT DEFAULT '',
+  current_company      TEXT DEFAULT '',
+  current_title        TEXT DEFAULT '',
+  experience_years     TEXT DEFAULT '',
+  notice_period        TEXT DEFAULT '',
+  work_authorization   TEXT DEFAULT '',
+  salary_current       TEXT DEFAULT '',
+  salary_expected      TEXT DEFAULT '',
+  willing_to_relocate  TEXT DEFAULT '',
+  work_mode_preference TEXT DEFAULT '',
+  highest_education    TEXT DEFAULT '',
+  custom_fields        TEXT DEFAULT '[]',
+  updated_at           TEXT DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS qa_entries (
+  id              TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+  question        TEXT NOT NULL,
+  answer          TEXT NOT NULL,
+  category        TEXT DEFAULT 'General',
+  tags            TEXT DEFAULT '[]',
+  embedding       TEXT,
+  embedding_model TEXT DEFAULT 'multilingual',
+  created_at      TEXT DEFAULT (datetime('now')),
+  updated_at      TEXT DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_qa_entries_category ON qa_entries(category);
+CREATE INDEX IF NOT EXISTS idx_qa_entries_created ON qa_entries(created_at);
+

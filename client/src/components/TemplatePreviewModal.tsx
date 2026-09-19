@@ -156,14 +156,17 @@ export default function TemplatePreviewModal({
   // Sync initial template when opened
   useEffect(() => {
     if (isOpen) {
-      setActiveTemplate(initialTemplateId);
-      setIsLoading(true);
-      // Auto-fit zoom on smaller screens
-      if (typeof window !== 'undefined' && window.innerWidth < 1200) {
-        setZoom(70);
-      } else {
-        setZoom(85);
-      }
+      const t = setTimeout(() => {
+        setActiveTemplate(initialTemplateId);
+        setIsLoading(true);
+        // Auto-fit zoom on smaller screens
+        if (typeof window !== 'undefined' && window.innerWidth < 1200) {
+          setZoom(70);
+        } else {
+          setZoom(85);
+        }
+      }, 0);
+      return () => clearTimeout(t);
     }
   }, [isOpen, initialTemplateId]);
 

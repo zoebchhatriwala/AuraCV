@@ -5,19 +5,18 @@ import { useAppStore } from '../store';
 import {
   Plus, FileText, Copy, Trash2, Pencil, Clock,
   Upload, Layers, CheckCircle2, Eye, X, Loader2,
-  ShieldCheck, Zap, Database, Check,
+  ShieldCheck, Zap,
 } from 'lucide-react';
-import { exportApi } from '../api';
 import TemplatePreviewModal from '../components/TemplatePreviewModal';
 import ConfirmModal from '../components/ConfirmModal';
+
 
 export default function Dashboard() {
   const { resumes, loadingResumes, createResume, deleteResume, duplicateResume, updateResume } = useAppStore();
   const navigate = useNavigate();
   const [creating, setCreating] = useState(false);
-  const [exportingDb, setExportingDb] = useState(false);
-  const [exportDbSuccess, setExportDbSuccess] = useState(false);
   const [newName, setNewName] = useState('');
+
   const [selectedTemplate, setSelectedTemplate] = useState('modern');
   const [showCreate, setShowCreate] = useState(false);
   const [previewTemplateId, setPreviewTemplateId] = useState<string | null>(null);
@@ -54,22 +53,8 @@ export default function Dashboard() {
     }
   };
 
-  const handleExportDb = async () => {
-    setExportingDb(true);
-    setExportDbSuccess(false);
-    try {
-      await exportApi.downloadDb('auracv.db');
-      setExportDbSuccess(true);
-      setTimeout(() => setExportDbSuccess(false), 3000);
-    } catch (e) {
-      console.error('Database export failed:', e);
-      alert(`Export failed: ${e instanceof Error ? e.message : 'Unknown error'}`);
-    } finally {
-      setExportingDb(false);
-    }
-  };
-
   const filteredResumes = resumes.filter(r =>
+
     r.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     (r.meta?.target_role && r.meta.target_role.toLowerCase().includes(searchQuery.toLowerCase()))
   );
@@ -119,25 +104,6 @@ export default function Dashboard() {
               </div>
 
               <div className="flex items-center gap-2 w-full sm:w-auto">
-                <button
-                  onClick={handleExportDb}
-                  disabled={exportingDb}
-                  className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl text-sm font-medium border transition-all bg-[var(--bg-surface)] hover:bg-slate-100 dark:hover:bg-neutral-800 cursor-pointer disabled:opacity-50"
-                  style={{
-                    borderColor: 'var(--border-default)',
-                    color: 'var(--text-primary)',
-                  }}
-                  title="Export complete SQLite database (.db)"
-                >
-                  {exportingDb ? (
-                    <Loader2 className="w-4 h-4 animate-spin text-emerald-600 dark:text-emerald-400" />
-                  ) : exportDbSuccess ? (
-                    <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                  ) : (
-                    <Database className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                  )}
-                  <span>{exportDbSuccess ? 'Exported!' : 'Export DB'}</span>
-                </button>
 
                 <button
                   onClick={() => navigate('/import')}
@@ -398,26 +364,6 @@ export default function Dashboard() {
               >
                 <Layers className="w-4 h-4 text-emerald-500" />
                 Browse Templates
-              </button>
-
-              <button
-                onClick={handleExportDb}
-                disabled={exportingDb}
-                className="inline-flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-medium border transition-all bg-[var(--bg-surface)] hover:bg-slate-100 dark:hover:bg-neutral-700 cursor-pointer disabled:opacity-50"
-                style={{
-                  borderColor: 'var(--border-default)',
-                  color: 'var(--text-primary)',
-                }}
-                title="Export complete SQLite database (.db)"
-              >
-                {exportingDb ? (
-                  <Loader2 className="w-4 h-4 animate-spin text-emerald-500" />
-                ) : exportDbSuccess ? (
-                  <Check className="w-4 h-4 text-emerald-500" />
-                ) : (
-                  <Database className="w-4 h-4 text-emerald-500" />
-                )}
-                <span>{exportDbSuccess ? 'Database Exported!' : 'Export DB'}</span>
               </button>
             </div>
 

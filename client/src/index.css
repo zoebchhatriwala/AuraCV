@@ -207,3 +207,11 @@ body {
   stroke-dasharray: var(--stroke-dash) 251.327;
   transition: stroke-dasharray 0.8s cubic-bezier(0.16, 1, 0.3, 1);
 }
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

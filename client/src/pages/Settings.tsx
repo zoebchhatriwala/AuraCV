@@ -61,12 +61,21 @@ export default function Settings() {
   };
 
   useEffect(() => {
-    fetchDbStats();
+    let ignore = false;
+    exportApi.dbStats().then(stats => {
+      if (!ignore) setDbStats(stats);
+    }).catch(e => {
+      console.warn("Failed to load DB stats:", e);
+    });
+    return () => { ignore = true; };
   }, []);
+
+  const [exportDbError, setExportDbError] = useState<string | null>(null);
 
   const handleExportDb = async () => {
     setExportingDb(true);
     setExportDbSuccess(false);
+    setExportDbError(null);
     try {
       await exportApi.downloadDb("auracv.db");
       setExportDbSuccess(true);
@@ -74,8 +83,8 @@ export default function Settings() {
       fetchDbStats();
     } catch (e) {
       console.error("Database export failed:", e);
-      alert(
-        `Export failed: ${e instanceof Error ? e.message : "Unknown error"}`,
+      setExportDbError(
+        `Export failed: ${e instanceof Error ? e.message : "Unknown error"}`
       );
     } finally {
       setExportingDb(false);
@@ -585,6 +594,19 @@ export default function Settings() {
               )}
             </button>
           </div>
+
+          {exportDbError && (
+            <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 text-xs flex items-center justify-between">
+              <span>{exportDbError}</span>
+              <button
+                type="button"
+                onClick={() => setExportDbError(null)}
+                className="text-xs font-semibold hover:underline ml-2"
+              >
+                Dismiss
+              </button>
+            </div>
+          )}
 
           {/* Stats grid */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">

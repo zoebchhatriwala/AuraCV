@@ -20,6 +20,8 @@ import {
   CloudOff,
   Pencil,
 } from "lucide-react";
+
+
 import ExportModal from "../components/ExportModal";
 import SectionEditor from "../components/SectionEditor";
 import TemplatePreviewModal from "../components/TemplatePreviewModal";
@@ -559,6 +561,7 @@ export default function Editor() {
 
           <button
             onClick={() => setShowExport(true)}
+
             className="btn-primary inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold cursor-pointer"
           >
             <Download className="w-3.5 h-3.5" /> Export CV

@@ -7,6 +7,7 @@ import aiRoutes from './routes/ai';
 import settingsRoutes from './routes/settings';
 import exportRoutes from './routes/export';
 import importRoutes from './routes/import';
+import vaultRoutes from './routes/vault';
 
 const app = express();
 const PORT = process.env.PORT ?? 3847;
@@ -31,6 +32,8 @@ app.use('/api/ai',       aiRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/export',   exportRoutes);
 app.use('/api/import',   importRoutes);
+app.use('/api/vault',    vaultRoutes);
+
 
 // ─── Templates list ───────────────────────────────────────────────────────────
 app.get('/api/templates', (_req, res) => {

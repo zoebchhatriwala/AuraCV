@@ -275,3 +275,63 @@ export interface AISessionRow {
   accepted: number;
   created_at: string;
 }
+
+// ─── Job Application Vault & Q&A types ───────────────────────────────────────
+
+export interface CustomField {
+  id: string;
+  label: string;
+  value: string;
+  category?: string;
+}
+
+export interface JobMetadata {
+  id: string;
+  full_name: string;
+  preferred_name: string;
+  email: string;
+  phone: string;
+  location: string;
+  linkedin_url: string;
+  github_url: string;
+  portfolio_url: string;
+  current_company: string;
+  current_title: string;
+  experience_years: string;
+  notice_period: string;
+  work_authorization: string;
+  salary_current: string;
+  salary_expected: string;
+  willing_to_relocate: string;
+  work_mode_preference: string;
+  highest_education: string;
+  custom_fields: CustomField[];
+  updated_at: string;
+}
+
+export interface JobMetadataRow extends Omit<JobMetadata, 'custom_fields'> {
+  custom_fields: string; // JSON string
+}
+
+export interface QAEntry {
+  id: string;
+  question: string;
+  answer: string;
+  category: string;
+  tags: string[];
+  embedding: number[] | null;
+  embedding_model: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface QAEntryRow extends Omit<QAEntry, 'tags' | 'embedding'> {
+  tags: string; // JSON string
+  embedding: string | null; // JSON string
+}
+
+export interface QASearchResult extends QAEntry {
+  similarity: number;
+  match_confidence: 'high' | 'medium' | 'low';
+}
+

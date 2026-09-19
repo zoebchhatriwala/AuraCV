@@ -722,6 +722,142 @@ router.post('/:id/json', (req: Request, res: Response) => {
   }
 });
 
+// POST /api/export/:id/markdown — returns markdown string and allows file download
+router.post('/:id/markdown', (req: Request, res: Response) => {
+  try {
+    const id = String(req.params.id);
+    const resume = resumeQueries.get(id);
+    if (!resume) return void res.status(404).json({ error: 'Not found' });
+    const sections = sectionQueries.list(id);
+    const markdown = generateResumeMarkdown(resume, sections);
+
+    const { download } = req.body as { download?: boolean };
+    if (download) {
+      const filename = `${resume.name.replace(/[^a-z0-9]/gi, '_')}_cv.md`;
+      res.setHeader('Content-Type', 'text/markdown; charset=utf-8');
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+      return void res.send(markdown);
+    }
+
+    res.json({ ok: true, markdown });
+  } catch (e) {
+    console.error('Markdown Export Error:', e);
+    res.status(500).json({ error: (e as Error).message });
+  }
+});
+
+function generateResumeMarkdown(resume: any, sections: any[]): string {
+  const visible = sections.filter(s => s.is_visible !== 0);
+  const parts: string[] = [];
+
+  const headerSec = visible.find(s => s.section_type === 'header');
+  if (headerSec && headerSec.content.length > 0) {
+    const h = headerSec.content[0] as Record<string, string>;
+    parts.push(`# ${h.name || resume.name}`);
+    if (h.role || resume.meta?.target_role) {
+      parts.push(`**${h.role || resume.meta?.target_role}**\n`);
+    }
+    const contacts: string[] = [];
+    if (h.email) contacts.push(`Email: [${h.email}](mailto:${h.email})`);
+    if (h.phone) contacts.push(`Phone: ${h.phone}`);
+    if (h.location) contacts.push(`Location: ${h.location}`);
+    if (h.linkedin) contacts.push(`[LinkedIn](${h.linkedin})`);
+    if (h.github) contacts.push(`[GitHub](${h.github})`);
+    if (h.website) contacts.push(`[Portfolio](${h.website})`);
+    if (contacts.length > 0) {
+      parts.push(contacts.join(' | '));
+    }
+    parts.push('\n---');
+  } else {
+    parts.push(`# ${resume.name}\n\n---`);
+  }
+
+  for (const s of visible) {
+    if (s.section_type === 'header') continue;
+    parts.push(`\n## ${s.title}\n`);
+
+    if (s.section_type === 'summary') {
+      const text = (s.content[0] as Record<string, string>)?.text || '';
+      if (text) parts.push(text);
+    } else if (s.section_type === 'experience') {
+      for (const item of s.content) {
+        const exp = item as Record<string, any>;
+        const dates = [exp.start_date, exp.end_date].filter(Boolean).join(' – ');
+        parts.push(`### ${exp.role || ''} ${exp.company ? `| ${exp.company}` : ''} ${dates ? `(${dates})` : ''}`);
+        if (exp.location) parts.push(`*${exp.location}*`);
+        if (Array.isArray(exp.bullets)) {
+          for (const b of exp.bullets) {
+            if (b) parts.push(`- ${b}`);
+          }
+        }
+        parts.push('');
+      }
+    } else if (s.section_type === 'education') {
+      for (const item of s.content) {
+        const edu = item as Record<string, any>;
+        const dates = [edu.start_date, edu.end_date].filter(Boolean).join(' – ');
+        const degree = [edu.degree, edu.field].filter(Boolean).join(' in ');
+        parts.push(`### ${edu.institution || ''} ${degree ? `— ${degree}` : ''} ${dates ? `(${dates})` : ''}`);
+        if (edu.gpa) parts.push(`*GPA: ${edu.gpa}*`);
+        if (Array.isArray(edu.bullets)) {
+          for (const b of edu.bullets) {
+            if (b) parts.push(`- ${b}`);
+          }
+        }
+        parts.push('');
+      }
+    } else if (s.section_type === 'skills') {
+      for (const item of s.content) {
+        const sk = item as Record<string, any>;
+        const items = Array.isArray(sk.items) ? sk.items.join(', ') : '';
+        if (sk.category && items) {
+          parts.push(`- **${sk.category}:** ${items}`);
+        } else if (items) {
+          parts.push(`- ${items}`);
+        }
+      }
+    } else if (s.section_type === 'projects') {
+      for (const item of s.content) {
+        const p = item as Record<string, any>;
+        parts.push(`### ${p.name || ''} ${p.url ? `[Link](${p.url})` : ''}`);
+        if (Array.isArray(p.tech) && p.tech.length > 0) {
+          parts.push(`*Technologies: ${p.tech.join(', ')}*`);
+        }
+        if (p.description) parts.push(p.description);
+        if (Array.isArray(p.bullets)) {
+          for (const b of p.bullets) {
+            if (b) parts.push(`- ${b}`);
+          }
+        }
+        parts.push('');
+      }
+    } else if (s.section_type === 'certifications') {
+      for (const item of s.content) {
+        const cert = item as Record<string, any>;
+        parts.push(`- **${cert.name || ''}** ${cert.issuer ? `— ${cert.issuer}` : ''} ${cert.date ? `(${cert.date})` : ''}`);
+      }
+    } else {
+      for (const item of s.content) {
+        if (typeof item === 'string') {
+          parts.push(item);
+        } else {
+          const c = item as Record<string, any>;
+          if (c.title || c.heading) parts.push(`### ${c.title || c.heading}`);
+          if (c.description || c.text) parts.push(c.description || c.text);
+          if (Array.isArray(c.bullets)) {
+            for (const b of c.bullets) {
+              if (b) parts.push(`- ${b}`);
+            }
+          }
+        }
+      }
+    }
+  }
+
+  return parts.join('\n');
+}
+
+
 // ─── Template renderer ────────────────────────────────────────────────────────
 
 function renderTemplate(

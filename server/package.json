@@ -7,6 +7,9 @@
     "start": "node dist/index.js"
   },
   "dependencies": {
+    "@huggingface/transformers": "^4.3.0",
+    "@img/sharp-win32-x64": "^0.35.4",
+    "@xenova/transformers": "^2.17.2",
     "better-sqlite3": "^11.10.0",
     "cors": "^2.8.5",
     "docx": "^9.0.1",
