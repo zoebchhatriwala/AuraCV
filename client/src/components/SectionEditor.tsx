@@ -8,14 +8,6 @@ import type { DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
-function parseDate(dateStr: string | undefined): number {
-  if (!dateStr) return 0;
-  const lower = dateStr.toLowerCase().trim();
-  if (lower === 'present' || lower === 'current' || lower === 'now') return Date.now();
-  const parsed = Date.parse(dateStr);
-  if (!isNaN(parsed)) return parsed;
-  return 0;
-}
 
 interface Props {
   section: Section;
@@ -241,6 +233,214 @@ function Field({
   );
 }
 
+function getEntryKey(entry: Record<string, unknown>, idx: number, prefix: string): string {
+  if (!entry._id) {
+    entry._id = `${prefix}_${idx}_${Math.random().toString(36).slice(2, 9)}`;
+  }
+  return entry._id as string;
+}
+
+function SkillItemEditor({
+  entry,
+  idx,
+  total,
+  onUpdate,
+  onRemove,
+  onMoveUp,
+  onMoveDown,
+}: {
+  entry: Record<string, unknown>;
+  idx: number;
+  total: number;
+  onUpdate: (patch: Record<string, unknown>) => void;
+  onRemove: () => void;
+  onMoveUp: () => void;
+  onMoveDown: () => void;
+}) {
+  const getInitialSkills = () => {
+    if (typeof entry._rawItems === 'string') return entry._rawItems;
+    if (Array.isArray(entry.items)) return (entry.items as string[]).join(', ');
+    return String(entry.items || '');
+  };
+
+  const [skillsText, setSkillsText] = useState(getInitialSkills);
+  const [prevItems, setPrevItems] = useState(entry.items);
+
+  if (entry.items !== prevItems) {
+    setPrevItems(entry.items);
+    const rawProps = Array.isArray(entry.items) ? (entry.items as string[]).join(', ') : String(entry.items || '');
+    const currentParsed = skillsText.split(',').map(s => s.trim()).filter(Boolean);
+    const incomingParsed = Array.isArray(entry.items) ? entry.items : [];
+    if (JSON.stringify(currentParsed) !== JSON.stringify(incomingParsed)) {
+      setSkillsText(typeof entry._rawItems === 'string' ? entry._rawItems : rawProps);
+    }
+  }
+
+  const handleSkillsChange = (v: string) => {
+    setSkillsText(v);
+    const arr = v.split(',').map(s => s.trim()).filter(Boolean);
+    onUpdate({ items: arr, _rawItems: v });
+  };
+
+  return (
+    <div
+      className="p-4 rounded-2xl border space-y-3 mb-3 transition-all"
+      style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-subtle)' }}
+    >
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">
+            Category #{idx + 1}
+          </span>
+          <div className="flex items-center gap-0.5">
+            <button
+              type="button"
+              disabled={idx === 0}
+              onClick={onMoveUp}
+              className="p-1 rounded text-slate-400 hover:text-slate-900 dark:hover:text-white disabled:opacity-20 cursor-pointer transition-colors"
+              title="Move category up"
+            >
+              <ChevronUp className="w-3.5 h-3.5" />
+            </button>
+            <button
+              type="button"
+              disabled={idx === total - 1}
+              onClick={onMoveDown}
+              className="p-1 rounded text-slate-400 hover:text-slate-900 dark:hover:text-white disabled:opacity-20 cursor-pointer transition-colors"
+              title="Move category down"
+            >
+              <ChevronDown className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={onRemove}
+          className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-500/10 transition-colors cursor-pointer"
+          title="Delete category"
+        >
+          <Trash2 className="w-3.5 h-3.5" />
+        </button>
+      </div>
+      <Field
+        label="Category Name"
+        value={(entry.category as string) ?? ''}
+        onChange={v => onUpdate({ category: v })}
+        placeholder="Languages, Frameworks, Cloud, etc."
+      />
+      <Field
+        label="Skills (comma separated)"
+        value={skillsText}
+        onChange={handleSkillsChange}
+        placeholder="TypeScript, React, Go, Docker, AWS, PostgreSQL"
+      />
+    </div>
+  );
+}
+
+function ProjectItemEditor({
+  entry,
+  idx,
+  total,
+  onUpdate,
+  onRemove,
+  onMoveUp,
+  onMoveDown,
+}: {
+  entry: Record<string, unknown>;
+  idx: number;
+  total: number;
+  onUpdate: (patch: Record<string, unknown>) => void;
+  onRemove: () => void;
+  onMoveUp: () => void;
+  onMoveDown: () => void;
+}) {
+  const getInitialTech = () => {
+    if (typeof entry._rawTech === 'string') return entry._rawTech;
+    if (Array.isArray(entry.tech)) return (entry.tech as string[]).join(', ');
+    return String(entry.tech || '');
+  };
+
+  const [techText, setTechText] = useState(getInitialTech);
+  const [prevTech, setPrevTech] = useState(entry.tech);
+
+  if (entry.tech !== prevTech) {
+    setPrevTech(entry.tech);
+    const rawProps = Array.isArray(entry.tech) ? (entry.tech as string[]).join(', ') : String(entry.tech || '');
+    const currentParsed = techText.split(',').map(s => s.trim()).filter(Boolean);
+    const incomingParsed = Array.isArray(entry.tech) ? entry.tech : [];
+    if (JSON.stringify(currentParsed) !== JSON.stringify(incomingParsed)) {
+      setTechText(typeof entry._rawTech === 'string' ? entry._rawTech : rawProps);
+    }
+  }
+
+  const handleTechChange = (v: string) => {
+    setTechText(v);
+    const arr = v.split(',').map(s => s.trim()).filter(Boolean);
+    onUpdate({ tech: arr, _rawTech: v });
+  };
+
+  return (
+    <div
+      className="p-4 rounded-2xl border space-y-3 mb-3 transition-all"
+      style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-subtle)' }}
+    >
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-bold uppercase tracking-wider text-amber-500">
+            Project #{idx + 1}
+          </span>
+          <div className="flex items-center gap-0.5">
+            <button
+              type="button"
+              disabled={idx === 0}
+              onClick={onMoveUp}
+              className="p-1 rounded text-slate-400 hover:text-slate-900 dark:hover:text-white disabled:opacity-20 cursor-pointer transition-colors"
+              title="Move project up"
+            >
+              <ChevronUp className="w-3.5 h-3.5" />
+            </button>
+            <button
+              type="button"
+              disabled={idx === total - 1}
+              onClick={onMoveDown}
+              className="p-1 rounded text-slate-400 hover:text-slate-900 dark:hover:text-white disabled:opacity-20 cursor-pointer transition-colors"
+              title="Move project down"
+            >
+              <ChevronDown className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={onRemove}
+          className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-500/10 transition-colors cursor-pointer"
+          title="Delete project"
+        >
+          <Trash2 className="w-3.5 h-3.5" />
+        </button>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <Field label="Project Name" value={(entry.name as string) ?? ''} onChange={v => onUpdate({ name: v })} placeholder="AuraCV" />
+        <Field label="URL / Repository" value={(entry.url as string) ?? ''} onChange={v => onUpdate({ url: v })} placeholder="github.com/org/project" />
+      </div>
+      <Field
+        label="Technologies Used (comma separated)"
+        value={techText}
+        onChange={handleTechChange}
+        placeholder="Next.js, Tailwind, SQLite, WebAssembly"
+      />
+      <Field
+        label="Project Description"
+        value={(entry.description as string) ?? ''}
+        onChange={v => onUpdate({ description: v })}
+        multiline
+        placeholder="Engineered high-performance offline resume system with instant live previews…"
+      />
+    </div>
+  );
+}
+
 export default function SectionEditor({ section, resumeId, onUpdate, onOpenCopilotWithBullet }: Props) {
   const { settings } = useAppStore();
   const autoSave = settings.auto_save !== 'false';
@@ -248,10 +448,11 @@ export default function SectionEditor({ section, resumeId, onUpdate, onOpenCopil
   const [isDirty, setIsDirty] = useState(false);
   const [rewriting, setRewriting] = useState<number | null>(null);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  const containerRef = useRef<HTMLDivElement>(null);
   const updateTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isTyping = useRef(false);
-  // Prevents the date-sort useEffect from reordering a freshly-added blank entry
   const addingEntry = useRef(false);
+  const prevSectionId = useRef(section.id);
 
   const localContentRef = useRef(localContent);
   const isDirtyRef = useRef(isDirty);
@@ -271,11 +472,18 @@ export default function SectionEditor({ section, resumeId, onUpdate, onOpenCopil
   };
   const isExpanded = (idx: number, type: string) => expanded[`${type}-${idx}`] ?? true;
 
+  const stripForSave = (arr: unknown[]) =>
+    (arr as Record<string, unknown>[]).map(item => {
+      if (!item || typeof item !== 'object') return item;
+      const { _rawItems, _rawTech, ...rest } = item;
+      return rest;
+    });
+
   const handleSaveNow = () => {
     if (updateTimeout.current) clearTimeout(updateTimeout.current);
     isTyping.current = false;
     setIsDirty(false);
-    onUpdate({ ...section, content: localContent });
+    onUpdate({ ...section, content: stripForSave(localContent) });
   };
 
   useEffect(() => {
@@ -293,47 +501,62 @@ export default function SectionEditor({ section, resumeId, onUpdate, onOpenCopil
     return () => {
       if (updateTimeout.current) clearTimeout(updateTimeout.current);
       if (isDirtyRef.current) {
-        onUpdateRef.current({ ...sectionRef.current, content: localContentRef.current });
+        onUpdateRef.current({ ...sectionRef.current, content: stripForSave(localContentRef.current) });
       }
     };
   }, []);
 
   useEffect(() => {
-    if (!isTyping.current && !addingEntry.current && !isDirty) {
-      let incoming = [...(section.content || [])] as Record<string, unknown>[];
-      // Only sort when every entry has at least one date populated — avoid
-      // sending a freshly-added blank entry to the bottom (timestamp 0).
-      const hasBlankDates = incoming.some(
-        a => !a.start_date && !a.end_date
-      );
-      if (
-        !hasBlankDates &&
-        (section.section_type === 'experience' || section.section_type === 'education')
-      ) {
-        incoming.sort((a, b) => {
-          const aEnd = parseDate(a.end_date as string);
-          const bEnd = parseDate(b.end_date as string);
-          if (aEnd !== bEnd) return bEnd - aEnd;
-          const aStart = parseDate(a.start_date as string);
-          const bStart = parseDate(b.start_date as string);
-          return bStart - aStart;
-        });
-      }
-      setLocalContent(incoming);
-    }
-    addingEntry.current = false;
-  }, [section.content, section.section_type, isDirty]);
+    const isNewSection = prevSectionId.current !== section.id;
+    prevSectionId.current = section.id;
 
-  const updateContent = (newContent: unknown[]) => {
+    if (isNewSection) {
+      setLocalContent((section.content || []) as Record<string, unknown>[]);
+      setIsDirty(false);
+      isTyping.current = false;
+      return;
+    }
+
+    // Never overwrite while the user is actively focused on an input inside this editor
+    if (containerRef.current?.contains(document.activeElement)) {
+      return;
+    }
+
+    // Strip internal helper keys (_id, _rawItems, _rawTech, _bulletIds) before comparing
+    const stripInternal = (arr: unknown[]) =>
+      (arr || []).map(item => {
+        if (!item || typeof item !== 'object') return item;
+        const { _id, _rawItems, _rawTech, _bulletIds, ...rest } = item as Record<string, unknown>;
+        return rest;
+      });
+
+    const incomingStr = JSON.stringify(stripInternal(section.content || []));
+    const localStr = JSON.stringify(stripInternal(localContentRef.current));
+
+    if (incomingStr === localStr) {
+      return;
+    }
+
+    if (!isDirtyRef.current) {
+      setLocalContent((section.content || []) as Record<string, unknown>[]);
+    }
+  }, [section.id, section.content]);
+
+  const updateContent = (newContent: unknown[], immediate = false) => {
     setLocalContent(newContent as Record<string, unknown>[]);
     setIsDirty(true);
     isTyping.current = true;
     if (updateTimeout.current) clearTimeout(updateTimeout.current);
-    if (autoSave) {
+
+    if (immediate) {
+      isTyping.current = false;
+      setIsDirty(false);
+      onUpdate({ ...section, content: stripForSave(newContent) });
+    } else if (autoSave) {
       updateTimeout.current = setTimeout(() => {
         isTyping.current = false;
         setIsDirty(false);
-        onUpdate({ ...section, content: newContent });
+        onUpdate({ ...section, content: stripForSave(newContent) });
       }, 700);
     }
   };
@@ -350,7 +573,16 @@ export default function SectionEditor({ section, resumeId, onUpdate, onOpenCopil
   };
 
   const removeEntry = (idx: number) => {
-    updateContent(localContent.filter((_, i) => i !== idx));
+    updateContent(localContent.filter((_, i) => i !== idx), true);
+  };
+
+  const moveEntry = (idx: number, direction: 'up' | 'down') => {
+    const targetIdx = direction === 'up' ? idx - 1 : idx + 1;
+    if (targetIdx < 0 || targetIdx >= localContent.length) return;
+    const next = [...localContent];
+    const [moved] = next.splice(idx, 1);
+    next.splice(targetIdx, 0, moved);
+    updateContent(next, true);
   };
 
   const rewriteBullet = async (entryIdx: number, bulletIdx: number, bulletText: string) => {
@@ -464,7 +696,7 @@ export default function SectionEditor({ section, resumeId, onUpdate, onOpenCopil
 
     return (
       <div
-        key={idx}
+        key={getEntryKey(entry, idx, 'exp')}
         className="p-4 rounded-2xl border mb-3 transition-all"
         style={{
           backgroundColor: 'var(--bg-surface)',
@@ -480,6 +712,26 @@ export default function SectionEditor({ section, resumeId, onUpdate, onOpenCopil
               {expanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
               Position #{idx + 1}
             </span>
+            <div className="flex items-center gap-0.5" onClick={e => e.stopPropagation()}>
+              <button
+                type="button"
+                disabled={idx === 0}
+                onClick={() => moveEntry(idx, 'up')}
+                className="p-1 rounded text-slate-400 hover:text-slate-900 dark:hover:text-white disabled:opacity-20 cursor-pointer transition-colors"
+                title="Move position up"
+              >
+                <ChevronUp className="w-3.5 h-3.5" />
+              </button>
+              <button
+                type="button"
+                disabled={idx === localContent.length - 1}
+                onClick={() => moveEntry(idx, 'down')}
+                className="p-1 rounded text-slate-400 hover:text-slate-900 dark:hover:text-white disabled:opacity-20 cursor-pointer transition-colors"
+                title="Move position down"
+              >
+                <ChevronDown className="w-3.5 h-3.5" />
+              </button>
+            </div>
             {!expanded && Boolean(entry.role || entry.company) && (
               <span className="text-sm text-slate-500 dark:text-slate-400 truncate max-w-[200px] sm:max-w-[300px]">
                 {String(entry.role || '')} {entry.role && entry.company ? 'at' : ''} {String(entry.company || '')}
@@ -489,7 +741,7 @@ export default function SectionEditor({ section, resumeId, onUpdate, onOpenCopil
           <button
             type="button"
             onClick={(e) => { e.stopPropagation(); removeEntry(idx); }}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-500/10 transition-colors"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-500/10 transition-colors cursor-pointer"
             title="Remove entry"
           >
             <Trash2 className="w-3.5 h-3.5" />
@@ -559,16 +811,39 @@ export default function SectionEditor({ section, resumeId, onUpdate, onOpenCopil
 
   const renderEducation = (entry: Record<string, unknown>, idx: number) => (
     <div
-      key={idx}
+      key={getEntryKey(entry, idx, 'edu')}
       className="p-4 rounded-2xl border space-y-3 mb-3"
       style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-subtle)' }}
     >
       <div className="flex items-center justify-between">
-        <span className="text-xs font-bold uppercase tracking-wider text-emerald-500">Degree #{idx + 1}</span>
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-bold uppercase tracking-wider text-emerald-500">Degree #{idx + 1}</span>
+          <div className="flex items-center gap-0.5">
+            <button
+              type="button"
+              disabled={idx === 0}
+              onClick={() => moveEntry(idx, 'up')}
+              className="p-1 rounded text-slate-400 hover:text-slate-900 dark:hover:text-white disabled:opacity-20 cursor-pointer transition-colors"
+              title="Move degree up"
+            >
+              <ChevronUp className="w-3.5 h-3.5" />
+            </button>
+            <button
+              type="button"
+              disabled={idx === localContent.length - 1}
+              onClick={() => moveEntry(idx, 'down')}
+              className="p-1 rounded text-slate-400 hover:text-slate-900 dark:hover:text-white disabled:opacity-20 cursor-pointer transition-colors"
+              title="Move degree down"
+            >
+              <ChevronDown className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
         <button
           type="button"
           onClick={() => removeEntry(idx)}
-          className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-500/10 transition-colors"
+          className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-500/10 transition-colors cursor-pointer"
+          title="Delete degree"
         >
           <Trash2 className="w-3.5 h-3.5" />
         </button>
@@ -584,94 +859,41 @@ export default function SectionEditor({ section, resumeId, onUpdate, onOpenCopil
     </div>
   );
 
-  const renderSkills = (entry: Record<string, unknown>, idx: number) => {
-    const rawItems = entry.items;
-    const itemsStr = Array.isArray(rawItems) ? rawItems.join(', ') : (rawItems as string) ?? '';
-    return (
-      <div
-        key={idx}
-        className="p-4 rounded-2xl border space-y-3 mb-3"
-        style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-subtle)' }}
-      >
-        <div className="flex items-center justify-between">
-          <span className="text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">Category #{idx + 1}</span>
-          <button
-            type="button"
-            onClick={() => removeEntry(idx)}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-500/10 transition-colors cursor-pointer"
-          >
-            <Trash2 className="w-3.5 h-3.5" />
-          </button>
-        </div>
-        <Field label="Category Name" value={(entry.category as string) ?? ''} onChange={v => updateEntry(idx, { category: v })} placeholder="Languages, Frameworks, Cloud, etc." />
-        <Field
-          label="Skills (comma separated)"
-          value={itemsStr}
-          onChange={v => {
-            const arr = v.split(',').map(s => s.trim()).filter(Boolean);
-            updateEntry(idx, { items: arr });
-          }}
-          placeholder="TypeScript, React, Go, Docker, AWS, PostgreSQL"
-        />
-      </div>
-    );
-  };
-
-  const renderProjects = (entry: Record<string, unknown>, idx: number) => {
-    const rawTech = entry.tech;
-    const techStr = Array.isArray(rawTech) ? rawTech.join(', ') : (rawTech as string) ?? '';
-    return (
-      <div
-        key={idx}
-        className="p-4 rounded-2xl border space-y-3 mb-3"
-        style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-subtle)' }}
-      >
-        <div className="flex items-center justify-between">
-          <span className="text-xs font-bold uppercase tracking-wider text-amber-500">Project #{idx + 1}</span>
-          <button
-            type="button"
-            onClick={() => removeEntry(idx)}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-500/10 transition-colors"
-          >
-            <Trash2 className="w-3.5 h-3.5" />
-          </button>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <Field label="Project Name" value={(entry.name as string) ?? ''} onChange={v => updateEntry(idx, { name: v })} placeholder="AuraCV" />
-          <Field label="URL / Repository" value={(entry.url as string) ?? ''} onChange={v => updateEntry(idx, { url: v })} placeholder="github.com/org/project" />
-        </div>
-        <Field
-          label="Technologies Used (comma separated)"
-          value={techStr}
-          onChange={v => {
-            const arr = v.split(',').map(s => s.trim()).filter(Boolean);
-            updateEntry(idx, { tech: arr });
-          }}
-          placeholder="Next.js, Tailwind, SQLite, WebAssembly"
-        />
-        <Field
-          label="Project Description"
-          value={(entry.description as string) ?? ''}
-          onChange={v => updateEntry(idx, { description: v })}
-          multiline
-          placeholder="Engineered high-performance offline resume system with instant live previews…"
-        />
-      </div>
-    );
-  };
-
   const renderCustom = (entry: Record<string, unknown>, idx: number) => (
     <div
-      key={idx}
+      key={getEntryKey(entry, idx, 'custom')}
       className="p-4 rounded-2xl border space-y-3 mb-3"
       style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-subtle)' }}
     >
       <div className="flex items-center justify-between">
-        <span className="text-xs font-bold uppercase tracking-wider text-purple-500">Item #{idx + 1}</span>
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-bold uppercase tracking-wider text-purple-500">Item #{idx + 1}</span>
+          <div className="flex items-center gap-0.5">
+            <button
+              type="button"
+              disabled={idx === 0}
+              onClick={() => moveEntry(idx, 'up')}
+              className="p-1 rounded text-slate-400 hover:text-slate-900 dark:hover:text-white disabled:opacity-20 cursor-pointer transition-colors"
+              title="Move item up"
+            >
+              <ChevronUp className="w-3.5 h-3.5" />
+            </button>
+            <button
+              type="button"
+              disabled={idx === localContent.length - 1}
+              onClick={() => moveEntry(idx, 'down')}
+              className="p-1 rounded text-slate-400 hover:text-slate-900 dark:hover:text-white disabled:opacity-20 cursor-pointer transition-colors"
+              title="Move item down"
+            >
+              <ChevronDown className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
         <button
           type="button"
           onClick={() => removeEntry(idx)}
           className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-500/10 transition-colors cursor-pointer"
+          title="Delete item"
         >
           <Trash2 className="w-3.5 h-3.5" />
         </button>
@@ -689,16 +911,39 @@ export default function SectionEditor({ section, resumeId, onUpdate, onOpenCopil
 
   const renderCertifications = (entry: Record<string, unknown>, idx: number) => (
     <div
-      key={idx}
+      key={getEntryKey(entry, idx, 'cert')}
       className="p-4 rounded-2xl border space-y-3 mb-3"
       style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-subtle)' }}
     >
       <div className="flex items-center justify-between">
-        <span className="text-xs font-bold uppercase tracking-wider text-rose-500">Certification #{idx + 1}</span>
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-bold uppercase tracking-wider text-rose-500">Certification #{idx + 1}</span>
+          <div className="flex items-center gap-0.5">
+            <button
+              type="button"
+              disabled={idx === 0}
+              onClick={() => moveEntry(idx, 'up')}
+              className="p-1 rounded text-slate-400 hover:text-slate-900 dark:hover:text-white disabled:opacity-20 cursor-pointer transition-colors"
+              title="Move certification up"
+            >
+              <ChevronUp className="w-3.5 h-3.5" />
+            </button>
+            <button
+              type="button"
+              disabled={idx === localContent.length - 1}
+              onClick={() => moveEntry(idx, 'down')}
+              className="p-1 rounded text-slate-400 hover:text-slate-900 dark:hover:text-white disabled:opacity-20 cursor-pointer transition-colors"
+              title="Move certification down"
+            >
+              <ChevronDown className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
         <button
           type="button"
           onClick={() => removeEntry(idx)}
           className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-500/10 transition-colors"
+          title="Delete certification"
         >
           <Trash2 className="w-3.5 h-3.5" />
         </button>
@@ -712,7 +957,7 @@ export default function SectionEditor({ section, resumeId, onUpdate, onOpenCopil
   );
 
   return (
-    <div className="space-y-3 pt-2">
+    <div ref={containerRef} className="space-y-3 pt-2">
       {section.section_type === 'header' && (localContent[0] ? renderHeader(localContent[0], 0) : renderHeader({}, 0))}
       {section.section_type === 'summary' && (localContent[0] ? renderSummary(localContent[0], 0) : renderSummary({}, 0))}
       {section.section_type === 'experience' && (
@@ -743,7 +988,18 @@ export default function SectionEditor({ section, resumeId, onUpdate, onOpenCopil
       )}
       {section.section_type === 'skills' && (
         <div>
-          {localContent.map(renderSkills)}
+          {localContent.map((entry, idx) => (
+            <SkillItemEditor
+              key={getEntryKey(entry, idx, 'skill')}
+              entry={entry}
+              idx={idx}
+              total={localContent.length}
+              onUpdate={patch => updateEntry(idx, patch)}
+              onRemove={() => removeEntry(idx)}
+              onMoveUp={() => moveEntry(idx, 'up')}
+              onMoveDown={() => moveEntry(idx, 'down')}
+            />
+          ))}
           <button
             type="button"
             onClick={() => addEntry({ category: '', items: [] })}
@@ -756,7 +1012,18 @@ export default function SectionEditor({ section, resumeId, onUpdate, onOpenCopil
       )}
       {section.section_type === 'projects' && (
         <div>
-          {localContent.map(renderProjects)}
+          {localContent.map((entry, idx) => (
+            <ProjectItemEditor
+              key={getEntryKey(entry, idx, 'proj')}
+              entry={entry}
+              idx={idx}
+              total={localContent.length}
+              onUpdate={patch => updateEntry(idx, patch)}
+              onRemove={() => removeEntry(idx)}
+              onMoveUp={() => moveEntry(idx, 'up')}
+              onMoveDown={() => moveEntry(idx, 'down')}
+            />
+          ))}
           <button
             type="button"
             onClick={() => addEntry({ name: '', url: '', tech: [], description: '' })}

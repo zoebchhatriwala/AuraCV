@@ -115,11 +115,26 @@ export default function Editor() {
   ) => {
     if (!id) return;
     setSaveStatus("saving");
-    await resumeApi.updateSection(id, sectionId, data);
-    setSaveStatus("saved");
-    setTimeout(() => setSaveStatus("idle"), 2000);
-    await fetchResume(id);
-    refreshPreview();
+    try {
+      await resumeApi.updateSection(id, sectionId, data);
+      setSaveStatus("saved");
+      setTimeout(() => setSaveStatus("idle"), 2000);
+      useAppStore.setState((state) => {
+        if (!state.currentResume) return state;
+        return {
+          currentResume: {
+            ...state.currentResume,
+            sections: state.currentResume.sections.map((s) =>
+              s.id === sectionId ? { ...s, ...data } : s,
+            ),
+          },
+        };
+      });
+      refreshPreview();
+    } catch (e) {
+      setSaveStatus("idle");
+      console.error(e);
+    }
   };
 
   const handleAddSection = async (type: string, title: string) => {
