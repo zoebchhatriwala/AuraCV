@@ -12,7 +12,7 @@
   html, body {
     margin: 0;
     padding: 0;
-    font-family: 'Newsreader', 'Georgia', 'Times New Roman', serif;
+    font-family: 'Newsreader', 'Georgia', 'Times New Roman', Arial, Calibri, serif;
     font-size: 9.75pt;
     line-height: 1.55;
     color: #1e293b;
@@ -323,9 +323,9 @@
       {{#if email}}<span class="contact-item"><a href="mailto:{{email}}">{{email}}</a></span>{{/if}}
       {{#if phone}}{{#if email}}<span class="contact-sep">•</span>{{/if}}<span class="contact-item">{{phone}}</span>{{/if}}
       {{#if location}}{{#if phone}}<span class="contact-sep">•</span>{{/if}}<span class="contact-item">{{location}}</span>{{/if}}
-      {{#if linkedin}}{{#if location}}<span class="contact-sep">•</span>{{/if}}<span class="contact-item"><a href="{{linkedin}}" target="_blank">LinkedIn</a></span>{{/if}}
-      {{#if github}}{{#if linkedin}}<span class="contact-sep">•</span>{{/if}}<span class="contact-item"><a href="{{github}}" target="_blank">GitHub</a></span>{{/if}}
-      {{#if website}}{{#if github}}<span class="contact-sep">•</span>{{/if}}<span class="contact-item"><a href="{{website}}" target="_blank">Portfolio</a></span>{{/if}}
+      {{#if linkedin}}{{#if location}}<span class="contact-sep">•</span>{{/if}}<span class="contact-item"><a href="{{linkedin}}" target="_blank">{{linkedin}}</a></span>{{/if}}
+      {{#if github}}{{#if linkedin}}<span class="contact-sep">•</span>{{/if}}<span class="contact-item"><a href="{{github}}" target="_blank">{{github}}</a></span>{{/if}}
+      {{#if website}}{{#if github}}<span class="contact-sep">•</span>{{/if}}<span class="contact-item"><a href="{{website}}" target="_blank">{{website}}</a></span>{{/if}}
     </div>
   </header>
   {{/with}}
@@ -335,7 +335,7 @@
     {{#if isSummary}}
       {{#if summaryText}}
       <section class="section">
-        <div class="section-title">{{title}}</div>
+        <h2 class="section-title">{{title}}</h2>
         <div class="summary-text">{{{markdown summaryText}}}</div>
       </section>
       {{/if}}
@@ -344,7 +344,7 @@
     {{#if isExperience}}
       {{#if content.length}}
       <section class="section">
-        <div class="section-title">{{title}}</div>
+        <h2 class="section-title">{{title}}</h2>
         {{#each content}}
         <div class="exp-item">
           <div class="exp-header">
@@ -369,7 +369,7 @@
     {{#if isEducation}}
       {{#if content.length}}
       <section class="section">
-        <div class="section-title">{{title}}</div>
+        <h2 class="section-title">{{title}}</h2>
         {{#each content}}
         <div class="edu-item">
           <div class="edu-header">
@@ -389,7 +389,7 @@
     {{#if isSkills}}
       {{#if content.length}}
       <section class="section">
-        <div class="section-title">{{title}}</div>
+        <h2 class="section-title">{{title}}</h2>
         <div class="skills-list">
           {{#each content}}
           <div class="skill-group">
@@ -405,7 +405,7 @@
     {{#if isProjects}}
       {{#if content.length}}
       <section class="section">
-        <div class="section-title">{{title}}</div>
+        <h2 class="section-title">{{title}}</h2>
         {{#each content}}
         <div class="proj-item">
           <div class="proj-header">
@@ -429,7 +429,7 @@
     {{#if isCertifications}}
       {{#if content.length}}
       <section class="section">
-        <div class="section-title">{{title}}</div>
+        <h2 class="section-title">{{title}}</h2>
         {{#each content}}
         <div class="cert-item">
           <span class="cert-name">{{name}}{{#if issuer}} — <em>{{issuer}}</em>{{/if}}</span>
@@ -443,7 +443,7 @@
     {{#if isCustom}}
       {{#if content.length}}
       <section class="section">
-        <div class="section-title">{{title}}</div>
+        <h2 class="section-title">{{title}}</h2>
         {{#each content}}
         <div class="custom-item">
           {{#if title}}<div class="custom-title">{{title}}</div>{{/if}}

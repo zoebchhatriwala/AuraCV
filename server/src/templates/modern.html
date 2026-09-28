@@ -12,7 +12,7 @@
   html, body {
     margin: 0;
     padding: 0;
-    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, Calibri, sans-serif;
     font-size: 9.5pt;
     line-height: 1.5;
     color: #1e293b;
@@ -304,7 +304,7 @@
   <aside class="sidebar">
     <!-- Contact Details -->
     <div>
-      <div class="sidebar-title">Contact</div>
+      <h2 class="sidebar-title">Contact</h2>
       <div class="contact-list">
         {{#with header}}
         {{#if email}}<div class="contact-entry"><strong>Email</strong><span>{{email}}</span></div>{{/if}}
@@ -321,7 +321,7 @@
       {{#if isSkills}}
         {{#if content.length}}
         <div>
-          <div class="sidebar-title">{{title}}</div>
+          <h2 class="sidebar-title">{{title}}</h2>
           <div class="skills-block">
             {{#each content}}
             <div>
@@ -339,7 +339,7 @@
       {{#if isEducation}}
         {{#if content.length}}
         <div>
-          <div class="sidebar-title">{{title}}</div>
+          <h2 class="sidebar-title">{{title}}</h2>
           {{#each content}}
           <div class="edu-block">
             <div class="edu-deg">{{degree}} in {{field}}</div>
@@ -354,7 +354,7 @@
       {{#if isCertifications}}
         {{#if content.length}}
         <div>
-          <div class="sidebar-title">{{title}}</div>
+          <h2 class="sidebar-title">{{title}}</h2>
           {{#each content}}
           <div class="cert-item">
             <div class="cert-name">{{name}}</div>
@@ -381,7 +381,7 @@
       {{#if isSummary}}
         {{#if summaryText}}
         <section>
-          <div class="section-title">{{title}}</div>
+          <h2 class="section-title">{{title}}</h2>
           <div class="summary-p">{{{markdown summaryText}}}</div>
         </section>
         {{/if}}
@@ -390,7 +390,7 @@
       {{#if isExperience}}
         {{#if content.length}}
         <section>
-          <div class="section-title">{{title}}</div>
+          <h2 class="section-title">{{title}}</h2>
           {{#each content}}
           <div class="exp-item">
             <div class="exp-row">
@@ -412,7 +412,7 @@
       {{#if isProjects}}
         {{#if content.length}}
         <section>
-          <div class="section-title">{{title}}</div>
+          <h2 class="section-title">{{title}}</h2>
           {{#each content}}
           <div class="proj-item">
             <div class="proj-header">
@@ -434,7 +434,7 @@
       {{#if isCustom}}
         {{#if content.length}}
         <section>
-          <div class="section-title">{{title}}</div>
+          <h2 class="section-title">{{title}}</h2>
           {{#each content}}
           <div class="proj-item">
             {{#if title}}<div class="proj-name">{{title}}</div>{{/if}}

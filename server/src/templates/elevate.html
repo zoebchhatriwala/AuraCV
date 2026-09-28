@@ -12,7 +12,7 @@
   html, body {
     margin: 0;
     padding: 0;
-    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-family: 'Plus Jakarta Sans', Arial, Calibri, sans-serif;
     font-size: 9pt;
     line-height: 1.5;
     color: #1e293b;
@@ -293,9 +293,9 @@
         {{#if email}}<span><a href="mailto:{{email}}" class="contact-link">{{email}}</a></span>{{/if}}
         {{#if phone}}<span>{{phone}}</span>{{/if}}
         {{#if location}}<span>{{location}}</span>{{/if}}
-        {{#if linkedin}}<span><a href="{{linkedin}}" target="_blank" class="contact-link">LinkedIn</a></span>{{/if}}
-        {{#if github}}<span><a href="{{github}}" target="_blank" class="contact-link">GitHub</a></span>{{/if}}
-        {{#if website}}<span><a href="{{website}}" target="_blank" class="contact-link">Portfolio</a></span>{{/if}}
+        {{#if linkedin}}<span><a href="{{linkedin}}" target="_blank" class="contact-link">{{linkedin}}</a></span>{{/if}}
+        {{#if github}}<span><a href="{{github}}" target="_blank" class="contact-link">{{github}}</a></span>{{/if}}
+        {{#if website}}<span><a href="{{website}}" target="_blank" class="contact-link">{{website}}</a></span>{{/if}}
       </div>
     </header>
     {{/with}}
@@ -305,7 +305,7 @@
       {{#if isSummary}}
         {{#if summaryText}}
         <section class="section">
-          <div class="section-title"><div class="section-title-tag"></div>{{title}}</div>
+          <h2 class="section-title"><div class="section-title-tag"></div>{{title}}</h2>
           <div class="summary-p">{{{markdown summaryText}}}</div>
         </section>
         {{/if}}
@@ -314,7 +314,7 @@
       {{#if isExperience}}
         {{#if content.length}}
         <section class="section">
-          <div class="section-title"><div class="section-title-tag"></div>{{title}}</div>
+          <h2 class="section-title"><div class="section-title-tag"></div>{{title}}</h2>
           {{#each content}}
           <div class="exp-item">
             <div class="exp-top">
@@ -338,7 +338,7 @@
       {{#if isEducation}}
         {{#if content.length}}
         <section class="section">
-          <div class="section-title"><div class="section-title-tag"></div>{{title}}</div>
+          <h2 class="section-title"><div class="section-title-tag"></div>{{title}}</h2>
           {{#each content}}
           <div style="margin-bottom: 8px;">
             <div class="edu-row">
@@ -357,7 +357,7 @@
       {{#if isSkills}}
         {{#if content.length}}
         <section class="section">
-          <div class="section-title"><div class="section-title-tag"></div>{{title}}</div>
+          <h2 class="section-title"><div class="section-title-tag"></div>{{title}}</h2>
           <div class="skills-grid">
             {{#each content}}
             <div class="skill-card">
@@ -373,7 +373,7 @@
       {{#if isProjects}}
         {{#if content.length}}
         <section class="section">
-          <div class="section-title"><div class="section-title-tag"></div>{{title}}</div>
+          <h2 class="section-title"><div class="section-title-tag"></div>{{title}}</h2>
           {{#each content}}
           <div class="proj-item">
             <div class="proj-top">
@@ -397,7 +397,7 @@
       {{#if isCertifications}}
         {{#if content.length}}
         <section class="section">
-          <div class="section-title"><div class="section-title-tag"></div>{{title}}</div>
+          <h2 class="section-title"><div class="section-title-tag"></div>{{title}}</h2>
           {{#each content}}
           <div class="cert-row">
             <span class="cert-name">{{name}}{{#if issuer}} — {{issuer}}{{/if}}</span>
@@ -411,7 +411,7 @@
       {{#if isCustom}}
         {{#if content.length}}
         <section class="section">
-          <div class="section-title"><div class="section-title-tag"></div>{{title}}</div>
+          <h2 class="section-title"><div class="section-title-tag"></div>{{title}}</h2>
           {{#each content}}
           <div style="margin-bottom: 8px;">
             {{#if title}}<div style="font-weight: 700; color: #0f172a;">{{title}}</div>{{/if}}

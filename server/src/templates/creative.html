@@ -14,7 +14,7 @@
     padding: 0;
     background: #f8fafc;
     color: #1e293b;
-    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+    font-family: 'Plus Jakarta Sans', system-ui, Arial, Calibri, sans-serif;
     font-size: 9pt;
     line-height: 1.55;
     -webkit-print-color-adjust: exact;
@@ -308,7 +308,7 @@
     {{#if isSummary}}
       {{#if summaryText}}
       <section class="nordic-section">
-        <div class="nordic-title"><span class="nordic-title-badge"></span>{{title}}</div>
+        <h2 class="nordic-title"><span class="nordic-title-badge"></span>{{title}}</h2>
         <div class="nordic-summary">{{{markdown summaryText}}}</div>
       </section>
       {{/if}}
@@ -317,7 +317,7 @@
     {{#if isExperience}}
       {{#if content.length}}
       <section class="nordic-section">
-        <div class="nordic-title"><span class="nordic-title-badge"></span>{{title}}</div>
+        <h2 class="nordic-title"><span class="nordic-title-badge"></span>{{title}}</h2>
         {{#each content}}
         <div class="nordic-exp-card">
           <div class="nordic-exp-top">
@@ -339,7 +339,7 @@
     {{#if isSkills}}
       {{#if content.length}}
       <section class="nordic-section">
-        <div class="nordic-title"><span class="nordic-title-badge"></span>{{title}}</div>
+        <h2 class="nordic-title"><span class="nordic-title-badge"></span>{{title}}</h2>
         <div class="nordic-skills-wrap">
           {{#each content}}
           <div class="nordic-skill-group">
@@ -357,7 +357,7 @@
     {{#if isEducation}}
       {{#if content.length}}
       <section class="nordic-section">
-        <div class="nordic-title"><span class="nordic-title-badge"></span>{{title}}</div>
+        <h2 class="nordic-title"><span class="nordic-title-badge"></span>{{title}}</h2>
         {{#each content}}
         <div class="nordic-edu-row">
           <div>
@@ -374,7 +374,7 @@
     {{#if isProjects}}
       {{#if content.length}}
       <section class="nordic-section">
-        <div class="nordic-title"><span class="nordic-title-badge"></span>{{title}}</div>
+        <h2 class="nordic-title"><span class="nordic-title-badge"></span>{{title}}</h2>
         {{#each content}}
         <div class="nordic-proj-card">
           <div class="nordic-proj-head">
@@ -396,7 +396,7 @@
     {{#if isCertifications}}
       {{#if content.length}}
       <section class="nordic-section">
-        <div class="nordic-title"><span class="nordic-title-badge"></span>{{title}}</div>
+        <h2 class="nordic-title"><span class="nordic-title-badge"></span>{{title}}</h2>
         {{#each content}}
         <div class="nordic-cert-item">
           <span><strong>{{name}}</strong> — {{issuer}}</span>
@@ -410,7 +410,7 @@
     {{#if isCustom}}
       {{#if content.length}}
       <section class="nordic-section">
-        <div class="nordic-title"><span class="nordic-title-badge"></span>{{title}}</div>
+        <h2 class="nordic-title"><span class="nordic-title-badge"></span>{{title}}</h2>
         {{#each content}}
         <div class="nordic-proj-card">
           {{#if title}}<div class="nordic-proj-name">{{title}}</div>{{/if}}

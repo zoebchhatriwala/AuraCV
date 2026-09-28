@@ -14,7 +14,7 @@
     padding: 0;
     background: #ffffff;
     color: #0f172a;
-    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, Calibri, sans-serif;
     font-size: 10pt;
     line-height: 1.55;
     scrollbar-width: none;
@@ -288,7 +288,7 @@
   <!-- Header -->
   <div class="header">
     {{#with header}}
-    <div class="header-name">{{name}}</div>
+    <h1 class="header-name">{{name}}</h1>
     {{#if role}}<div class="header-role">{{role}}</div>{{/if}}
     <div class="header-contacts">
       {{#if email}}<span class="contact-item">{{email}}</span>{{/if}}
@@ -305,7 +305,7 @@
     {{#if isSummary}}
       {{#if summaryText}}
       <div class="section">
-        <div class="section-title">{{title}}</div>
+        <h2 class="section-title">{{title}}</h2>
         <div class="summary-text">{{{markdown summaryText}}}</div>
       </div>
       {{/if}}
@@ -314,7 +314,7 @@
     {{#if isExperience}}
       {{#if content.length}}
       <div class="section">
-        <div class="section-title">{{title}}</div>
+        <h2 class="section-title">{{title}}</h2>
         {{#each content}}
         <div class="exp-entry">
           <div class="exp-top">
@@ -336,7 +336,7 @@
     {{#if isEducation}}
       {{#if content.length}}
       <div class="section">
-        <div class="section-title">{{title}}</div>
+        <h2 class="section-title">{{title}}</h2>
         {{#each content}}
         <div class="edu-entry">
           <div class="edu-left">
@@ -353,7 +353,7 @@
     {{#if isSkills}}
       {{#if content.length}}
       <div class="section">
-        <div class="section-title">{{title}}</div>
+        <h2 class="section-title">{{title}}</h2>
         <div class="skills-wrap">
           {{#each content}}
           <div class="skill-group">
@@ -371,7 +371,7 @@
     {{#if isProjects}}
       {{#if content.length}}
       <div class="section">
-        <div class="section-title">{{title}}</div>
+        <h2 class="section-title">{{title}}</h2>
         {{#each content}}
         <div class="project-entry">
           <div class="project-top">
@@ -393,7 +393,7 @@
     {{#if isCertifications}}
       {{#if content.length}}
       <div class="section">
-        <div class="section-title">{{title}}</div>
+        <h2 class="section-title">{{title}}</h2>
         {{#each content}}
         <div class="cert-row">
           <span class="cert-title">{{name}} <span style="font-weight:400;color:#64748b;">· {{issuer}}</span></span>
@@ -407,7 +407,7 @@
     {{#if isCustom}}
       {{#if content.length}}
       <div class="section">
-        <div class="section-title">{{title}}</div>
+        <h2 class="section-title">{{title}}</h2>
         {{#each content}}
         <div class="project-entry">
           {{#if title}}<div class="project-title">{{title}}</div>{{/if}}

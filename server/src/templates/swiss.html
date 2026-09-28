@@ -12,7 +12,7 @@
   html, body {
     margin: 0;
     padding: 0;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, Arial, Calibri, sans-serif;
     font-size: 8.75pt;
     line-height: 1.5;
     color: #171717;
@@ -69,7 +69,7 @@
     font-size: 8pt;
     font-weight: 600;
     color: #525252;
-    shrink: 0;
+    flex-shrink: 0;
   }
   .header-contacts a {
     color: #0a0a0a;
@@ -297,9 +297,9 @@
         {{#if email}}<span><a href="mailto:{{email}}">{{email}}</a></span>{{/if}}
         {{#if phone}}<span>{{phone}}</span>{{/if}}
         {{#if location}}<span>{{location}}</span>{{/if}}
-        {{#if linkedin}}<span><a href="{{linkedin}}" target="_blank">LinkedIn</a></span>{{/if}}
-        {{#if github}}<span><a href="{{github}}" target="_blank">GitHub</a></span>{{/if}}
-        {{#if website}}<span><a href="{{website}}" target="_blank">Portfolio</a></span>{{/if}}
+        {{#if linkedin}}<span><a href="{{linkedin}}" target="_blank">{{linkedin}}</a></span>{{/if}}
+        {{#if github}}<span><a href="{{github}}" target="_blank">{{github}}</a></span>{{/if}}
+        {{#if website}}<span><a href="{{website}}" target="_blank">{{website}}</a></span>{{/if}}
       </div>
     </div>
   </header>
@@ -310,7 +310,7 @@
     {{#if isSummary}}
       {{#if summaryText}}
       <div class="section-row">
-        <div class="section-label"><span class="accent">// </span>{{title}}</div>
+        <h2 class="section-label"><span class="accent">// </span>{{title}}</h2>
         <div class="section-content">
           <div class="summary-text">{{{markdown summaryText}}}</div>
         </div>
@@ -321,7 +321,7 @@
     {{#if isExperience}}
       {{#if content.length}}
       <div class="section-row">
-        <div class="section-label"><span class="accent">// </span>{{title}}</div>
+        <h2 class="section-label"><span class="accent">// </span>{{title}}</h2>
         <div class="section-content">
           {{#each content}}
           <div class="exp-block">
@@ -347,7 +347,7 @@
     {{#if isEducation}}
       {{#if content.length}}
       <div class="section-row">
-        <div class="section-label"><span class="accent">// </span>{{title}}</div>
+        <h2 class="section-label"><span class="accent">// </span>{{title}}</h2>
         <div class="section-content">
           {{#each content}}
           <div class="edu-block">
@@ -368,7 +368,7 @@
     {{#if isSkills}}
       {{#if content.length}}
       <div class="section-row">
-        <div class="section-label"><span class="accent">// </span>{{title}}</div>
+        <h2 class="section-label"><span class="accent">// </span>{{title}}</h2>
         <div class="section-content">
           <div class="skills-rows">
             {{#each content}}
@@ -386,7 +386,7 @@
     {{#if isProjects}}
       {{#if content.length}}
       <div class="section-row">
-        <div class="section-label"><span class="accent">// </span>{{title}}</div>
+        <h2 class="section-label"><span class="accent">// </span>{{title}}</h2>
         <div class="section-content">
           {{#each content}}
           <div class="proj-block">
@@ -412,7 +412,7 @@
     {{#if isCertifications}}
       {{#if content.length}}
       <div class="section-row">
-        <div class="section-label"><span class="accent">// </span>{{title}}</div>
+        <h2 class="section-label"><span class="accent">// </span>{{title}}</h2>
         <div class="section-content">
           {{#each content}}
           <div class="cert-line">
@@ -428,7 +428,7 @@
     {{#if isCustom}}
       {{#if content.length}}
       <div class="section-row">
-        <div class="section-label"><span class="accent">// </span>{{title}}</div>
+        <h2 class="section-label"><span class="accent">// </span>{{title}}</h2>
         <div class="section-content">
           {{#each content}}
           <div style="margin-bottom: 8px;">

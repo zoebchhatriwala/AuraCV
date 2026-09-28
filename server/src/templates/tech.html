@@ -14,7 +14,7 @@
     padding: 0;
     background: #f1f5f9;
     color: #0f172a;
-    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+    font-family: 'Plus Jakarta Sans', system-ui, Arial, Calibri, sans-serif;
     font-size: 9pt;
     line-height: 1.5;
     -webkit-print-color-adjust: exact;
@@ -309,8 +309,7 @@
     color: #0f172a;
   }
   .tech-proj-name::before {
-    content: '📦 ';
-    font-size: 8.5pt;
+    content: '';
   }
   .tech-proj-url {
     font-family: 'JetBrains Mono', monospace;
@@ -358,12 +357,12 @@
     <h1 class="tech-name">{{name}}</h1>
     {{#if role}}<div class="tech-role">{{role}}</div>{{/if}}
     <div class="tech-contacts">
-      {{#if email}}<span class="tech-contact-item">✉ {{email}}</span>{{/if}}
-      {{#if phone}}<span class="tech-contact-item">☏ {{phone}}</span>{{/if}}
-      {{#if location}}<span class="tech-contact-item">📍 {{location}}</span>{{/if}}
-      {{#if github}}<span class="tech-contact-item">🐙 <a href="https://{{github}}">{{github}}</a></span>{{/if}}
-      {{#if linkedin}}<span class="tech-contact-item">💼 <a href="https://{{linkedin}}">{{linkedin}}</a></span>{{/if}}
-      {{#if website}}<span class="tech-contact-item">🌐 <a href="https://{{website}}">{{website}}</a></span>{{/if}}
+      {{#if email}}<span class="tech-contact-item">Email: {{email}}</span>{{/if}}
+      {{#if phone}}<span class="tech-contact-item">Phone: {{phone}}</span>{{/if}}
+      {{#if location}}<span class="tech-contact-item">Location: {{location}}</span>{{/if}}
+      {{#if github}}<span class="tech-contact-item"><a href="https://{{github}}">{{github}}</a></span>{{/if}}
+      {{#if linkedin}}<span class="tech-contact-item"><a href="https://{{linkedin}}">{{linkedin}}</a></span>{{/if}}
+      {{#if website}}<span class="tech-contact-item"><a href="https://{{website}}">{{website}}</a></span>{{/if}}
     </div>
   </header>
   {{/with}}
@@ -373,7 +372,7 @@
     {{#if isSummary}}
       {{#if summaryText}}
       <section class="tech-section">
-        <div class="tech-sec-title">{{title}}</div>
+        <h2 class="tech-sec-title">{{title}}</h2>
         <div class="tech-summary-box">{{{markdown summaryText}}}</div>
       </section>
       {{/if}}
@@ -382,7 +381,7 @@
     {{#if isExperience}}
       {{#if content.length}}
       <section class="tech-section">
-        <div class="tech-sec-title">{{title}}</div>
+        <h2 class="tech-sec-title">{{title}}</h2>
         {{#each content}}
         <div class="tech-exp-item">
           <div class="tech-exp-head">
@@ -404,7 +403,7 @@
     {{#if isSkills}}
       {{#if content.length}}
       <section class="tech-section">
-        <div class="tech-sec-title">{{title}}</div>
+        <h2 class="tech-sec-title">{{title}}</h2>
         <div class="tech-skills-wrap">
           {{#each content}}
           <div class="tech-skill-group">
@@ -422,7 +421,7 @@
     {{#if isEducation}}
       {{#if content.length}}
       <section class="tech-section">
-        <div class="tech-sec-title">{{title}}</div>
+        <h2 class="tech-sec-title">{{title}}</h2>
         {{#each content}}
         <div class="tech-edu-item">
           <div class="tech-edu-head">
@@ -439,7 +438,7 @@
     {{#if isProjects}}
       {{#if content.length}}
       <section class="tech-section">
-        <div class="tech-sec-title">{{title}}</div>
+        <h2 class="tech-sec-title">{{title}}</h2>
         {{#each content}}
         <div class="tech-proj-item">
           <div class="tech-proj-head">
@@ -461,7 +460,7 @@
     {{#if isCertifications}}
       {{#if content.length}}
       <section class="tech-section">
-        <div class="tech-sec-title">{{title}}</div>
+        <h2 class="tech-sec-title">{{title}}</h2>
         {{#each content}}
         <div class="tech-cert-row">
           <span><strong>{{name}}</strong> — {{issuer}}</span>
@@ -475,7 +474,7 @@
     {{#if isCustom}}
       {{#if content.length}}
       <section class="tech-section">
-        <div class="tech-sec-title">{{title}}</div>
+        <h2 class="tech-sec-title">{{title}}</h2>
         {{#each content}}
         <div class="tech-proj-item">
           {{#if title}}<div class="tech-proj-name">{{title}}</div>{{/if}}

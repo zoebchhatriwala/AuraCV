@@ -12,7 +12,7 @@
   html, body {
     margin: 0;
     padding: 0;
-    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, Arial, Calibri, sans-serif;
     font-size: 9pt;
     line-height: 1.5;
     color: #1e293b;
@@ -65,7 +65,7 @@
     gap: 5px;
     font-size: 8.5pt;
     color: #475569;
-    shrink: 0;
+    flex-shrink: 0;
   }
   .contact-pill {
     display: inline-flex;
@@ -350,9 +350,9 @@
       {{#if email}}<span class="contact-pill"><a href="mailto:{{email}}">{{email}}</a></span>{{/if}}
       {{#if phone}}<span class="contact-pill">{{phone}}</span>{{/if}}
       {{#if location}}<span class="contact-pill">{{location}}</span>{{/if}}
-      {{#if linkedin}}<span class="contact-pill accent"><a href="{{linkedin}}" target="_blank">LinkedIn</a></span>{{/if}}
-      {{#if github}}<span class="contact-pill accent"><a href="{{github}}" target="_blank">GitHub</a></span>{{/if}}
-      {{#if website}}<span class="contact-pill accent"><a href="{{website}}" target="_blank">Portfolio</a></span>{{/if}}
+      {{#if linkedin}}<span class="contact-pill accent"><a href="{{linkedin}}" target="_blank">{{linkedin}}</a></span>{{/if}}
+      {{#if github}}<span class="contact-pill accent"><a href="{{github}}" target="_blank">{{github}}</a></span>{{/if}}
+      {{#if website}}<span class="contact-pill accent"><a href="{{website}}" target="_blank">{{website}}</a></span>{{/if}}
     </div>
   </header>
   {{/with}}

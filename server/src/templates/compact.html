@@ -9,7 +9,7 @@
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   body {
     background: #f8fafc;
-    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+    font-family: 'Plus Jakarta Sans', system-ui, Arial, Calibri, sans-serif;
     color: #0f172a;
     font-size: 9pt;
     line-height: 1.5;
@@ -214,7 +214,7 @@
     {{#if isSummary}}
       {{#if summaryText}}
       <div class="compact-section">
-        <div class="section-badge">{{title}}</div>
+        <h2 class="section-badge">{{title}}</h2>
         <div class="summary-text">{{{markdown summaryText}}}</div>
       </div>
       {{/if}}
@@ -223,7 +223,7 @@
     {{#if isExperience}}
       {{#if content.length}}
       <div class="compact-section">
-        <div class="section-badge">{{title}}</div>
+        <h2 class="section-badge">{{title}}</h2>
         {{#each content}}
         <div class="exp-item">
           <div class="exp-top">
@@ -245,7 +245,7 @@
     {{#if isSkills}}
       {{#if content.length}}
       <div class="compact-section">
-        <div class="section-badge">{{title}}</div>
+        <h2 class="section-badge">{{title}}</h2>
         {{#each content}}
         <div class="skill-line">
           <strong>{{category}}:</strong> {{#each items}}{{this}}{{#unless @last}}, {{/unless}}{{/each}}
@@ -258,7 +258,7 @@
     {{#if isEducation}}
       {{#if content.length}}
       <div class="compact-section">
-        <div class="section-badge">{{title}}</div>
+        <h2 class="section-badge">{{title}}</h2>
         {{#each content}}
         <div class="edu-row">
           <div style="display: flex; justify-content: space-between; align-items: baseline;">
@@ -275,7 +275,7 @@
     {{#if isCertifications}}
       {{#if content.length}}
       <div class="compact-section">
-        <div class="section-badge">{{title}}</div>
+        <h2 class="section-badge">{{title}}</h2>
         {{#each content}}
         <div class="edu-row" style="font-size: 8.5pt;">
           <strong>{{name}}</strong> — {{issuer}}{{#if date}} ({{date}}){{/if}}
@@ -288,7 +288,7 @@
     {{#if isProjects}}
       {{#if content.length}}
       <div class="compact-section">
-        <div class="section-badge">{{title}}</div>
+        <h2 class="section-badge">{{title}}</h2>
         {{#each content}}
         <div class="proj-row">
           <div class="proj-row-head">
@@ -310,7 +310,7 @@
     {{#if isCustom}}
       {{#if content.length}}
       <div class="compact-section">
-        <div class="section-badge">{{title}}</div>
+        <h2 class="section-badge">{{title}}</h2>
         {{#each content}}
         <div class="exp-item">
           {{#if title}}<div class="exp-title-bold">{{title}}</div>{{/if}}

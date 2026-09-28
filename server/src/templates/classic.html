@@ -12,7 +12,7 @@
   html, body {
     margin: 0;
     padding: 0;
-    font-family: 'Merriweather', 'Georgia', 'Times New Roman', serif;
+    font-family: 'Merriweather', 'Georgia', 'Times New Roman', Arial, Calibri, serif;
     font-size: 9.75pt;
     line-height: 1.6;
     color: #1a1a1a;
@@ -39,7 +39,7 @@
     margin-bottom: 22px;
   }
   .header-name {
-    font-family: 'Playfair Display', Georgia, serif;
+    font-family: 'Playfair Display', Georgia, Arial, Calibri, serif;
     font-size: 25pt;
     font-weight: 700;
     letter-spacing: 0.75px;
@@ -79,7 +79,7 @@
     margin-bottom: 0;
   }
   .section-title {
-    font-family: 'Playfair Display', Georgia, serif;
+    font-family: 'Playfair Display', Georgia, Arial, Calibri, serif;
     font-size: 10.5pt;
     font-weight: 700;
     color: #000000;
@@ -245,7 +245,7 @@
   <!-- Header -->
   <div class="header">
     {{#with header}}
-    <div class="header-name">{{name}}</div>
+    <h1 class="header-name">{{name}}</h1>
     {{#if role}}<div class="header-role">{{role}}</div>{{/if}}
     <div class="header-contacts">
       {{#if email}}<span class="contact-item">{{email}}</span>{{/if}}
@@ -262,7 +262,7 @@
     {{#if isSummary}}
       {{#if summaryText}}
       <div class="section">
-        <div class="section-title">{{title}}</div>
+        <h2 class="section-title">{{title}}</h2>
         <div class="summary-text">{{{markdown summaryText}}}</div>
       </div>
       {{/if}}
@@ -271,7 +271,7 @@
     {{#if isExperience}}
       {{#if content.length}}
       <div class="section">
-        <div class="section-title">{{title}}</div>
+        <h2 class="section-title">{{title}}</h2>
         {{#each content}}
         <div class="exp-entry">
           <div class="exp-header">
@@ -293,7 +293,7 @@
     {{#if isEducation}}
       {{#if content.length}}
       <div class="section">
-        <div class="section-title">{{title}}</div>
+        <h2 class="section-title">{{title}}</h2>
         {{#each content}}
         <div class="edu-entry">
           <div>
@@ -310,7 +310,7 @@
     {{#if isSkills}}
       {{#if content.length}}
       <div class="section">
-        <div class="section-title">{{title}}</div>
+        <h2 class="section-title">{{title}}</h2>
         <div class="skills-container">
           {{#each content}}
           <div class="skill-row">
@@ -326,7 +326,7 @@
     {{#if isProjects}}
       {{#if content.length}}
       <div class="section">
-        <div class="section-title">{{title}}</div>
+        <h2 class="section-title">{{title}}</h2>
         {{#each content}}
         <div class="project-entry">
           <div class="project-header">
@@ -348,7 +348,7 @@
     {{#if isCertifications}}
       {{#if content.length}}
       <div class="section">
-        <div class="section-title">{{title}}</div>
+        <h2 class="section-title">{{title}}</h2>
         {{#each content}}
         <div class="cert-entry">
           <div><span class="cert-name">{{name}}</span> <span class="cert-issuer">· {{issuer}}</span></div>
@@ -362,7 +362,7 @@
     {{#if isCustom}}
       {{#if content.length}}
       <div class="section">
-        <div class="section-title">{{title}}</div>
+        <h2 class="section-title">{{title}}</h2>
         {{#each content}}
         <div class="project-entry">
           {{#if title}}<div class="project-name">{{title}}</div>{{/if}}

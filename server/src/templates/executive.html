@@ -9,7 +9,7 @@
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   body {
     background: #f1f5f9;
-    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+    font-family: 'Plus Jakarta Sans', system-ui, Arial, Calibri, sans-serif;
     color: #1e293b;
     font-size: 9pt;
     line-height: 1.5;
@@ -263,7 +263,7 @@
       {{#if isSummary}}
         {{#if summaryText}}
         <section>
-          <div class="sec-heading">{{title}}</div>
+          <h2 class="sec-heading">{{title}}</h2>
           <div class="exec-summary-box">{{{markdown summaryText}}}</div>
         </section>
         {{/if}}
@@ -272,7 +272,7 @@
       {{#if isExperience}}
         {{#if content.length}}
         <section>
-          <div class="sec-heading">{{title}}</div>
+          <h2 class="sec-heading">{{title}}</h2>
           {{#each content}}
           <div class="exp-card">
             <div class="exp-head">
@@ -294,7 +294,7 @@
       {{#if isSkills}}
         {{#if content.length}}
         <section>
-          <div class="sec-heading">{{title}}</div>
+          <h2 class="sec-heading">{{title}}</h2>
           {{#each content}}
           <div class="skill-group">
             <div class="skill-cat">{{category}}</div>
@@ -310,7 +310,7 @@
       {{#if isEducation}}
         {{#if content.length}}
         <section>
-          <div class="sec-heading">{{title}}</div>
+          <h2 class="sec-heading">{{title}}</h2>
           {{#each content}}
           <div class="edu-entry">
             <div class="edu-head">
@@ -327,7 +327,7 @@
       {{#if isCertifications}}
         {{#if content.length}}
         <section>
-          <div class="sec-heading">{{title}}</div>
+          <h2 class="sec-heading">{{title}}</h2>
           {{#each content}}
           <div class="cert-row">
             <strong>{{name}}</strong> — {{issuer}}{{#if date}} ({{date}}){{/if}}
@@ -340,7 +340,7 @@
       {{#if isProjects}}
         {{#if content.length}}
         <section>
-          <div class="sec-heading">{{title}}</div>
+          <h2 class="sec-heading">{{title}}</h2>
           {{#each content}}
           <div class="proj-card">
             <div class="proj-title">
@@ -361,7 +361,7 @@
       {{#if isCustom}}
         {{#if content.length}}
         <section>
-          <div class="sec-heading">{{title}}</div>
+          <h2 class="sec-heading">{{title}}</h2>
           {{#each content}}
           <div class="proj-card">
             {{#if title}}<div class="proj-title">{{title}}</div>{{/if}}
