@@ -39,7 +39,9 @@ export default function AICopilotPanel({
 
   // ── Bullet Polisher State ──
   const [bulletInput, setBulletInput] = useState(initialBullet || '');
-  const [bulletTone, setBulletTone] = useState<'metrics' | 'concise' | 'executive' | 'technical'>('metrics');
+  const [bulletTone, setBulletTone] = useState<'xyz' | 'concise' | 'leadership' | 'action'>('xyz');
+  const headerRole = (sections.find(s => s.section_type === 'header')?.content?.[0] as Record<string, unknown>)?.role;
+  const [targetRole, setTargetRole] = useState<string>(typeof headerRole === 'string' ? headerRole : '');
   const [polishLoading, setPolishLoading] = useState(false);
   const [polishResult, setPolishResult] = useState<RewriteResult | null>(null);
   const [polishError, setPolishError] = useState('');
@@ -93,15 +95,10 @@ export default function AICopilotPanel({
     setPolishError('');
     setAppliedBullet(false);
     try {
-      const toneMap: Record<string, string> = {
-        metrics: 'executive',
-        concise: 'concise',
-        executive: 'leadership',
-        technical: 'technical',
-      };
       const res = await aiApi.rewrite({
         bullet: bulletInput,
-        tone: toneMap[bulletTone] || 'executive',
+        tone: bulletTone,
+        role: targetRole || undefined,
         resume_id: resumeId,
         section_id: bulletContext?.sectionId || activeSectionId || undefined,
       });
@@ -403,17 +400,36 @@ export default function AICopilotPanel({
               />
             </div>
 
-            {/* Tone Selector */}
+            {/* Target Role or Field */}
+            <div>
+              <label className="text-xs font-medium block mb-1.5" style={{ color: 'var(--text-secondary)' }}>
+                Target Role / Field
+              </label>
+              <input
+                type="text"
+                value={targetRole}
+                onChange={e => setTargetRole(e.target.value)}
+                placeholder="e.g. Product Manager, Marketing Lead, Financial Analyst, Nurse..."
+                className="w-full text-xs px-3 py-2 rounded-xl border focus:outline-none focus:ring-1 focus:ring-blue-500 font-sans transition-all"
+                style={{
+                  backgroundColor: 'var(--bg-surface-elevated)',
+                  borderColor: 'var(--border-default)',
+                  color: 'var(--text-primary)',
+                }}
+              />
+            </div>
+
+            {/* Polish Style Selector */}
             <div>
               <span className="text-xs font-medium block mb-1.5" style={{ color: 'var(--text-secondary)' }}>
-                Target Polish Style
+                Polish Style
               </span>
               <div className="grid grid-cols-2 gap-1.5">
                 {[
-                  { id: 'metrics',   label: 'Metrics & Impact' },
-                  { id: 'concise',   label: 'Crisp & Concise' },
-                  { id: 'executive', label: 'Leadership' },
-                  { id: 'technical', label: 'Technical Depth' },
+                  { id: 'xyz',        label: 'Google X-Y-Z (Impact)' },
+                  { id: 'concise',    label: 'Crisp & Direct' },
+                  { id: 'leadership', label: 'Leadership & Scope' },
+                  { id: 'action',     label: 'Action & Results' },
                 ].map(t => (
                   <button
                     key={t.id}
@@ -484,6 +500,48 @@ export default function AICopilotPanel({
                   <p className="text-xs leading-relaxed font-medium" style={{ color: 'var(--text-primary)' }}>
                     {polishResult.rewritten}
                   </p>
+
+                  {/* Google X-Y-Z Breakdown */}
+                  {polishResult.xyz_breakdown && (
+                    <div
+                      className="p-2.5 rounded-lg border text-[11px] space-y-1"
+                      style={{
+                        backgroundColor: 'var(--bg-surface)',
+                        borderColor: 'var(--border-subtle)',
+                      }}
+                    >
+                      <div className="font-semibold text-slate-700 dark:text-slate-300">
+                        Google X-Y-Z Breakdown:
+                      </div>
+                      <div>
+                        <span className="font-semibold text-emerald-600 dark:text-emerald-400">[X] Accomplished:</span>{' '}
+                        <span style={{ color: 'var(--text-secondary)' }}>{polishResult.xyz_breakdown.accomplished_x}</span>
+                      </div>
+                      <div>
+                        <span className="font-semibold text-blue-600 dark:text-blue-400">[Y] Measured by:</span>{' '}
+                        <span style={{ color: 'var(--text-secondary)' }}>{polishResult.xyz_breakdown.measured_by_y}</span>
+                      </div>
+                      <div>
+                        <span className="font-semibold text-purple-600 dark:text-purple-400">[Z] Doing:</span>{' '}
+                        <span style={{ color: 'var(--text-secondary)' }}>{polishResult.xyz_breakdown.doing_z}</span>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Jargon Removed Notice */}
+                  {polishResult.jargon_removed && polishResult.jargon_removed.length > 0 && (
+                    <div className="text-[10px] text-amber-600 dark:text-amber-400 flex items-center gap-1 font-mono">
+                      <span>Removed AI buzzwords:</span>
+                      <span className="line-through">{polishResult.jargon_removed.join(', ')}</span>
+                    </div>
+                  )}
+
+                  {/* Improvement Notes */}
+                  {polishResult.improvement_notes && (
+                    <p className="text-[11px] italic" style={{ color: 'var(--text-muted)' }}>
+                      {polishResult.improvement_notes}
+                    </p>
+                  )}
 
                   <div className="flex items-center gap-2 pt-1 border-t" style={{ borderColor: 'var(--border-subtle)' }}>
                     <button

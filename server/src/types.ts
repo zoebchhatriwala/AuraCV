@@ -128,6 +128,12 @@ export interface RewriteResult {
   alternatives: string[];
   action_verb_used: string;
   improvement_notes: string;
+  xyz_breakdown?: {
+    accomplished_x: string;
+    measured_by_y: string;
+    doing_z: string;
+  };
+  jargon_removed?: string[];
 }
 
 export interface ATSScoreResult {

@@ -71,12 +71,12 @@ export const exportApi = {
     `/api/export/${id}/preview${template ? `?template=${template}` : ''}`,
   samplePreview: (template: string = 'modern') =>
     `/api/export/sample-preview?template=${template}`,
-  pdf:  (id: string, opts?: { ats_mode?: boolean; template?: string }) =>
+  pdf:  (id: string, opts?: { ats_mode?: boolean; template?: string; filename?: string }) =>
     post<Blob>(`/export/${id}/pdf`, opts),
-  docx: (id: string) => post<Blob>(`/export/${id}/docx`),
-  json: (id: string) => post<unknown>(`/export/${id}/json`),
-  markdown: (id: string, download = false) =>
-    post<{ ok: boolean; markdown?: string }>(`/export/${id}/markdown`, { download }),
+  docx: (id: string, opts?: { filename?: string }) => post<Blob>(`/export/${id}/docx`, opts),
+  json: (id: string, opts?: { filename?: string }) => post<unknown>(`/export/${id}/json`, opts),
+  markdown: (id: string, download = false, filename?: string) =>
+    post<{ ok: boolean; markdown?: string }>(`/export/${id}/markdown`, { download, filename }),
   dbUrl: (filename?: string) =>
     `/api/export/db${filename ? `?filename=${encodeURIComponent(filename)}` : ''}`,
   dbStats: () => get<DatabaseStats>('/export/db/stats'),
@@ -256,6 +256,12 @@ export interface RewriteResult {
   alternatives: string[];
   action_verb_used: string;
   improvement_notes: string;
+  xyz_breakdown?: {
+    accomplished_x: string;
+    measured_by_y: string;
+    doing_z: string;
+  };
+  jargon_removed?: string[];
 }
 
 export interface ATSScoreResult {

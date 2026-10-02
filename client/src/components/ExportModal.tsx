@@ -1,19 +1,42 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Download, FileText, FileJson, FileCode, Copy, X, Loader2, ShieldCheck, Check } from 'lucide-react';
+import { Download, FileText, FileJson, FileCode, Copy, X, Loader2, ShieldCheck, Check, RotateCcw } from 'lucide-react';
+import { getNormalizedExportName, cleanExportFileName } from '../utils/exportFileName';
+import { vaultApi } from '../api';
 
 interface Props {
   resumeId: string;
   resumeName: string;
+  candidateName?: string;
   onClose: () => void;
 }
 
-export default function ExportModal({ resumeId, resumeName, onClose }: Props) {
+export default function ExportModal({ resumeId, resumeName, candidateName = '', onClose }: Props) {
+  const [resolvedCandidateName, setResolvedCandidateName] = useState(candidateName);
+  const defaultBaseName = getNormalizedExportName(resolvedCandidateName, resumeName);
+  const [fileName, setFileName] = useState(defaultBaseName);
+  const [isCustomName, setIsCustomName] = useState(false);
+
   const [atsMode, setAtsMode] = useState(false);
   const [loading, setLoading] = useState<string | null>(null);
   const [downloaded, setDownloaded] = useState<string | null>(null);
   const [copiedMarkdown, setCopiedMarkdown] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  // If candidateName was not passed or empty, try fetching full_name from Vault metadata
+  useEffect(() => {
+    if (!candidateName) {
+      vaultApi.getMeta().then((meta) => {
+        if (meta?.full_name && meta.full_name.trim()) {
+          const fetchedName = meta.full_name.trim();
+          setResolvedCandidateName(fetchedName);
+          if (!isCustomName) {
+            setFileName(getNormalizedExportName(fetchedName, resumeName));
+          }
+        }
+      }).catch(() => {});
+    }
+  }, [candidateName, resumeName, isCustomName]);
 
   const copyMarkdown = async () => {
     setLoading('md-copy');
@@ -41,15 +64,15 @@ export default function ExportModal({ resumeId, resumeName, onClose }: Props) {
     setLoading('markdown');
     setErrorMessage(null);
     try {
+      const activeName = cleanExportFileName(fileName, defaultBaseName);
       const res = await fetch(`/api/export/${resumeId}/markdown`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ download: true }),
+        body: JSON.stringify({ download: true, filename: activeName }),
       });
       if (!res.ok) throw new Error('Failed to download markdown');
       const blob = await res.blob();
-      const safeName = resumeName.replace(/[^a-z0-9]/gi, '_');
-      triggerDownload(blob, `${safeName}_cv.md`, 'text/markdown');
+      triggerDownload(blob, `${activeName}.md`, 'text/markdown');
       setDownloaded('markdown');
       setTimeout(() => setDownloaded(null), 2500);
     } catch (err) {
@@ -69,29 +92,39 @@ export default function ExportModal({ resumeId, resumeName, onClose }: Props) {
 
     try {
       let blob: Blob;
-      const safeName = resumeName.replace(/[^a-z0-9]/gi, '_');
+      const activeName = cleanExportFileName(fileName, defaultBaseName);
 
       if (format === 'pdf') {
         const res = await fetch(`/api/export/${resumeId}/pdf`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ats_mode: atsMode }),
+          body: JSON.stringify({ ats_mode: atsMode, filename: activeName }),
           signal: controller.signal,
         });
         if (!res.ok) throw new Error((await res.text().catch(() => '')) || `Server returned ${res.status}`);
         blob = await res.blob();
-        triggerDownload(blob, `${safeName}_cv.pdf`, 'application/pdf');
+        triggerDownload(blob, `${activeName}.pdf`, 'application/pdf');
       } else if (format === 'docx') {
-        const res = await fetch(`/api/export/${resumeId}/docx`, { method: 'POST', signal: controller.signal });
+        const res = await fetch(`/api/export/${resumeId}/docx`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ filename: activeName }),
+          signal: controller.signal,
+        });
         if (!res.ok) throw new Error((await res.text().catch(() => '')) || `Server returned ${res.status}`);
         blob = await res.blob();
-        triggerDownload(blob, `${safeName}_cv.docx`, 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+        triggerDownload(blob, `${activeName}.docx`, 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
       } else {
-        const res = await fetch(`/api/export/${resumeId}/json`, { method: 'POST', signal: controller.signal });
+        const res = await fetch(`/api/export/${resumeId}/json`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ filename: activeName }),
+          signal: controller.signal,
+        });
         if (!res.ok) throw new Error((await res.text().catch(() => '')) || `Server returned ${res.status}`);
         const data = await res.json();
         blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-        triggerDownload(blob, `${safeName}_backup.json`, 'application/json');
+        triggerDownload(blob, `${activeName}_backup.json`, 'application/json');
       }
       setDownloaded(format);
       setTimeout(() => setDownloaded(null), 2500);
@@ -107,7 +140,7 @@ export default function ExportModal({ resumeId, resumeName, onClose }: Props) {
     }
   };
 
-
+  const activeCleanName = cleanExportFileName(fileName, defaultBaseName);
 
   return createPortal(
     <div
@@ -115,7 +148,7 @@ export default function ExportModal({ resumeId, resumeName, onClose }: Props) {
       onClick={onClose}
     >
       <div
-        className="w-full max-w-md rounded-3xl p-6 md:p-8 border shadow-2xl space-y-6"
+        className="w-full max-w-md rounded-3xl p-6 md:p-8 border shadow-2xl space-y-5"
         style={{
           backgroundColor: 'var(--bg-surface)',
           borderColor: 'var(--border-default)',
@@ -149,6 +182,68 @@ export default function ExportModal({ resumeId, resumeName, onClose }: Props) {
             </button>
           </div>
         )}
+
+        {/* Normalized Export File Name */}
+        <div
+          className="p-4 rounded-2xl border space-y-2"
+          style={{
+            backgroundColor: 'var(--bg-surface-elevated)',
+            borderColor: 'var(--border-subtle)',
+          }}
+        >
+          <div className="flex items-center justify-between">
+            <label
+              htmlFor="export-file-name-input"
+              className="text-xs font-bold uppercase tracking-wider"
+              style={{ color: 'var(--text-muted)' }}
+            >
+              Export Filename
+            </label>
+            {fileName !== defaultBaseName && (
+              <button
+                type="button"
+                onClick={() => {
+                  setFileName(defaultBaseName);
+                  setIsCustomName(false);
+                }}
+                className="inline-flex items-center gap-1 text-[11px] font-semibold text-blue-600 dark:text-blue-400 hover:underline cursor-pointer"
+                title="Reset to default normalized name"
+              >
+                <RotateCcw className="w-3 h-3" />
+                <span>Reset to default</span>
+              </button>
+            )}
+          </div>
+
+          <div className="relative flex items-center">
+            <input
+              id="export-file-name-input"
+              type="text"
+              value={fileName}
+              onChange={(e) => {
+                setFileName(e.target.value.replace(/[\\/:*?"<>|]+/g, ''));
+                setIsCustomName(true);
+              }}
+              onBlur={() => setFileName(cleanExportFileName(fileName, defaultBaseName))}
+              placeholder="e.g. Alex_Morgan_Software_Engineer"
+              className="w-full px-3.5 py-2 rounded-xl border text-xs sm:text-sm font-mono transition-all focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+              style={{
+                backgroundColor: 'var(--bg-surface)',
+                borderColor: 'var(--border-default)',
+                color: 'var(--text-primary)',
+              }}
+            />
+          </div>
+
+          <div className="flex items-center justify-between text-[11px] gap-2 pt-0.5" style={{ color: 'var(--text-secondary)' }}>
+            <span className="truncate">
+              Normalized: <span className="font-semibold text-slate-800 dark:text-slate-200">{resolvedCandidateName || 'Name'}</span> + <span className="font-semibold text-slate-800 dark:text-slate-200">{resumeName}</span>
+            </span>
+            <span className="shrink-0 font-mono text-blue-600 dark:text-blue-400 font-medium">
+              {activeCleanName}.pdf
+            </span>
+          </div>
+        </div>
 
         {/* ATS Mode Toggle */}
         <div
@@ -344,8 +439,6 @@ export default function ExportModal({ resumeId, resumeName, onClose }: Props) {
             </button>
           </div>
         </div>
-
-
       </div>
     </div>,
     document.body

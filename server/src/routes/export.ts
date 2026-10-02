@@ -4,6 +4,7 @@ import { readFileSync, existsSync, unlink, unlinkSync } from 'fs';
 import Handlebars from 'handlebars';
 import { marked } from 'marked';
 import { resumeQueries, sectionQueries, exportDatabaseSnapshot, getDatabaseStats } from '../db/database';
+import { getCandidateName, getNormalizedExportName, cleanExportFileName } from '../export/exportName';
 import puppeteer from 'puppeteer';
 import {
   Document,
@@ -259,7 +260,11 @@ router.post('/:id/pdf', async (req: Request, res: Response) => {
     const resume = resumeQueries.get(id);
     if (!resume) return void res.status(404).json({ error: 'Not found' });
 
-    const { ats_mode, template } = req.body as { ats_mode?: boolean; template?: string };
+    const { ats_mode, template, filename: customFilename } = (req.body || {}) as {
+      ats_mode?: boolean;
+      template?: string;
+      filename?: string;
+    };
     const templateId = ats_mode ? 'ats' : (template ?? resume.template_id ?? 'modern');
     const sections = sectionQueries.list(id);
     const html = renderTemplate(templateId, resume, sections);
@@ -286,7 +291,10 @@ router.post('/:id/pdf', async (req: Request, res: Response) => {
       printBackground: true,
     });
 
-    const filename = `${resume.name.replace(/[^a-z0-9]/gi, '_')}_cv.pdf`;
+    const candidateName = getCandidateName(sections);
+    const defaultBase = getNormalizedExportName(candidateName, resume.name);
+    const baseName = cleanExportFileName(customFilename, defaultBase);
+    const filename = `${baseName}.pdf`;
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
     res.send(Buffer.from(pdfBuffer));
@@ -310,6 +318,7 @@ router.post('/:id/docx', async (req: Request, res: Response) => {
     const id = String(req.params.id);
     const resume = resumeQueries.get(id);
     if (!resume) return void res.status(404).json({ error: 'Not found' });
+    const { filename: customFilename } = (req.body || {}) as { filename?: string };
     const sections = sectionQueries.list(id);
 
     const noBorder = { style: BorderStyle.NONE, size: 0, color: 'auto' };
@@ -695,7 +704,10 @@ router.post('/:id/docx', async (req: Request, res: Response) => {
     });
 
     const buffer = await Packer.toBuffer(doc);
-    const filename = `${resume.name.replace(/[^a-z0-9]/gi, '_')}_cv.docx`;
+    const candidateName = getCandidateName(sections);
+    const defaultBase = getNormalizedExportName(candidateName, resume.name);
+    const baseName = cleanExportFileName(customFilename, defaultBase);
+    const filename = `${baseName}.docx`;
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
     res.send(buffer);
@@ -711,8 +723,12 @@ router.post('/:id/json', (req: Request, res: Response) => {
     const id = String(req.params.id);
     const resume = resumeQueries.get(id);
     if (!resume) return void res.status(404).json({ error: 'Not found' });
+    const { filename: customFilename } = (req.body || {}) as { filename?: string };
     const sections = sectionQueries.list(id);
-    const filename = `${resume.name.replace(/[^a-z0-9]/gi, '_')}_cv_backup.json`;
+    const candidateName = getCandidateName(sections);
+    const defaultBase = getNormalizedExportName(candidateName, resume.name);
+    const baseName = cleanExportFileName(customFilename, defaultBase);
+    const filename = `${baseName}_backup.json`;
     res.setHeader('Content-Type', 'application/json');
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
     res.json({ resume, sections, exported_at: new Date().toISOString() });
@@ -731,9 +747,12 @@ router.post('/:id/markdown', (req: Request, res: Response) => {
     const sections = sectionQueries.list(id);
     const markdown = generateResumeMarkdown(resume, sections);
 
-    const { download } = req.body as { download?: boolean };
+    const { download, filename: customFilename } = (req.body || {}) as { download?: boolean; filename?: string };
     if (download) {
-      const filename = `${resume.name.replace(/[^a-z0-9]/gi, '_')}_cv.md`;
+      const candidateName = getCandidateName(sections);
+      const defaultBase = getNormalizedExportName(candidateName, resume.name);
+      const baseName = cleanExportFileName(customFilename, defaultBase);
+      const filename = `${baseName}.md`;
       res.setHeader('Content-Type', 'text/markdown; charset=utf-8');
       res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
       return void res.send(markdown);

@@ -772,6 +772,10 @@ export default function Editor() {
         <ExportModal
           resumeId={id!}
           resumeName={currentResume.name}
+          candidateName={
+            (currentResume.sections.find((s) => s.section_type === "header")
+              ?.content?.[0] as Record<string, any>)?.name || ""
+          }
           onClose={() => setShowExport(false)}
         />
       )}

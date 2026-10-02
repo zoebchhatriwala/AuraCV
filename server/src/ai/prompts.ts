@@ -1,12 +1,20 @@
 export const PROMPTS = {
   redline(sectionTitle: string, sectionContent: string, context = ""): string {
-    return `You are an expert resume coach and HR consultant.
-Analyze the following resume section and provide specific, actionable redline suggestions.
+    return `You are an expert career advisor and hiring manager reviewing a resume to modern, top-tier professional standards (strict 1-2 page scannability, Google X-Y-Z formula, and human, ATS-friendly clarity).
+
+Analyze the following resume section and provide specific, actionable, fluff-free redline critique.
 
 Section: "${sectionTitle}"
 Content:
 ${sectionContent}
-${context ? `\nTarget role/company context: ${context}` : ""}
+${context ? `\nTarget role/industry context: ${context}` : ""}
+
+### TONE & LANGUAGE CONSTRAINTS:
+1. Strict ban on inflated corporate jargon and AI filler: flag overused buzzwords like "spearheaded," "orchestrated," "leveraged," "revolutionized," "pivotal," "testament," "synergistic," "robust," "delve," "tapestry," "game-changing."
+2. Write like an accomplished, grounded professional speaking directly to a hiring manager. Champion plain, active verbs: "built," "led," "designed," "managed," "launched," "cut," "grew," "delivered," "negotiated," "closed," "streamlined," "analyzed."
+3. Evaluate statements using the Google X-Y-Z formula: "Accomplished [X], as measured by [Y], by doing [Z]" (What was achieved/the challenge -> What was done, methods or tools used -> Measurable outcome/impact).
+4. Flag missing metrics and hard proof points (percentages, dollars, hours saved, volume, team size, conversion rates, error reductions).
+5. Scannability & brevity: Flag fluff and filler words that waste space on a tight, scannable CV.
 
 Respond in JSON matching this exact structure:
 {
@@ -14,38 +22,58 @@ Respond in JSON matching this exact structure:
   "suggestions": [
     {
       "type": "improve" | "remove" | "add" | "rewrite",
-      "original": "<original text snippet>",
-      "suggestion": "<specific improvement>",
-      "reason": "<why this helps>",
+      "original": "<original text snippet or word>",
+      "suggestion": "<specific plain-English improvement using Google X-Y-Z format>",
+      "reason": "<why this improves human clarity, ATS parsing, or hiring manager signal>",
       "priority": "high" | "medium" | "low"
     }
   ],
-  "strengths": ["<what is already working well>"],
-  "summary": "<2-3 sentence overall assessment>"
+  "strengths": ["<what is already concrete, quantifiable, or well-communicated>"],
+  "summary": "<2-3 sentence candid assessment from an experienced hiring manager's perspective>"
 }`;
   },
 
-  rewrite(bullet: string, tone = "professional", role = ""): string {
-    return `You are an expert resume writer.
-Rewrite the following resume bullet point to be more impactful, quantifiable, and ${tone}.
-${role ? `Target role: ${role}` : ""}
+  rewrite(bullet: string, tone = "xyz", role = ""): string {
+    return `You are an expert career advisor and hiring coach helping write a resume to top global standards (grounded human tone, Google X-Y-Z format, and scannable ATS-friendly clarity).
 
-Original: "${bullet}"
+Rewrite the following resume bullet point to be clear, quantifiable, and direct for any career field or role.
 
-Rules: Start with a strong action verb. Include metrics where possible. Be concise (1-2 lines max). Use active voice.
+TARGET ROLE / FIELD: ${role || "Target Role"}
+STYLE FOCUS: ${tone} (e.g. xyz = Google X-Y-Z Impact, concise = crisp & direct, leadership = ownership & team scope, action = action & outcome driven)
 
-Respond in JSON:
+ORIGINAL BULLET:
+"${bullet}"
+
+### STRICT TONE & LANGUAGE CONSTRAINTS:
+1. Strict ban on inflated corporate jargon and AI filler:
+   Do NOT use words like "spearheaded," "orchestrated," "leveraged," "revolutionized," "pivotal," "testament," "synergistic," "robust," "delve," "tapestry," "game-changing," "streamlined," "utilized."
+2. Write like an accomplished professional speaking directly to a hiring manager:
+   Use plain, active verbs: "built," "led," "designed," "managed," "launched," "grew," "cut," "delivered," "negotiated," "closed," "created," "reduced," "analyzed."
+3. Structure using the universal Google X-Y-Z formula:
+   "Accomplished [X], as measured by [Y], by doing [Z]"
+   - [X] What was accomplished / the core outcome or goal achieved.
+   - [Y] The quantifiable metric or business impact (e.g. %, $, hours saved, growth, volume, accuracy, retention). If the original lacks hard numbers, supply realistic placeholder metrics in brackets (e.g. "[by 25%]" or "[$50K]") so the candidate can easily personalize them.
+   - [Z] What actions, methods, skills, frameworks, or tools were applied.
+4. Keep it tight and punchy: 1 to 2 lines max. No run-on sentences.
+
+Respond in JSON matching this exact structure:
 {
-  "rewritten": "<new bullet point>",
-  "alternatives": ["<option 2>", "<option 3>"],
-  "action_verb_used": "<verb>",
-  "improvement_notes": "<what changed and why>"
+  "rewritten": "<the tight, high-impact bullet in Google X-Y-Z format>",
+  "alternatives": ["<alternative angle 1>", "<alternative angle 2>"],
+  "action_verb_used": "<the active verb used (e.g. built, led, designed, launched, cut, grew)>",
+  "xyz_breakdown": {
+    "accomplished_x": "<what was accomplished/the core outcome>",
+    "measured_by_y": "<the quantified metric/impact>",
+    "doing_z": "<the action, method, or skills used>"
+  },
+  "jargon_removed": ["<banned buzzword or fluff removed, if any>"],
+  "improvement_notes": "<1-2 concise sentences explaining what fluff was cut and why>"
 }`;
   },
 
   atsScore(resumeText: string, jobDescription: string): string {
-    return `You are an ATS (Applicant Tracking System) expert.
-Analyze how well this resume matches the job description.
+    return `You are a recruitment specialist and hiring advisor.
+Evaluate how well this resume matches the target job description based on relevant competencies, quantifiable impact, and ATS scannability.
 
 RESUME:
 ${resumeText}
@@ -53,23 +81,28 @@ ${resumeText}
 JOB DESCRIPTION:
 ${jobDescription}
 
+### CRITERIA:
+- Scored on role alignment, concrete skills verification, and quantifiable proof points (Google X-Y-Z metrics, not superficial keyword stuffing).
+- Prioritize clear, natural professional language over corporate buzzwords.
+- Format check for clean headings and scannable 1-2 page structure.
+
 Respond in JSON:
 {
   "overall_score": <0-100>,
   "keyword_match_score": <0-100>,
   "format_score": <0-100>,
   "experience_match_score": <0-100>,
-  "matched_keywords": ["<keyword>"],
-  "missing_keywords": ["<keyword>"],
+  "matched_keywords": ["<matched skill, competency, or qualification>"],
+  "missing_keywords": ["<critical missing skill, competency, or qualification>"],
   "section_scores": { "summary": <n>, "experience": <n>, "skills": <n>, "education": <n> },
-  "recommendations": ["<action>"],
-  "summary": "<2-3 sentence assessment>"
+  "recommendations": ["<actionable, non-jargon step to strengthen alignment>"],
+  "summary": "<2-3 sentence candid assessment of alignment with target role>"
 }`;
   },
 
   keywordGap(resumeText: string, jobDescription: string): string {
-    return `You are a recruitment specialist.
-Find all important keywords from the JD that are missing or underrepresented in the resume.
+    return `You are a recruitment specialist and talent advisor.
+Identify the critical skills, domain competencies, tools, methodologies, and credentials missing from the candidate's resume based on the job description. Filter out fluff buzzwords and focus on high-signal role requirements.
 
 RESUME:
 ${resumeText}
@@ -83,7 +116,7 @@ Respond in JSON:
   "nice_to_have_missing": [{ "keyword": "", "suggested_context": "" }],
   "already_present": ["<keyword>"],
   "skills_gap": { "technical": [], "soft": [], "domain": [] },
-  "summary": "<brief gap analysis>"
+  "summary": "<brief, direct gap analysis focused on verifiable capabilities>"
 }`;
   },
 
@@ -120,7 +153,7 @@ Return ONLY valid JSON with this exact structure (include only sections that hav
     {
       "section_type": "skills",
       "title": "Skills",
-      "content": [{ "category": "Technical", "items": [] }]
+      "content": [{ "category": "Core Competencies", "items": [] }]
     },
     {
       "section_type": "projects",
@@ -131,6 +164,7 @@ Return ONLY valid JSON with this exact structure (include only sections that hav
       "section_type": "certifications",
       "title": "Certifications",
       "content": [{ "name": "", "issuer": "", "date": "", "url": "" }]
+    }
   ]
 }
 `;
@@ -156,9 +190,9 @@ TARGET QUESTION TO ANSWER:
 
 ${instructions ? `SPECIAL INSTRUCTIONS / FOCUS: ${instructions}\n` : ""}
 RULES:
-1. Ground the response strictly in the candidate's real experiences, projects, technical stacks, and metrics from the original answer. Do NOT invent new employers, projects, or fake statistics.
+1. Ground the response strictly in the candidate's real experiences, projects, competencies, and metrics from the original answer. Do NOT invent new employers, projects, or fake statistics.
 2. Adapt the angle, structure (e.g. Situation, Task, Action, Result), and emphasis so it provides a compelling, direct answer to the TARGET QUESTION.
-3. Be articulate, natural, and persuasive. Avoid robotic fluff.
+3. Be articulate, natural, and persuasive. Avoid robotic fluff and inflated buzzwords.
 
 Respond in JSON matching this exact structure:
 {
