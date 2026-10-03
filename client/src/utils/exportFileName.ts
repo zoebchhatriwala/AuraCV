@@ -1,6 +1,6 @@
 /**
  * Utilities for normalizing and formatting export filenames.
- * Conforms to: [Candidate Name] + [CV Name] (e.g. Alex_Morgan_Senior_Staff_Engineer)
+ * Conforms to: [Candidate Name] + [CV / Resume Name] (e.g. Alex_Morgan_Senior_Staff_Engineer)
  */
 
 export function getNormalizedExportName(
@@ -24,7 +24,7 @@ export function getNormalizedExportName(
 
   // If both candidate name and cv name are provided
   if (cleanCandidate && cleanCv) {
-    // If CV name already contains candidate name (case-insensitive), avoid duplicate
+    // If CV / Resume name already contains candidate name (case-insensitive), avoid duplicate
     if (cleanCv.toLowerCase().includes(cleanCandidate.toLowerCase())) {
       return cleanCv;
     }

@@ -248,19 +248,19 @@ export default function Templates() {
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 mb-2">
-            <Layers className="w-3.5 h-3.5" /> CV Templates
+            <Layers className="w-3.5 h-3.5" /> CV / Resume Templates
           </div>
           <h1
             className="font-display text-2xl sm:text-3xl font-bold tracking-tight"
             style={{ color: "var(--text-primary)" }}
           >
-            Choose Your CV Style
+            Choose Your CV / Resume Style
           </h1>
           <p
             className="text-sm mt-1"
             style={{ color: "var(--text-secondary)" }}
           >
-            Select a design for your CV. You can switch templates anytime in
+            Select a design for your CV / Resume. You can switch templates anytime in
             the editor.
           </p>
         </div>

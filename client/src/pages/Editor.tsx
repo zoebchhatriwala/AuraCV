@@ -334,7 +334,7 @@ export default function Editor() {
         <div className="flex flex-col items-center gap-3">
           <div className="w-10 h-10 rounded-full border-2 border-blue-600 border-t-transparent animate-spin" />
           <span className="text-xs text-slate-500 dark:text-slate-400">
-            Loading CV Canvas…
+            Loading CV / Resume Canvas…
           </span>
         </div>
       </div>
@@ -579,7 +579,7 @@ export default function Editor() {
 
             className="btn-primary inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold cursor-pointer"
           >
-            <Download className="w-3.5 h-3.5" /> Export CV
+            <Download className="w-3.5 h-3.5" /> Export CV / Resume
           </button>
         </div>
       </div>
@@ -739,7 +739,7 @@ export default function Editor() {
                 ref={previewRef}
                 src={exportApi.preview(id!, currentResume.template_id)}
                 className="w-full h-[1200px] border-0 bg-white"
-                title="CV Live Preview"
+                title="CV / Resume Live Preview"
               />
             </div>
           </div>

@@ -175,7 +175,7 @@ export default function CVTailor() {
       await fetchResume(newResumeId);
       setSelectedResumeId(newResumeId);
       setSuccessMsg(
-        "Successfully created a new tailored version of your CV!",
+        "Successfully created a new tailored version of your CV / Resume!",
       );
     } catch (e) {
       setError((e as Error).message);
@@ -195,10 +195,10 @@ export default function CVTailor() {
           className="font-display text-2xl sm:text-3xl font-bold tracking-tight"
           style={{ color: "var(--text-primary)" }}
         >
-          AI CV Tailor
+          AI CV / Resume Tailor
         </h1>
         <p className="text-sm mt-1" style={{ color: "var(--text-secondary)" }}>
-          Tailor your CV for a specific role. The AI will ask you questions
+          Tailor your CV / Resume for a specific role. The AI will ask you questions
           to uncover metrics and impact, then rewrite it perfectly.
         </p>
       </div>
@@ -213,7 +213,7 @@ export default function CVTailor() {
             className="text-xs font-semibold uppercase tracking-wider block"
             style={{ color: "var(--text-muted)" }}
           >
-            Target CV Profile
+            Target CV / Resume Profile
           </label>
           <p className="text-xs" style={{ color: "var(--text-secondary)" }}>
             Choose which resume version to tailor
@@ -232,7 +232,7 @@ export default function CVTailor() {
             color: "var(--text-primary)",
           }}
         >
-          <option value="">Select a CV</option>
+          <option value="">Select a CV / Resume</option>
           {resumes.map((r) => (
             <option key={r.id} value={r.id}>
               {r.name} ({r.version_tag})
@@ -298,7 +298,7 @@ export default function CVTailor() {
               >
                 <p className="font-semibold text-purple-600 dark:text-purple-400 mb-1 flex items-center gap-2">
                   <MessageSquare className="w-4 h-4" /> The AI needs a bit more
-                  context to make your CV perfect:
+                  context to make your CV / Resume perfect:
                 </p>
                 <p style={{ color: "var(--text-secondary)" }}>
                   Please answer the questions below to provide quantifiable
@@ -369,7 +369,7 @@ export default function CVTailor() {
               ? "AI Engine Processing…"
               : tailorStep === 2
                 ? "Submit Answers & Tailor"
-                : "Tailor My CV"}
+                : "Tailor My CV / Resume"}
           </button>
           {!selectedResumeId && (
             <span className="text-xs text-amber-500 font-medium">
@@ -435,7 +435,7 @@ function TailorPanel({
           className="font-display text-xl font-bold"
           style={{ color: "var(--text-primary)" }}
         >
-          Tailored CV
+          Tailored CV / Resume
         </h3>
         <div className="flex items-center gap-3">
           <button

@@ -8,9 +8,9 @@ import {
 } from 'lucide-react';
 
 const NAV_ITEMS = [
-  { to: '/dashboard', icon: LayoutDashboard, label: 'CVs' },
+  { to: '/dashboard', icon: LayoutDashboard, label: 'CVs / Resumes' },
   { to: '/vault',     icon: Briefcase,       label: 'Job Vault' },
-  { to: '/cv-tailor', icon: MessageSquare,   label: 'CV Tailor' },
+  { to: '/cv-tailor', icon: MessageSquare,   label: 'CV / Resume Tailor' },
   { to: '/templates', icon: Palette,         label: 'Templates' },
   { to: '/import',    icon: Upload,          label: 'Import' },
   { to: '/settings',  icon: Settings,        label: 'Settings' },
@@ -29,7 +29,7 @@ export default function Layout() {
   }, [location.pathname]);
 
   const currentRouteTitle = () => {
-    if (location.pathname.startsWith('/editor')) return 'CV Editor';
+    if (location.pathname.startsWith('/editor')) return 'CV / Resume Editor';
     if (location.pathname.startsWith('/ai-studio')) return 'Writing Assistant';
     const match = NAV_ITEMS.find(item => item.to === location.pathname);
     return match ? match.label : 'AuraCV';
@@ -80,7 +80,7 @@ export default function Layout() {
                   AuraCV
                 </span>
                 <span className="text-[10px] uppercase font-semibold tracking-wider text-slate-500 dark:text-slate-400">
-                  CV Studio
+                  CV / Resume Studio
                 </span>
               </div>
             )}

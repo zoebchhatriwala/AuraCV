@@ -68,10 +68,10 @@ export default function AIStudio() {
           <Zap className="w-3.5 h-3.5" /> AI Assistant
         </div>
         <h1 className="font-display text-2xl sm:text-3xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
-          AI CV Assistant
+          AI CV / Resume Assistant
         </h1>
         <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>
-          Check how your CV matches job postings, discover missing keywords, and improve bullet points.
+          See how your CV / Resume matches job descriptions and get tips to improve it.
         </p>
       </div>
 
@@ -82,10 +82,10 @@ export default function AIStudio() {
       >
         <div className="space-y-0.5">
           <label className="text-xs font-semibold uppercase tracking-wider block" style={{ color: 'var(--text-muted)' }}>
-            Target CV Profile
+            Target CV / Resume Profile
           </label>
           <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
-            Choose which CV version to analyze
+            Choose which CV / Resume version to analyze
           </p>
         </div>
         <select
@@ -101,7 +101,7 @@ export default function AIStudio() {
             color: 'var(--text-primary)',
           }}
         >
-          <option value="">Select a CV</option>
+          <option value="">Select a CV / Resume</option>
           {resumes.map(r => (
             <option key={r.id} value={r.id}>
               {r.name} ({r.version_tag})
@@ -284,7 +284,7 @@ export default function AIStudio() {
             {loading ? 'AI Engine Processing…' : 'Run AI Analysis'}
           </button>
           {!selectedResumeId && (
-            <span className="text-xs text-amber-500 font-medium">Please select a CV first</span>
+            <span className="text-xs text-amber-500 font-medium">Please select a CV / Resume first</span>
           )}
         </div>
 
