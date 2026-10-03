@@ -237,7 +237,7 @@ export default function Settings() {
                 className="text-sm font-semibold"
                 style={{ color: "var(--text-primary)" }}
               >
-                Default Resume Template
+                Default CV Template
               </p>
               <p className="text-xs" style={{ color: "var(--text-secondary)" }}>
                 Starting layout used when creating new resumes
@@ -641,7 +641,7 @@ export default function Settings() {
                 className="text-[11px] font-medium"
                 style={{ color: "var(--text-muted)" }}
               >
-                Resume Sections
+                CV Sections
               </p>
               <p
                 className="text-lg font-bold mt-0.5"

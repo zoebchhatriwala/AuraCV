@@ -334,7 +334,7 @@ export default function Editor() {
         <div className="flex flex-col items-center gap-3">
           <div className="w-10 h-10 rounded-full border-2 border-blue-600 border-t-transparent animate-spin" />
           <span className="text-xs text-slate-500 dark:text-slate-400">
-            Loading Resume Canvas…
+            Loading CV Canvas…
           </span>
         </div>
       </div>

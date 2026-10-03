@@ -29,7 +29,7 @@ export default function Layout() {
   }, [location.pathname]);
 
   const currentRouteTitle = () => {
-    if (location.pathname.startsWith('/editor')) return 'Resume Editor';
+    if (location.pathname.startsWith('/editor')) return 'CV Editor';
     if (location.pathname.startsWith('/ai-studio')) return 'Writing Assistant';
     const match = NAV_ITEMS.find(item => item.to === location.pathname);
     return match ? match.label : 'AuraCV';

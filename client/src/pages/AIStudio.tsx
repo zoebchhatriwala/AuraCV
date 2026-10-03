@@ -68,7 +68,7 @@ export default function AIStudio() {
           <Zap className="w-3.5 h-3.5" /> AI Assistant
         </div>
         <h1 className="font-display text-2xl sm:text-3xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
-          AI Resume Assistant
+          AI CV Assistant
         </h1>
         <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>
           Check how your CV matches job postings, discover missing keywords, and improve bullet points.
@@ -85,7 +85,7 @@ export default function AIStudio() {
             Target CV Profile
           </label>
           <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
-            Choose which resume version to analyze
+            Choose which CV version to analyze
           </p>
         </div>
         <select
@@ -284,7 +284,7 @@ export default function AIStudio() {
             {loading ? 'AI Engine Processing…' : 'Run AI Analysis'}
           </button>
           {!selectedResumeId && (
-            <span className="text-xs text-amber-500 font-medium">Please select a resume first</span>
+            <span className="text-xs text-amber-500 font-medium">Please select a CV first</span>
           )}
         </div>
 
