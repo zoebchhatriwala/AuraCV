@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 
 const NAV_ITEMS = [
-  { to: '/dashboard', icon: LayoutDashboard, label: 'Resumes' },
+  { to: '/dashboard', icon: LayoutDashboard, label: 'CVs' },
   { to: '/vault',     icon: Briefcase,       label: 'Job Vault' },
   { to: '/cv-tailor', icon: MessageSquare,   label: 'CV Tailor' },
   { to: '/templates', icon: Palette,         label: 'Templates' },

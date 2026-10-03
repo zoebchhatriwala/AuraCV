@@ -621,7 +621,7 @@ export default function Settings() {
                 className="text-[11px] font-medium"
                 style={{ color: "var(--text-muted)" }}
               >
-                Resumes
+                CVs
               </p>
               <p
                 className="text-lg font-bold mt-0.5"

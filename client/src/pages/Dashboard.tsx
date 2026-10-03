@@ -93,7 +93,7 @@ export default function Dashboard() {
                   type="text"
                   value={searchQuery}
                   onChange={e => setSearchQuery(e.target.value)}
-                  placeholder="Search resumes..."
+                  placeholder="Search CVs..."
                   className="w-full px-3.5 py-2 rounded-xl border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                   style={{
                     backgroundColor: 'var(--bg-surface-elevated)',
@@ -122,7 +122,7 @@ export default function Dashboard() {
                   className="flex-1 sm:flex-initial btn-primary inline-flex items-center justify-center gap-2 px-5 py-2 rounded-xl text-sm font-semibold cursor-pointer shadow-sm"
                 >
                   <Plus className="w-4 h-4" />
-                  New Resume
+                  New CV
                 </button>
               </div>
             </div>
@@ -131,7 +131,7 @@ export default function Dashboard() {
           {/* Stats Bar */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {[
-              { label: 'Total Resumes', value: resumes.length, sub: 'Saved in studio' },
+              { label: 'Total CVs', value: resumes.length, sub: 'Saved in studio' },
               { label: 'Target Roles', value: new Set(resumes.map(r => r.meta?.target_role || r.name)).size, sub: 'Active variations' },
               { label: 'Last Modified', value: resumes[0]?.updated_at ? new Date(resumes[0].updated_at).toLocaleDateString() : 'Today', sub: 'Most recent edit' },
             ].map((stat, i) => (
@@ -291,7 +291,7 @@ export default function Dashboard() {
                       onClick={() => duplicateResume(resume.id)}
                       className="p-2 rounded-xl border transition-all bg-[var(--bg-surface)] hover:bg-slate-100 dark:hover:bg-neutral-700 hover:text-slate-950 dark:hover:text-white cursor-pointer"
                       style={{ borderColor: 'var(--border-default)', color: 'var(--text-secondary)' }}
-                      title="Duplicate resume version"
+                      title="Duplicate CV version"
                     >
                       <Copy className="w-3.5 h-3.5" />
                     </button>
@@ -299,7 +299,7 @@ export default function Dashboard() {
                       onClick={() => setResumeToDelete({ id: resume.id, name: resume.name })}
                       className="p-2 rounded-xl border transition-all bg-[var(--bg-surface)] hover:bg-rose-50 dark:hover:bg-rose-950/30 hover:text-rose-600 dark:hover:text-rose-400 cursor-pointer"
                       style={{ borderColor: 'var(--border-default)', color: 'var(--text-secondary)' }}
-                      title="Delete resume"
+                      title="Delete CV"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
@@ -320,12 +320,12 @@ export default function Dashboard() {
             }}
           >
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wider bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
-              <Layers className="w-3.5 h-3.5" /> AuraCV Resume Studio
+              <Layers className="w-3.5 h-3.5" /> AuraCV Studio
             </div>
 
             <div className="max-w-2xl mx-auto space-y-3">
               <h1 className="font-display text-3xl md:text-5xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
-                Build a resume that gets you hired
+                Build a CV that gets you hired
               </h1>
               <p className="text-sm md:text-base leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
                 Choose a clean layout, write impactful bullet points with AI assistance, and export to PDF or Word in seconds.
@@ -339,7 +339,7 @@ export default function Dashboard() {
                 className="btn-primary inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold cursor-pointer shadow-md"
               >
                 <Plus className="w-4 h-4" />
-                Create First Resume
+                Create First CV
               </button>
 
               <button
@@ -422,7 +422,7 @@ export default function Dashboard() {
             <div className="flex items-start justify-between">
               <div>
                 <h3 className="font-display text-xl font-bold" style={{ color: 'var(--text-primary)' }}>
-                  Create New Resume
+                  Create New CV
                 </h3>
                 <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>
                   Give your CV a name and choose a starting style.
@@ -576,16 +576,16 @@ export default function Dashboard() {
             setSelectedTemplate(id);
             setPreviewTemplateId(null);
           }}
-          actionButtonLabel="Use for New Resume"
+          actionButtonLabel="Use for New CV"
         />
       )}
 
       {/* ── In-App Confirm Modal for Deletion ─────────────────────────────── */}
       <ConfirmModal
         isOpen={!!resumeToDelete}
-        title="Delete Resume"
+        title="Delete CV"
         message={`Are you sure you want to delete "${resumeToDelete?.name}"? All associated sections and configurations will be permanently removed.`}
-        confirmLabel="Delete Resume"
+        confirmLabel="Delete CV"
         variant="danger"
         onConfirm={() => {
           if (resumeToDelete) {
