@@ -2,7 +2,7 @@
 
 AuraCV is a modern, privacy-first AI CV / Resume building studio. It combines the speed of local execution with the intelligence of cloud and local LLMs to help you craft, refine, and export professional CVs / Resumes.
 
-<img width="2559" height="1270" alt="image" src="https://github.com/user-attachments/assets/e175e843-962a-46d6-a3a9-b7756708ae31" />
+<img width="1278" height="637" alt="image" src="https://github.com/user-attachments/assets/5a379c2b-4985-4f60-be98-90167390e9c8" />
 
 
 ## Features
