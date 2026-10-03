@@ -80,7 +80,7 @@ export default function Layout() {
                   AuraCV
                 </span>
                 <span className="text-[10px] uppercase font-semibold tracking-wider text-slate-500 dark:text-slate-400">
-                  Resume Studio
+                  CV Studio
                 </span>
               </div>
             )}
