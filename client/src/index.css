@@ -192,6 +192,7 @@ body {
 .gradient-text {
   background: linear-gradient(180deg, var(--text-primary) 0%, var(--text-secondary) 100%);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
@@ -214,4 +215,9 @@ body {
 .no-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
+}
+
+/* ─── Forms ───────────────────────────────────────────────────────────────── */
+textarea::-webkit-resizer {
+  display: none;
 }

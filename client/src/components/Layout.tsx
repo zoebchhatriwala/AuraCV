@@ -4,12 +4,13 @@ import { useAppStore } from '../store';
 import {
   LayoutDashboard, Settings, Upload,
   Palette, ChevronRight, PanelLeftClose, PanelLeftOpen,
-  Sun, Moon, Menu, X, Briefcase
+  Sun, Moon, Menu, X, Briefcase, MessageSquare
 } from 'lucide-react';
 
 const NAV_ITEMS = [
   { to: '/dashboard', icon: LayoutDashboard, label: 'Resumes' },
   { to: '/vault',     icon: Briefcase,       label: 'Job Vault' },
+  { to: '/cv-tailor', icon: MessageSquare,   label: 'CV Tailor' },
   { to: '/templates', icon: Palette,         label: 'Templates' },
   { to: '/import',    icon: Upload,          label: 'Import' },
   { to: '/settings',  icon: Settings,        label: 'Settings' },

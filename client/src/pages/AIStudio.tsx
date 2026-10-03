@@ -5,7 +5,7 @@ import { useParams } from 'react-router-dom';
 import {
   Sparkles, Target, Search, Pencil,
   CheckCircle2, AlertCircle, Loader2, Copy, Check,
-  Zap, ArrowRight,
+  Zap, ArrowRight
 } from 'lucide-react';
 
 type AITask = 'ats' | 'keywords' | 'redline' | 'rewrite';

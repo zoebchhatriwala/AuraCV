@@ -202,4 +202,89 @@ Respond in JSON matching this exact structure:
   "suggested_category": "<Experience | Behavioral | Leadership | Culture Fit | Logistics | General>"
 }`;
   },
-} satisfies Record<string, (...args: string[]) => string>;
+
+  cvTailorQuestions(resumeText: string, role: string, instructions: string): string {
+    return `You are an elite Executive Recruiter and Resume Writer following the "Google CV Standard".
+Your goal is to tailor the candidate's CV to the target role.
+Google CV standards strictly require EVERY bullet to follow the X-Y-Z format: "Accomplished [X] as measured by [Y], by doing [Z]."
+Before rewriting, identify gaps where metrics ([Y]) or specific actions ([Z]) are missing or weak for the target role.
+
+RESUME:
+${resumeText}
+
+TARGET ROLE:
+${role}
+
+CUSTOM INSTRUCTIONS:
+${instructions}
+
+Ask the user a concise list of up to 5 specific, targeted questions to extract the exact missing metrics and actions needed to write perfect X-Y-Z bullets for this specific role.
+Crucially, your questions MUST explicitly guide the user to provide the X, Y, and Z. For example, frame questions like: "For your work on [Project], what was the specific outcome you accomplished [X], what metric measured its success [Y], and what specific action did you take to achieve it [Z]?"
+
+Respond in JSON matching this exact structure:
+{
+  "questions": [
+    {
+      "id": "q1",
+      "question": "<specific question asking for metrics or context>"
+    }
+  ]
+}`;
+  },
+
+  cvTailorRewrite(resumeText: string, role: string, instructions: string, qna: Array<{question: string, answer: string}>): string {
+    const qnaText = qna.map(q => `Q: ${q.question}\nA: ${q.answer}`).join("\n\n");
+    
+    return `You are an elite Executive Recruiter and Resume Writer following the "Google CV Standard".
+Transform the user's existing CV into a top-tier, interview-winning document tailored to the target role.
+
+RESUME:
+${resumeText}
+
+TARGET ROLE:
+${role}
+
+CUSTOM INSTRUCTIONS:
+${instructions}
+
+USER ANSWERS TO CLARIFYING QUESTIONS:
+${qnaText}
+
+CORE PRINCIPLES:
+1. The Google X-Y-Z Formula (STRICTLY REQUIRED): EVERY SINGLE bullet point MUST explicitly follow the format: "Accomplished [X] as measured by [Y], by doing [Z]." Do not deviate from this phrasing. It MUST literally begin with the word "Accomplished" or "Achieved" followed by what was done, then "as measured by", and then "by doing".
+2. Quantifiable Impact: Replace responsibilities with measurable results based on the user's answers.
+3. Hyper-Relevance: Tailor strictly to the target role.
+4. Human & Authentic: Strictly avoid "AI-sounding" buzzwords (e.g. synergized, orchestrated, spearheaded). Write like a competent human.
+5. ATS-Friendly: Precise and scannable.
+6. DO NOT change the original Company Name or Role Title. Return them exactly as they appear in the provided resume.
+7. Skills Optimization: Reorder, filter, and highlight skills in the skills sections to perfectly align with the target role.
+8. Single-Page Constraint: Ensure the output helps the CV fit on a single page. Write a very brief summary (max 2 sentences), limit experience to a MAXIMUM of 3 most impactful bullets per role, and remove irrelevant skills.
+
+Rewrite the work experience, skills, and summary sections.
+Respond in JSON matching this exact structure:
+{
+  "summary": "<The rewritten professional summary>",
+  "experience": [
+    {
+      "company": "<Company Name>",
+      "role": "<Role Title>",
+      "bullets": [
+        "<rewritten bullet 1>",
+        "<rewritten bullet 2>"
+      ]
+    }
+  ],
+  "skills": [
+    {
+      "category": "<Category Name>",
+      "items": [
+        "<tailored skill 1>",
+        "<tailored skill 2>"
+      ]
+    }
+  ],
+  "improvement_notes": "<1-2 sentences explaining how you tailored it>"
+}`;
+  },
+} satisfies Record<string, (...args: any[]) => string>;
+

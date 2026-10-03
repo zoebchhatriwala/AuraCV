@@ -9,6 +9,7 @@ import AIStudio from './pages/AIStudio';
 import Settings from './pages/Settings';
 import Import from './pages/Import';
 import ApplicationVault from './pages/ApplicationVault';
+import CVTailor from './pages/CVTailor';
 
 export default function App() {
   const { fetchResumes, fetchProviders, fetchActiveProvider, fetchSettings } = useAppStore();
@@ -31,6 +32,7 @@ export default function App() {
           <Route path="/editor/:id"        element={<Editor />} />
           <Route path="/templates"         element={<Templates />} />
           <Route path="/ai-studio/:id?"   element={<AIStudio />} />
+          <Route path="/cv-tailor/:id?"    element={<CVTailor />} />
           <Route path="/settings"          element={<Settings />} />
           <Route path="/import"            element={<Import />} />
         </Route>

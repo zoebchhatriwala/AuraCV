@@ -112,12 +112,24 @@ export default class HttpProvider {
     if (raw == null) throw new Error('Empty response from provider');
     if (responseCfg.parse === 'json') {
       let text = typeof raw === 'string' ? raw : JSON.stringify(raw);
-      if (responseCfg.strip_markdown_fences) {
-        text = text
-          .replace(/^```json\s*/im, '')
-          .replace(/^```\s*/im, '')
-          .replace(/\s*```\s*$/im, '')
-          .trim();
+      if (responseCfg.strip_markdown_fences && typeof raw === 'string') {
+        const jsonMatch = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
+        if (jsonMatch && jsonMatch[1]) {
+          text = jsonMatch[1].trim();
+        } else {
+          // Fallback: extract substring from first { or [ to last } or ]
+          const startBrace = text.indexOf('{');
+          const startBracket = text.indexOf('[');
+          const startIdx = (startBrace !== -1 && startBracket !== -1) ? Math.min(startBrace, startBracket) : Math.max(startBrace, startBracket);
+          
+          const endBrace = text.lastIndexOf('}');
+          const endBracket = text.lastIndexOf(']');
+          const endIdx = Math.max(endBrace, endBracket);
+          
+          if (startIdx !== -1 && endIdx !== -1 && endIdx >= startIdx) {
+            text = text.substring(startIdx, endIdx + 1);
+          }
+        }
       }
       return typeof raw === 'object' ? raw : JSON.parse(text);
     }
@@ -182,6 +194,14 @@ export default class HttpProvider {
   async importParse(rawText: string): Promise<ImportParseResult> {
     const endpoint = this.assertFeature('import_parse');
     return this.call(endpoint, PROMPTS.importParse(rawText)) as Promise<ImportParseResult>;
+  }
+
+  async cvTailorQuestions(resumeText: string, role: string, instructions: string): Promise<{questions: Array<{id: string, question: string}>}> {
+    return this.call('chat', PROMPTS.cvTailorQuestions(resumeText, role, instructions)) as Promise<{questions: Array<{id: string, question: string}>}>;
+  }
+
+  async cvTailorRewrite(resumeText: string, role: string, instructions: string, qna: Array<{question: string, answer: string}>): Promise<{summary: string, experience: Array<{company: string, role: string, bullets: string[]}>, improvement_notes: string}> {
+    return this.call('chat', PROMPTS.cvTailorRewrite(resumeText, role, instructions, qna)) as Promise<{summary: string, experience: Array<{company: string, role: string, bullets: string[]}>, improvement_notes: string}>;
   }
 
   async test(): Promise<unknown> {

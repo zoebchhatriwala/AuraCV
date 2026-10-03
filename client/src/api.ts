@@ -55,6 +55,10 @@ export const aiApi = {
                  post<ATSScoreResult>('/ai/ats-score', data),
   keywordGap:  (data: { resume_id: string; job_description: string; model?: string }) =>
                  post<KeywordGapResult>('/ai/keyword-gap', data),
+  cvTailorQuestions: (data: { resume_id: string; role: string; instructions?: string; model?: string }) =>
+                 post<{questions: Array<{id: string, question: string}>}>('/ai/cv-tailor/questions', data),
+  cvTailorRewrite: (data: { resume_id: string; role: string; instructions?: string; qna: Array<{question: string, answer: string}>; model?: string }) =>
+                 post<{summary: string, experience: Array<{company: string, role: string, bullets: string[]}>, skills?: Array<{category: string, items: string[]}>, improvement_notes: string}>('/ai/cv-tailor/rewrite', data),
   sessions:    (resumeId: string) => get<AISession[]>(`/ai/sessions/${resumeId}`),
   acceptSession: (id: string)     => post<{ ok: boolean }>(`/ai/sessions/${id}/accept`),
 };

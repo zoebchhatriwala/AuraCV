@@ -84,7 +84,10 @@ function sectionsToPlainText(sections: ResumeSection[]): string {
       else if (e.company) {
         lines.push(`${e.role} at ${e.company} (${e.start_date}–${e.end_date})`);
         if (Array.isArray(e.bullets)) lines.push(...(e.bullets as string[]).map(b => `• ${b}`));
-      } else if (Array.isArray(e.items)) lines.push((e.items as string[]).join(', '));
+      } else if (Array.isArray(e.items)) {
+        if (e.category) lines.push(`${e.category}: ${(e.items as string[]).join(', ')}`);
+        else lines.push((e.items as string[]).join(', '));
+      }
       else lines.push(JSON.stringify(entry));
     }
     return lines.join('\n');
@@ -169,6 +172,30 @@ router.post('/keyword-gap', async (req: Request, res: Response) => {
       input_text: resumeText, output_text: JSON.stringify(result),
       job_desc: job_description, score: null,
     });
+    res.json(result);
+  } catch (e) { res.status(500).json({ error: (e as Error).message }); }
+});
+
+router.post('/cv-tailor/questions', async (req: Request, res: Response) => {
+  try {
+    const { resume_id, role, instructions, model } = req.body as { resume_id?: string; role?: string; instructions?: string; model?: string };
+    if (!resume_id || !role) return void res.status(400).json({ error: 'resume_id and role required' });
+    const sections = sectionQueries.list(resume_id);
+    const resumeText = sectionsToPlainText(sections);
+    const provider = getActiveProvider(model);
+    const result = await provider.cvTailorQuestions(resumeText, role, instructions || '');
+    res.json(result);
+  } catch (e) { res.status(500).json({ error: (e as Error).message }); }
+});
+
+router.post('/cv-tailor/rewrite', async (req: Request, res: Response) => {
+  try {
+    const { resume_id, role, instructions, qna, model } = req.body as { resume_id?: string; role?: string; instructions?: string; qna?: Array<{question: string, answer: string}>; model?: string };
+    if (!resume_id || !role || !qna) return void res.status(400).json({ error: 'resume_id, role, and qna required' });
+    const sections = sectionQueries.list(resume_id);
+    const resumeText = sectionsToPlainText(sections);
+    const provider = getActiveProvider(model);
+    const result = await provider.cvTailorRewrite(resumeText, role, instructions || '', qna);
     res.json(result);
   } catch (e) { res.status(500).json({ error: (e as Error).message }); }
 });
