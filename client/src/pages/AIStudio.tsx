@@ -71,7 +71,7 @@ export default function AIStudio() {
           AI Resume Assistant
         </h1>
         <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>
-          Check how your resume matches job postings, discover missing keywords, and improve bullet points.
+          Check how your CV matches job postings, discover missing keywords, and improve bullet points.
         </p>
       </div>
 
@@ -82,7 +82,7 @@ export default function AIStudio() {
       >
         <div className="space-y-0.5">
           <label className="text-xs font-semibold uppercase tracking-wider block" style={{ color: 'var(--text-muted)' }}>
-            Target Resume Profile
+            Target CV Profile
           </label>
           <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
             Choose which resume version to analyze
@@ -101,7 +101,7 @@ export default function AIStudio() {
             color: 'var(--text-primary)',
           }}
         >
-          <option value="">Select a resume</option>
+          <option value="">Select a CV</option>
           {resumes.map(r => (
             <option key={r.id} value={r.id}>
               {r.name} ({r.version_tag})

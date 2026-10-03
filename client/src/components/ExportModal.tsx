@@ -159,7 +159,7 @@ export default function ExportModal({ resumeId, resumeName, candidateName = '', 
         <div className="flex items-center justify-between">
           <div>
             <h3 className="font-display text-xl font-bold" style={{ color: 'var(--text-primary)' }}>
-              Export Resume
+              Export CV
             </h3>
             <p className="text-xs mt-0.5" style={{ color: 'var(--text-secondary)' }}>
               Download pixel-perfect files ready for job applications
@@ -308,7 +308,7 @@ export default function ExportModal({ resumeId, resumeName, candidateName = '', 
             {
               fmt: 'json' as const,
               label: 'AuraCV Backup (.json)',
-              desc: 'Complete backup file of your resume data',
+              desc: 'Complete backup file of your CV data',
               badge: 'Data Backup',
               icon: FileJson,
               color: '#10b981',

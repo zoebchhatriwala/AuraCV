@@ -20,7 +20,7 @@ export default function Import() {
     setLoading(true); setError(''); setSuccess('');
     try {
       const { id } = await importApi.pdf(file, name || file.name.replace(/\.pdf$/i, ''));
-      setSuccess('Resume successfully parsed and imported! Opening editor…');
+      setSuccess('CV successfully parsed and imported! Opening editor…');
       setTimeout(() => navigate(`/editor/${id}`), 1200);
     } catch (e) {
       setError((e as Error).message);
@@ -31,8 +31,8 @@ export default function Import() {
     if (!text.trim()) return;
     setLoading(true); setError(''); setSuccess('');
     try {
-      const { id } = await importApi.text(text, name || 'Imported Resume');
-      setSuccess('Resume text structured into sections! Opening editor…');
+      const { id } = await importApi.text(text, name || 'Imported CV');
+      setSuccess('CV text structured into sections! Opening editor…');
       setTimeout(() => navigate(`/editor/${id}`), 1200);
     } catch (e) {
       setError((e as Error).message);
@@ -53,7 +53,7 @@ export default function Import() {
   };
 
   const modes: Array<{ id: Mode; icon: typeof Upload; label: string; desc: string }> = [
-    { id: 'pdf',  icon: FileText,       label: 'PDF Upload',  desc: 'Upload an existing PDF resume' },
+    { id: 'pdf',  icon: FileText,       label: 'PDF Upload',  desc: 'Upload an existing PDF CV' },
     { id: 'text', icon: ClipboardPaste, label: 'Paste Text',  desc: 'Paste plain text content'      },
     { id: 'json', icon: FileJson,       label: 'JSON Backup', desc: 'Restore an AuraCV backup file' },
   ];
@@ -63,13 +63,13 @@ export default function Import() {
       {/* ── Header ──────────────────────────────────────────────────────── */}
       <div>
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 mb-2">
-          <Upload className="w-3.5 h-3.5" /> Resume Import
+          <Upload className="w-3.5 h-3.5" /> CV Import
         </div>
         <h1 className="font-display text-2xl sm:text-3xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
-          Import Resume
+          Import CV
         </h1>
         <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>
-          Upload or paste your resume to automatically fill in your work history, education, and skills.
+          Upload or paste your CV to automatically fill in your work history, education, and skills.
         </p>
       </div>
 
@@ -107,7 +107,7 @@ export default function Import() {
       {/* ── Target Name Input ────────────────────────────────────────────── */}
       <div className="space-y-1.5">
         <label className="text-xs font-semibold uppercase tracking-wider block" style={{ color: 'var(--text-secondary)' }}>
-          Resume Title <span className="opacity-60">(Optional)</span>
+          CV Title <span className="opacity-60">(Optional)</span>
         </label>
         <input
           type="text"
@@ -150,7 +150,7 @@ export default function Import() {
             <Upload className="w-8 h-8" />
           </div>
           <h3 className="font-display font-bold text-base mb-1" style={{ color: 'var(--text-primary)' }}>
-            Drag and drop your PDF resume here
+            Drag and drop your PDF CV here
           </h3>
           <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
             or click to choose a file from your computer
@@ -179,7 +179,7 @@ export default function Import() {
             className="btn-primary w-full py-3 rounded-2xl text-sm font-semibold flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
           >
             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-            {loading ? 'AI Parsing Resume Sections…' : 'Parse with AI Engine'}
+            {loading ? 'AI Parsing CV Sections…' : 'Parse with AI Engine'}
           </button>
         </div>
       )}
@@ -222,7 +222,7 @@ export default function Import() {
           <Loader2 className="w-5 h-5 text-blue-600 dark:text-blue-400 animate-spin" />
           <div>
             <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
-              Structuring your resume…
+              Structuring your CV…
             </p>
             <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
               Analyzing layout, classifying sections, and formatting experience bullets

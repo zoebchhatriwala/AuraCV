@@ -69,7 +69,7 @@ export default function Dashboard() {
             <div>
               <div className="flex items-center gap-3">
                 <h1 className="font-display text-2xl sm:text-3xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
-                  Your Resumes
+                  Your CVs
                 </h1>
                 <span
                   className="px-2.5 py-0.5 rounded-full text-xs font-semibold border"
@@ -83,7 +83,7 @@ export default function Dashboard() {
                 </span>
               </div>
               <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>
-                Manage, edit, and export your resumes.
+                Manage, edit, and export your CVs.
               </p>
             </div>
 
@@ -173,7 +173,7 @@ export default function Dashboard() {
             >
               <FileText className="w-10 h-10 text-slate-400 mx-auto" />
               <h3 className="font-display text-lg font-bold" style={{ color: 'var(--text-primary)' }}>
-                No resumes match "{searchQuery}"
+                No CVs match "{searchQuery}"
               </h3>
               <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
                 Try searching for a different title or keyword.
@@ -403,7 +403,7 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* ── Create Resume Modal ──────────────────────────────────────────── */}
+      {/* ── Create CV Modal ──────────────────────────────────────────── */}
       {showCreate && createPortal(
         <div
           className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/25 dark:bg-black/70 backdrop-blur-xs"
@@ -425,7 +425,7 @@ export default function Dashboard() {
                   Create New Resume
                 </h3>
                 <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>
-                  Give your resume a name and choose a starting style.
+                  Give your CV a name and choose a starting style.
                 </p>
               </div>
               <button
@@ -441,7 +441,7 @@ export default function Dashboard() {
               {/* Title input */}
               <div>
                 <label className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'var(--text-secondary)' }}>
-                  Resume Title
+                  CV Title
                 </label>
                 <input
                   autoFocus

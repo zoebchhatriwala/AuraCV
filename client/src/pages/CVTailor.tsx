@@ -175,7 +175,7 @@ export default function CVTailor() {
       await fetchResume(newResumeId);
       setSelectedResumeId(newResumeId);
       setSuccessMsg(
-        "Successfully created a new tailored version of your resume!",
+        "Successfully created a new tailored version of your CV!",
       );
     } catch (e) {
       setError((e as Error).message);
@@ -198,7 +198,7 @@ export default function CVTailor() {
           AI CV Tailor
         </h1>
         <p className="text-sm mt-1" style={{ color: "var(--text-secondary)" }}>
-          Tailor your resume for a specific role. The AI will ask you questions
+          Tailor your CV for a specific role. The AI will ask you questions
           to uncover metrics and impact, then rewrite it perfectly.
         </p>
       </div>
@@ -213,7 +213,7 @@ export default function CVTailor() {
             className="text-xs font-semibold uppercase tracking-wider block"
             style={{ color: "var(--text-muted)" }}
           >
-            Target Resume Profile
+            Target CV Profile
           </label>
           <p className="text-xs" style={{ color: "var(--text-secondary)" }}>
             Choose which resume version to tailor
@@ -232,7 +232,7 @@ export default function CVTailor() {
             color: "var(--text-primary)",
           }}
         >
-          <option value="">Select a resume</option>
+          <option value="">Select a CV</option>
           {resumes.map((r) => (
             <option key={r.id} value={r.id}>
               {r.name} ({r.version_tag})
@@ -435,7 +435,7 @@ function TailorPanel({
           className="font-display text-xl font-bold"
           style={{ color: "var(--text-primary)" }}
         >
-          Tailored Resume
+          Tailored CV
         </h3>
         <div className="flex items-center gap-3">
           <button

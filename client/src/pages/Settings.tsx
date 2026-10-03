@@ -275,7 +275,7 @@ export default function Settings() {
               AI Providers
             </h2>
             <p className="text-xs" style={{ color: "var(--text-secondary)" }}>
-              Select which AI provider powers your resume suggestions and review
+              Select which AI provider powers your CV suggestions and review
               tools
             </p>
           </div>
@@ -914,9 +914,9 @@ export default function Settings() {
                   className="text-[11px]"
                   style={{ color: "var(--text-muted)" }}
                 >
-                  Tip: If you only want to restore a single resume without
+                  Tip: If you only want to restore a single CV without
                   replacing the entire database, go to the{" "}
-                  <strong>Import</strong> page and upload an individual resume
+                  <strong>Import</strong> page and upload an individual CV
                   JSON backup.
                 </p>
               </div>
