@@ -102,12 +102,16 @@ export default function CVTailor() {
       );
       const duplicatedResume = await resumeApi.get(newResumeId);
 
-      const headerSec = duplicatedResume.sections.find((s) => s.section_type === "header");
+      const headerSec = duplicatedResume.sections.find(
+        (s) => s.section_type === "header",
+      );
       if (headerSec && tailorRole) {
         const headerContent = headerSec.content as Array<any>;
         if (headerContent.length > 0) {
           const newHeaderContent = [{ ...headerContent[0], role: tailorRole }];
-          await resumeApi.updateSection(newResumeId, headerSec.id, { content: newHeaderContent });
+          await resumeApi.updateSection(newResumeId, headerSec.id, {
+            content: newHeaderContent,
+          });
         }
       }
 
@@ -126,48 +130,68 @@ export default function CVTailor() {
       );
       if (expSec && tailorResult.experience?.length > 0) {
         const currentExp = expSec.content as Array<any>;
-        const newContent = currentExp.map((item, idx) => {
-          let matched = null;
-          if (tailorResult.experience.length === currentExp.length) {
-            matched = tailorResult.experience[idx];
-          } else {
-            matched = tailorResult.experience.find(
-              (e) =>
-                e.company
-                  .toLowerCase()
-                  .includes((item.company || "").toLowerCase()) ||
-                (item.company || "")
-                  .toLowerCase()
-                  .includes(e.company.toLowerCase()),
-            );
+        const aiExperiences = [...tailorResult.experience];
+        
+        const newContent = currentExp.map((item) => {
+          const iComp = (item.company || "").trim().toLowerCase();
+          const iRole = (item.role || "").trim().toLowerCase();
+          
+          // Try exact match first
+          let aiMatchIdx = aiExperiences.findIndex(e => {
+            const eComp = (e.company || "").trim().toLowerCase();
+            const eRole = (e.role || "").trim().toLowerCase();
+            return iComp === eComp && iRole === eRole;
+          });
+          
+          // Fallback to fuzzy company match if exact fails
+          if (aiMatchIdx === -1) {
+             aiMatchIdx = aiExperiences.findIndex(e => {
+                const eComp = (e.company || "").trim().toLowerCase();
+                return (iComp && eComp.includes(iComp)) || (eComp && iComp.includes(eComp));
+             });
           }
-          if (matched) {
+
+          let matchedAi = null;
+          if (aiMatchIdx !== -1) {
+            matchedAi = aiExperiences.splice(aiMatchIdx, 1)[0];
+          }
+
+          if (matchedAi) {
             return {
               ...item,
-              bullets: matched.bullets,
+              company: matchedAi.company || item.company,
+              role: matchedAi.role || item.role,
+              bullets: matchedAi.bullets,
             };
           }
-          return item;
+          
+          // If AI didn't rewrite it, keep the original experience unchanged
+          return item; 
         });
+        
+        // Append any brand new experiences the AI might have created
+        newContent.push(...aiExperiences);
+        
         await resumeApi.updateSection(newResumeId, expSec.id, {
           content: newContent,
         });
       }
 
       if (tailorResult.skills && tailorResult.skills.length > 0) {
-        const skillSections = duplicatedResume.sections.filter((s) => s.section_type === "skills");
-        for (const skillSec of skillSections) {
-          const currentSkills = skillSec.content as Array<any>;
-          const newContent = currentSkills.map((item) => {
-            const matched = tailorResult.skills?.find(
-              (s) => s.category?.toLowerCase() === (item.category || "").toLowerCase()
-            );
-            if (matched) {
-              return { ...item, items: matched.items };
-            }
-            return item;
+        const skillSections = duplicatedResume.sections.filter(
+          (s) => s.section_type === "skills",
+        );
+        if (skillSections.length > 0) {
+          // Replace the first skills section entirely with the AI's optimized list
+          await resumeApi.updateSection(newResumeId, skillSections[0].id, {
+            content: tailorResult.skills,
           });
-          await resumeApi.updateSection(newResumeId, skillSec.id, { content: newContent });
+          // Empty any subsequent skills sections to avoid duplicates
+          for (let i = 1; i < skillSections.length; i++) {
+            await resumeApi.updateSection(newResumeId, skillSections[i].id, {
+              content: [],
+            });
+          }
         }
       }
 
@@ -198,8 +222,8 @@ export default function CVTailor() {
           AI CV / Resume Tailor
         </h1>
         <p className="text-sm mt-1" style={{ color: "var(--text-secondary)" }}>
-          Tailor your CV / Resume for a specific role. The AI will ask you questions
-          to uncover metrics and impact, then rewrite it perfectly.
+          Tailor your CV / Resume for a specific role. The AI will ask you
+          questions to uncover metrics and impact, then rewrite it perfectly.
         </p>
       </div>
 
@@ -278,9 +302,9 @@ export default function CVTailor() {
                 <textarea
                   value={tailorInstructions}
                   onChange={(e) => setTailorInstructions(e.target.value)}
-                  rows={2}
+                  rows={3}
                   placeholder="e.g. Focus on my leadership experience and React performance optimizations."
-                  className="w-full rounded-2xl px-4 py-3 text-sm transition-all focus:outline-none focus:ring-2 focus:ring-purple-500/20 border resize-none"
+                  className="w-full min-h-[80px] rounded-2xl rounded-br-md px-4 py-3 text-sm transition-all focus:outline-none focus:ring-2 focus:ring-purple-500/20 border resize-y"
                   style={{
                     backgroundColor: "var(--bg-surface-elevated)",
                     borderColor: "var(--border-default)",
@@ -321,9 +345,9 @@ export default function CVTailor() {
                         [q.id]: e.target.value,
                       })
                     }
-                    rows={2}
+                    rows={3}
                     placeholder="Your answer..."
-                    className="w-full rounded-xl px-4 py-2.5 text-sm transition-all focus:outline-none focus:ring-2 focus:ring-purple-500/20 border resize-y"
+                    className="w-full min-h-[80px] rounded-xl rounded-br-md px-4 py-2.5 text-sm transition-all focus:outline-none focus:ring-2 focus:ring-purple-500/20 border resize-y"
                     style={{
                       backgroundColor: "var(--bg-surface-elevated)",
                       borderColor: "var(--border-default)",

@@ -166,7 +166,7 @@ export default function AIStudio() {
               onChange={e => setJobDesc(e.target.value)}
               rows={6}
               placeholder="Paste the target job description here (requirements, qualifications, responsibilities)…"
-              className="w-full rounded-2xl px-4 py-3 text-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500/20 border resize-y"
+              className="w-full min-h-[80px] rounded-2xl rounded-br-md px-4 py-3 text-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500/20 border resize-y"
               style={{
                 backgroundColor: 'var(--bg-surface-elevated)',
                 borderColor: 'var(--border-default)',
@@ -191,7 +191,7 @@ export default function AIStudio() {
               onChange={e => setJobDesc(e.target.value)}
               rows={6}
               placeholder="Paste the target job description here (requirements, qualifications, responsibilities)…"
-              className="w-full rounded-2xl px-4 py-3 text-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500/20 border resize-y"
+              className="w-full min-h-[80px] rounded-2xl rounded-br-md px-4 py-3 text-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500/20 border resize-y"
               style={{
                 backgroundColor: 'var(--bg-surface-elevated)',
                 borderColor: 'var(--border-default)',
@@ -237,7 +237,7 @@ export default function AIStudio() {
                 onChange={e => setBullet(e.target.value)}
                 rows={3}
                 placeholder="e.g. Worked on database performance and helped team ship feature on time."
-                className="w-full rounded-2xl px-4 py-3 text-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500/20 border resize-none"
+                className="w-full min-h-[80px] rounded-2xl rounded-br-md px-4 py-3 text-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500/20 border resize-y"
                 style={{
                   backgroundColor: 'var(--bg-surface-elevated)',
                   borderColor: 'var(--border-default)',

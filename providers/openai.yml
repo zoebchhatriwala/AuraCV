@@ -36,6 +36,11 @@ models:
     - id: o3-mini
       name: "o3-mini (reasoning)"
       context_window: 128000
+      request_overrides:
+        temperature: null
+        max_tokens: null
+        response_format: null
+        max_completion_tokens: 4096
 
 # ─── Endpoints ───────────────────────────────────────────────────────────────
 endpoints:

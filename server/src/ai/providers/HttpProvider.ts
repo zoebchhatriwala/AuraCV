@@ -81,20 +81,47 @@ export default class HttpProvider {
   }
 
   private buildBody(endpointCfg: EndpointConfig, prompt: string | null = null): unknown {
-    const template = JSON.stringify(endpointCfg.request ?? {});
-    let resolved = template.replace(/\{\{model\}\}/g, this.model);
-    if (prompt !== null) {
-      const escaped = prompt
-        .replace(/\\/g, '\\\\')
-        .replace(/"/g, '\\"')
-        .replace(/\n/g, '\\n')
-        .replace(/\r/g, '\\r')
-        .replace(/\t/g, '\\t');
-      resolved = resolved.replace(/\{\{prompt\}\}/g, escaped);
-    } else {
-      resolved = resolved.replace(/\{\{prompt\}\}/g, '');
+    const template = JSON.parse(JSON.stringify(endpointCfg.request ?? {}));
+    
+    const modelCfg = this.config.models?.options.find(m => m.id === this.model);
+    if (modelCfg?.request_overrides) {
+      const merge = (target: any, source: any) => {
+        for (const key of Object.keys(source)) {
+          if (source[key] === null) {
+            delete target[key];
+          } else if (source[key] && typeof source[key] === 'object' && !Array.isArray(source[key])) {
+            target[key] = target[key] || {};
+            merge(target[key], source[key]);
+          } else {
+            target[key] = source[key];
+          }
+        }
+      };
+      merge(template, modelCfg.request_overrides);
     }
-    return JSON.parse(resolved);
+    
+    const walkAndReplace = (obj: any): any => {
+      if (typeof obj === 'string') {
+        let s = obj.replace(/\{\{model\}\}/g, () => this.model);
+        if (s.includes('{{prompt}}')) {
+          s = s.replace(/\{\{prompt\}\}/g, () => prompt ?? '');
+        }
+        return s;
+      }
+      if (Array.isArray(obj)) {
+        return obj.map(walkAndReplace);
+      }
+      if (typeof obj === 'object' && obj !== null) {
+        const res: any = {};
+        for (const k of Object.keys(obj)) {
+          res[k] = walkAndReplace(obj[k]);
+        }
+        return res;
+      }
+      return obj;
+    };
+    
+    return walkAndReplace(template);
   }
 
   /** Dot/bracket notation path extractor: "choices[0].message.content" */
@@ -108,30 +135,80 @@ export default class HttpProvider {
       }, obj);
   }
 
-  private parseResponse(raw: unknown, responseCfg: EndpointConfig['response']): unknown {
-    if (raw == null) throw new Error('Empty response from provider');
-    if (responseCfg.parse === 'json') {
-      let text = typeof raw === 'string' ? raw : JSON.stringify(raw);
-      if (responseCfg.strip_markdown_fences && typeof raw === 'string') {
-        const jsonMatch = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
-        if (jsonMatch && jsonMatch[1]) {
-          text = jsonMatch[1].trim();
-        } else {
-          // Fallback: extract substring from first { or [ to last } or ]
-          const startBrace = text.indexOf('{');
-          const startBracket = text.indexOf('[');
-          const startIdx = (startBrace !== -1 && startBracket !== -1) ? Math.min(startBrace, startBracket) : Math.max(startBrace, startBracket);
-          
-          const endBrace = text.lastIndexOf('}');
-          const endBracket = text.lastIndexOf(']');
-          const endIdx = Math.max(endBrace, endBracket);
-          
-          if (startIdx !== -1 && endIdx !== -1 && endIdx >= startIdx) {
-            text = text.substring(startIdx, endIdx + 1);
+  private extractJsonFromText(text: string): unknown {
+    // 1. Try markdown blocks (last one first)
+    const blocks = Array.from(text.matchAll(/```(?:json)?\s*([\s\S]*?)\s*```/gi));
+    for (let i = blocks.length - 1; i >= 0; i--) {
+      try {
+        const parsed = JSON.parse(blocks[i][1].trim());
+        if (parsed && typeof parsed === 'object') return parsed;
+      } catch (e) {}
+    }
+
+    // 2. Scan for balanced '{ ... }' blocks ignoring strings
+    const candidates: string[] = [];
+    let depth = 0;
+    let start = -1;
+    let inString = false;
+    let escape = false;
+
+    for (let i = 0; i < text.length; i++) {
+      const char = text[i];
+      if (escape) {
+        escape = false;
+        continue;
+      }
+      if (char === '\\') {
+        escape = true;
+        continue;
+      }
+      if (char === '"') {
+        inString = !inString;
+        continue;
+      }
+      if (!inString) {
+        if (char === '{') {
+          if (depth === 0) start = i;
+          depth++;
+        } else if (char === '}') {
+          depth--;
+          if (depth === 0 && start !== -1) {
+            candidates.push(text.substring(start, i + 1));
+            start = -1;
+          } else if (depth < 0) {
+            depth = 0;
           }
         }
       }
-      return typeof raw === 'object' ? raw : JSON.parse(text);
+    }
+
+    // Try parsing candidates from last to first
+    for (let i = candidates.length - 1; i >= 0; i--) {
+      try {
+        const parsed = JSON.parse(candidates[i]);
+        if (parsed && typeof parsed === 'object') return parsed;
+      } catch (e) {
+        try {
+          const fixed = candidates[i].replace(/,\s*([\]}])/g, '$1');
+          const parsed = JSON.parse(fixed);
+          if (parsed && typeof parsed === 'object') return parsed;
+        } catch (e2) {}
+      }
+    }
+
+    throw new Error("No valid JSON object found in text");
+  }
+
+  private parseResponse(raw: unknown, responseCfg: EndpointConfig['response']): unknown {
+    if (raw == null) throw new Error('Empty response from provider');
+    if (responseCfg.parse === 'json') {
+      if (typeof raw === 'object') return raw;
+      const text = String(raw);
+      try {
+        return this.extractJsonFromText(text);
+      } catch (err: any) {
+        throw new Error(`JSON Parse Error: ${err.message}\n\nRaw Text:\n${text}`);
+      }
     }
     if (responseCfg.parse === 'text') return String(raw);
     if (responseCfg.parse === 'number') return Number(raw);

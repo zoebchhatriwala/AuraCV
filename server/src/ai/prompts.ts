@@ -221,12 +221,15 @@ ${instructions}
 Ask the user a concise list of up to 5 specific, targeted questions to extract the exact missing metrics and actions needed to write perfect X-Y-Z bullets for this specific role.
 Crucially, your questions MUST explicitly guide the user to provide the X, Y, and Z. For example, frame questions like: "For your work on [Project], what was the specific outcome you accomplished [X], what metric measured its success [Y], and what specific action did you take to achieve it [Z]?"
 
+IMPORTANT: You must generate real, customized questions based on the resume. Do NOT output placeholder text.
+IMPORTANT: When writing text inside JSON values, NEVER use unescaped double quotes (\"). Always use single quotes (') or properly escape them (\\\") to prevent JSON parsing errors.
+
 Respond in JSON matching this exact structure:
 {
   "questions": [
     {
       "id": "q1",
-      "question": "<specific question asking for metrics or context>"
+      "question": "What specific metric measured the success of..."
     }
   ]
 }`;
@@ -261,29 +264,30 @@ CORE PRINCIPLES:
 8. Single-Page Constraint: Ensure the output helps the CV fit on a single page. Write a very brief summary (max 2 sentences), limit experience to a MAXIMUM of 3 most impactful bullets per role, and remove irrelevant skills.
 
 Rewrite the work experience, skills, and summary sections.
+IMPORTANT: You must write actual, customized content tailored to the user. Do NOT copy the placeholder text from the example below.
+IMPORTANT: When writing text inside JSON values, NEVER use unescaped double quotes (\"). Always use single quotes (') or properly escape them (\\\") to prevent JSON parsing errors.
+
 Respond in JSON matching this exact structure:
 {
-  "summary": "<The rewritten professional summary>",
+  "summary": "A highly skilled Forward Deployed AI Engineer...",
   "experience": [
     {
-      "company": "<Company Name>",
-      "role": "<Role Title>",
+      "company": "Tech Corp",
+      "role": "AI Engineer",
       "bullets": [
-        "<rewritten bullet 1>",
-        "<rewritten bullet 2>"
+        "Accomplished X as measured by Y, by doing Z."
       ]
     }
   ],
   "skills": [
     {
-      "category": "<Category Name>",
+      "category": "Core Competencies",
       "items": [
-        "<tailored skill 1>",
-        "<tailored skill 2>"
+        "Machine Learning"
       ]
     }
   ],
-  "improvement_notes": "<1-2 sentences explaining how you tailored it>"
+  "improvement_notes": "Added quantifiable metrics to the engineering role."
 }`;
   },
 } satisfies Record<string, (...args: any[]) => string>;

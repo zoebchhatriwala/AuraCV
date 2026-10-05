@@ -204,6 +204,7 @@ export interface ModelOption {
   name: string;
   context_window?: number;
   recommended?: boolean;
+  request_overrides?: Record<string, unknown>;
 }
 
 export interface EndpointConfig {

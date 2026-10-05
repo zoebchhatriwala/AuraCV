@@ -1588,7 +1588,7 @@ ${morphSource.answer}
                     setEntryForm({ ...entryForm, answer: e.target.value })
                   }
                   placeholder="Write your comprehensive answer here..."
-                  className="w-full px-3.5 py-2.5 rounded-xl border text-xs leading-relaxed focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                  className="w-full min-h-[80px] px-3.5 py-2.5 rounded-xl rounded-br-md border text-xs leading-relaxed focus:outline-none focus:ring-2 focus:ring-blue-500/30 resize-y"
                   style={{
                     backgroundColor: "var(--bg-surface-elevated)",
                     borderColor: "var(--border-subtle)",
@@ -1881,7 +1881,7 @@ ${morphSource.answer}
                     })
                   }
                   placeholder="Paste or refine your adapted answer here..."
-                  className="w-full p-4 rounded-2xl border text-xs leading-relaxed font-medium focus:outline-none focus:ring-2 focus:ring-purple-500/30 transition-all"
+                  className="w-full min-h-[80px] p-4 rounded-2xl rounded-br-md border text-xs leading-relaxed font-medium focus:outline-none focus:ring-2 focus:ring-purple-500/30 transition-all resize-y"
                   style={{
                     backgroundColor: "var(--bg-surface-elevated)",
                     borderColor: "var(--border-subtle)",

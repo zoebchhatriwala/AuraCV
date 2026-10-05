@@ -48,7 +48,6 @@ endpoints:
       generationConfig:
         temperature: 0.7
         maxOutputTokens: 4096
-        responseMimeType: application/json    # Force JSON output from Gemini
     # Gemini response structure
     response:
       extract: "candidates[0].content.parts[0].text"
@@ -65,7 +64,6 @@ endpoints:
             - text: 'Reply with only valid JSON: {"ok":true}'
       generationConfig:
         maxOutputTokens: 20
-        responseMimeType: application/json
     response:
       extract: "candidates[0].content.parts[0].text"
       parse: json

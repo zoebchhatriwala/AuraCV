@@ -166,7 +166,7 @@ export default function Import() {
             onChange={e => setText(e.target.value)}
             rows={10}
             placeholder="Paste raw resume text here (Header, Experience, Education, Skills)…"
-            className="w-full rounded-2xl px-4 py-3 text-xs md:text-sm font-mono transition-all focus:outline-none focus:ring-2 focus:ring-blue-500/20 border resize-y"
+            className="w-full min-h-[80px] rounded-2xl rounded-br-md px-4 py-3 text-xs md:text-sm font-mono transition-all focus:outline-none focus:ring-2 focus:ring-blue-500/20 border resize-y"
             style={{
               backgroundColor: 'var(--bg-surface-elevated)',
               borderColor: 'var(--border-default)',

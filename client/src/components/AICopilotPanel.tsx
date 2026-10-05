@@ -244,7 +244,7 @@ export default function AICopilotPanel({
                 value={jobDesc}
                 onChange={e => setJobDesc(e.target.value)}
                 placeholder="Paste job description requirements and responsibilities here..."
-                className="w-full text-xs p-3 rounded-xl border focus:outline-none focus:ring-1 focus:ring-blue-500 font-sans transition-all resize-none"
+                className="w-full min-h-[80px] text-xs p-3 rounded-xl rounded-br-md border focus:outline-none focus:ring-1 focus:ring-blue-500 font-sans transition-all resize-y"
                 style={{
                   backgroundColor: 'var(--bg-surface-elevated)',
                   borderColor: 'var(--border-default)',
@@ -391,7 +391,7 @@ export default function AICopilotPanel({
                 value={bulletInput}
                 onChange={e => setBulletInput(e.target.value)}
                 placeholder="Paste or select a bullet point to polish..."
-                className="w-full text-xs p-3 rounded-xl border focus:outline-none focus:ring-1 focus:ring-blue-500 font-sans transition-all resize-none"
+                className="w-full min-h-[80px] text-xs p-3 rounded-xl rounded-br-md border focus:outline-none focus:ring-1 focus:ring-blue-500 font-sans transition-all resize-y"
                 style={{
                   backgroundColor: 'var(--bg-surface-elevated)',
                   borderColor: 'var(--border-default)',

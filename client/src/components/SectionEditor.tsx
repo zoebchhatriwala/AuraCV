@@ -111,7 +111,7 @@ function MarkdownArea({
         onKeyDown={(e) => handleMarkdownShortcut(e, value, onChange)}
         placeholder={placeholder}
         rows={rows}
-        className={`${className} overflow-hidden resize-none pr-24`}
+        className={`${className} min-h-[80px] overflow-hidden resize-y rounded-br-md pr-24`}
         style={{
           backgroundColor: 'var(--bg-surface-elevated)',
           borderColor: 'var(--border-default)',
@@ -161,7 +161,7 @@ function SortableBullet({
             updateEntry(idx, { bullets: next });
           }}
           placeholder="Led migration of core payments service, reducing latency by 35%…"
-          className="w-full rounded-xl px-3.5 py-2 text-xs transition-all border focus:outline-none focus:ring-2 focus:ring-blue-500/20 resize-none overflow-hidden"
+          className="w-full rounded-xl px-3.5 py-2 text-xs transition-all border focus:outline-none focus:ring-2 focus:ring-blue-500/20 overflow-hidden"
         />
       </div>
       <div className="flex flex-col gap-1">
