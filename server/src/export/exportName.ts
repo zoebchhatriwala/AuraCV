@@ -36,7 +36,7 @@ export function getNormalizedExportName(
 
   let rawCv = (cvName || '').trim();
   // Strip common placeholder / default names
-  if (/^(untitled(\s+resume|\s+cv)?|new\s+resume|default)$/i.test(rawCv)) {
+  if (/^(untitled(\s+resume|\s+cv|\s+profile)?|new\s+(resume|profile)|default)$/i.test(rawCv)) {
     rawCv = '';
   }
 
@@ -45,7 +45,7 @@ export function getNormalizedExportName(
     .replace(/^_+|_+$/g, '');
 
   if (cleanCandidate && cleanCv) {
-    // If CV name already contains candidate name (case-insensitive), avoid duplicate
+    // If profile name already contains candidate name (case-insensitive), avoid duplicate
     if (cleanCv.toLowerCase().includes(cleanCandidate.toLowerCase())) {
       return cleanCv;
     }
@@ -53,23 +53,23 @@ export function getNormalizedExportName(
   }
 
   if (cleanCandidate) {
-    return `${cleanCandidate}_CV`;
+    return `${cleanCandidate}_Profile`;
   }
 
   if (cleanCv) {
     return cleanCv;
   }
 
-  return 'Resume_CV';
+  return 'Profile';
 }
 
 export function cleanExportFileName(input?: string | null, fallback?: string): string {
-  if (!input || !input.trim()) return fallback || 'Resume_CV';
+  if (!input || !input.trim()) return fallback || 'Profile';
   let clean = input.replace(/\.(pdf|docx|json|md)$/i, '').trim();
   clean = clean
     .replace(/[\\/:*?"<>|]+/g, '')
     .replace(/\s+/g, '_')
     .replace(/_{2,}/g, '_')
     .replace(/^_+|_+$/g, '');
-  return clean || fallback || 'Resume_CV';
+  return clean || fallback || 'Profile';
 }

@@ -237,10 +237,10 @@ export default function Settings() {
                 className="text-sm font-semibold"
                 style={{ color: "var(--text-primary)" }}
               >
-                Default CV / Resume Template
+                Default Profile Template
               </p>
               <p className="text-xs" style={{ color: "var(--text-secondary)" }}>
-                Starting layout used when creating new resumes
+                Starting layout used when creating new profiles
               </p>
             </div>
             <select
@@ -275,7 +275,7 @@ export default function Settings() {
               AI Providers
             </h2>
             <p className="text-xs" style={{ color: "var(--text-secondary)" }}>
-              Select which AI provider powers your CV / Resume suggestions and review
+              Select which AI provider powers your profile suggestions and review
               tools
             </p>
           </div>
@@ -528,7 +528,7 @@ export default function Settings() {
             Data Backup & Storage
           </h2>
           <p className="text-xs" style={{ color: "var(--text-secondary)" }}>
-            Manage and export your backup of all your CVs / Resumes,
+            Manage and export your backup of all your profiles,
             settings, and logs
           </p>
         </div>
@@ -621,7 +621,7 @@ export default function Settings() {
                 className="text-[11px] font-medium"
                 style={{ color: "var(--text-muted)" }}
               >
-                CVs / Resumes
+                Profiles
               </p>
               <p
                 className="text-lg font-bold mt-0.5"
@@ -641,7 +641,7 @@ export default function Settings() {
                 className="text-[11px] font-medium"
                 style={{ color: "var(--text-muted)" }}
               >
-                CV / Resume Sections
+                Profile Sections
               </p>
               <p
                 className="text-lg font-bold mt-0.5"
@@ -914,9 +914,9 @@ export default function Settings() {
                   className="text-[11px]"
                   style={{ color: "var(--text-muted)" }}
                 >
-                  Tip: If you only want to restore a single CV / Resume without
+                  Tip: If you only want to restore a single profile without
                   replacing the entire database, go to the{" "}
-                  <strong>Import</strong> page and upload an individual CV / Resume
+                  <strong>Import</strong> page and upload an individual profile
                   JSON backup.
                 </p>
               </div>

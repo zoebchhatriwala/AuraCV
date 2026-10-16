@@ -1,6 +1,6 @@
 # AuraCV
 
-AuraCV is a modern, privacy-first AI CV / Resume building studio. It combines the speed of local execution with the intelligence of cloud and local LLMs to help you craft, refine, and export professional CVs / Resumes.
+AuraCV is a modern, privacy-first career intelligence studio. It combines the speed of local execution with the intelligence of cloud and local LLMs to help you craft, refine, and export professional profiles.
 
 <img width="1278" height="637" alt="image" src="https://github.com/user-attachments/assets/5a379c2b-4985-4f60-be98-90167390e9c8" />
 
@@ -10,8 +10,8 @@ AuraCV is a modern, privacy-first AI CV / Resume building studio. It combines th
 - **Multi-Provider AI Engine:** Bring your own API keys for NVIDIA NIM, OpenAI, Anthropic, Gemini, OpenRouter, or run completely offline with Ollama.
 - **AI-Powered Editing:** Highlight text to instantly rewrite, redline, or expand bullet points with AI Copilot.
 - **Privacy-First:** Your data stays in your local SQLite database. Keys are AES-256 encrypted.
-- **Live Preview:** Instantly see how your CV / Resume looks across multiple professional templates (ATS-friendly, Classic, Modern, Minimal, etc).
-- **Import/Export:** Import existing CVs / Resumes and export your finished work to pixel-perfect PDF or DOCX formats.
+- **Live Preview:** Instantly see how your profile looks across multiple professional templates (ATS-friendly, Classic, Modern, Minimal, etc).
+- **Import/Export:** Import existing profiles and export your finished work to pixel-perfect PDF or DOCX formats.
 
 ## Tech Stack
 
@@ -58,7 +58,7 @@ To add or modify providers at a system level, you can edit the YAML files locate
 
 ## Database Backup & Restore
 
-AuraCV stores all CVs / Resumes, custom sections, AI writing sessions, and configurations in a single SQLite database (`server/auracv.db`).
+AuraCV stores all profiles, custom sections, AI writing sessions, and configurations in a single SQLite database (`server/auracv.db`).
 
 ### Exporting Database (.db)
 - Click **Export DB** in the Dashboard top bar, or navigate to **Settings > Data Backup & Storage** and click **Download Backup File**.
@@ -68,7 +68,7 @@ AuraCV stores all CVs / Resumes, custom sections, AI writing sessions, and confi
 1. Stop the server (`Ctrl + C` in the running terminal).
 2. Copy your exported backup file to `server/auracv.db` (overwrite existing).
 3. Delete `server/auracv.db-wal` and `server/auracv.db-shm` if they exist to prevent journal mismatch.
-4. Restart the server (`npm run dev`). All CVs / Resumes, sections, and settings will be restored.
+4. Restart the server (`npm run dev`). All profiles, sections, and settings will be restored.
 
 **macOS / Linux (Bash or Zsh):**
 ```bash
@@ -86,7 +86,7 @@ Copy-Item "path\to\your_backup.db" auracv.db -Force
 cd ..; npm run dev
 ```
 
-*Note: For single CV / Resume backups, you can also use JSON export/import via the **Import** page without replacing the database.*
+*Note: For single profile backups, you can also use JSON export/import via the **Import** page without replacing the database.*
 
 ## Contributing
 

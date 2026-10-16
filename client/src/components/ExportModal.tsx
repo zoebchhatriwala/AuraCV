@@ -140,8 +140,6 @@ export default function ExportModal({ resumeId, resumeName, candidateName = '', 
     }
   };
 
-  const activeCleanName = cleanExportFileName(fileName, defaultBaseName);
-
   return createPortal(
     <div
       className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/25 dark:bg-black/70 backdrop-blur-xs"
@@ -159,7 +157,7 @@ export default function ExportModal({ resumeId, resumeName, candidateName = '', 
         <div className="flex items-center justify-between">
           <div>
             <h3 className="font-display text-xl font-bold" style={{ color: 'var(--text-primary)' }}>
-              Export CV / Resume
+              Export Profile
             </h3>
             <p className="text-xs mt-0.5" style={{ color: 'var(--text-secondary)' }}>
               Download pixel-perfect files ready for job applications
@@ -226,7 +224,7 @@ export default function ExportModal({ resumeId, resumeName, candidateName = '', 
               }}
               onBlur={() => setFileName(cleanExportFileName(fileName, defaultBaseName))}
               placeholder="e.g. Alex_Morgan_Software_Engineer"
-              className="w-full px-3.5 py-2 rounded-xl border text-xs sm:text-sm font-mono transition-all focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+              className="w-full px-3.5 py-2.5 rounded-xl border text-xs sm:text-sm font-mono transition-all focus:outline-none focus:ring-2 focus:ring-blue-500/20"
               style={{
                 backgroundColor: 'var(--bg-surface)',
                 borderColor: 'var(--border-default)',
@@ -235,14 +233,9 @@ export default function ExportModal({ resumeId, resumeName, candidateName = '', 
             />
           </div>
 
-          <div className="flex items-center justify-between text-[11px] gap-2 pt-0.5" style={{ color: 'var(--text-secondary)' }}>
-            <span className="truncate">
-              Normalized: <span className="font-semibold text-slate-800 dark:text-slate-200">{resolvedCandidateName || 'Name'}</span> + <span className="font-semibold text-slate-800 dark:text-slate-200">{resumeName}</span>
-            </span>
-            <span className="shrink-0 font-mono text-blue-600 dark:text-blue-400 font-medium">
-              {activeCleanName}.pdf
-            </span>
-          </div>
+          <p className="text-[11px] truncate" style={{ color: 'var(--text-secondary)' }}>
+            Auto-formatted as <span className="font-semibold text-slate-800 dark:text-slate-200">{resolvedCandidateName || 'Name'}</span> · <span className="font-semibold text-slate-800 dark:text-slate-200">{resumeName}</span>
+          </p>
         </div>
 
         {/* ATS Mode Toggle */}
@@ -308,7 +301,7 @@ export default function ExportModal({ resumeId, resumeName, candidateName = '', 
             {
               fmt: 'json' as const,
               label: 'AuraCV Backup (.json)',
-              desc: 'Complete backup file of your CV / Resume data',
+              desc: 'Complete backup file of your profile data',
               badge: 'Data Backup',
               icon: FileJson,
               color: '#10b981',

@@ -26,7 +26,7 @@ export default function Dashboard() {
   const [versionValue, setVersionValue] = useState('');
 
   const handleCreate = async () => {
-    const finalName = newName.trim() || 'Untitled Resume';
+    const finalName = newName.trim() || 'Untitled Profile';
     setCreating(true);
     try {
       const id = await createResume(finalName, selectedTemplate);
@@ -69,7 +69,7 @@ export default function Dashboard() {
             <div>
               <div className="flex items-center gap-3">
                 <h1 className="font-display text-2xl sm:text-3xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
-                  Your CVs / Resumes
+                  Your Profiles
                 </h1>
                 <span
                   className="px-2.5 py-0.5 rounded-full text-xs font-semibold border"
@@ -83,7 +83,7 @@ export default function Dashboard() {
                 </span>
               </div>
               <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>
-                Manage, edit, and export your CVs / Resumes.
+                Manage, edit, and export your career profiles.
               </p>
             </div>
 
@@ -93,7 +93,7 @@ export default function Dashboard() {
                   type="text"
                   value={searchQuery}
                   onChange={e => setSearchQuery(e.target.value)}
-                  placeholder="Search CVs / Resumes..."
+                  placeholder="Search profiles..."
                   className="w-full px-3.5 py-2 rounded-xl border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                   style={{
                     backgroundColor: 'var(--bg-surface-elevated)',
@@ -122,7 +122,7 @@ export default function Dashboard() {
                   className="flex-1 sm:flex-initial btn-primary inline-flex items-center justify-center gap-2 px-5 py-2 rounded-xl text-sm font-semibold cursor-pointer shadow-sm"
                 >
                   <Plus className="w-4 h-4" />
-                  New CV / Resume
+                  New Profile
                 </button>
               </div>
             </div>
@@ -131,7 +131,7 @@ export default function Dashboard() {
           {/* Stats Bar */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {[
-              { label: 'Total CVs / Resumes', value: resumes.length, sub: 'Saved in studio' },
+              { label: 'Total Profiles', value: resumes.length, sub: 'Saved in studio' },
               { label: 'Target Roles', value: new Set(resumes.map(r => r.meta?.target_role || r.name)).size, sub: 'Active variations' },
               { label: 'Last Modified', value: resumes[0]?.updated_at ? new Date(resumes[0].updated_at).toLocaleDateString() : 'Today', sub: 'Most recent edit' },
             ].map((stat, i) => (
@@ -173,7 +173,7 @@ export default function Dashboard() {
             >
               <FileText className="w-10 h-10 text-slate-400 mx-auto" />
               <h3 className="font-display text-lg font-bold" style={{ color: 'var(--text-primary)' }}>
-                No CVs / Resumes match "{searchQuery}"
+                No profiles match "{searchQuery}"
               </h3>
               <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
                 Try searching for a different title or keyword.
@@ -291,7 +291,7 @@ export default function Dashboard() {
                       onClick={() => duplicateResume(resume.id)}
                       className="p-2 rounded-xl border transition-all bg-[var(--bg-surface)] hover:bg-slate-100 dark:hover:bg-neutral-700 hover:text-slate-950 dark:hover:text-white cursor-pointer"
                       style={{ borderColor: 'var(--border-default)', color: 'var(--text-secondary)' }}
-                      title="Duplicate CV / Resume version"
+                      title="Duplicate profile version"
                     >
                       <Copy className="w-3.5 h-3.5" />
                     </button>
@@ -299,7 +299,7 @@ export default function Dashboard() {
                       onClick={() => setResumeToDelete({ id: resume.id, name: resume.name })}
                       className="p-2 rounded-xl border transition-all bg-[var(--bg-surface)] hover:bg-rose-50 dark:hover:bg-rose-950/30 hover:text-rose-600 dark:hover:text-rose-400 cursor-pointer"
                       style={{ borderColor: 'var(--border-default)', color: 'var(--text-secondary)' }}
-                      title="Delete CV / Resume"
+                      title="Delete profile"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
@@ -320,12 +320,12 @@ export default function Dashboard() {
             }}
           >
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wider bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
-              <Layers className="w-3.5 h-3.5" /> AuraCV Studio
+              <Layers className="w-3.5 h-3.5" /> AuraCV Career Intelligence
             </div>
 
             <div className="max-w-2xl mx-auto space-y-3">
               <h1 className="font-display text-3xl md:text-5xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
-                Build a CV / Resume that gets you hired
+                Build a profile that gets you hired
               </h1>
               <p className="text-sm md:text-base leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
                 Choose a clean layout, write impactful bullet points with AI assistance, and export to PDF or Word in seconds.
@@ -339,7 +339,7 @@ export default function Dashboard() {
                 className="btn-primary inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold cursor-pointer shadow-md"
               >
                 <Plus className="w-4 h-4" />
-                Create First CV / Resume
+                Create First Profile
               </button>
 
               <button
@@ -351,7 +351,7 @@ export default function Dashboard() {
                 }}
               >
                 <Upload className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                Import Existing CV / Resume
+                Import Existing Profile
               </button>
 
               <button
@@ -403,7 +403,7 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* ── Create CV / Resume Modal ──────────────────────────────────────────── */}
+      {/* ── Create Profile Modal ──────────────────────────────────────────── */}
       {showCreate && createPortal(
         <div
           className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/25 dark:bg-black/70 backdrop-blur-xs"
@@ -422,10 +422,10 @@ export default function Dashboard() {
             <div className="flex items-start justify-between">
               <div>
                 <h3 className="font-display text-xl font-bold" style={{ color: 'var(--text-primary)' }}>
-                  Create New CV / Resume
+                  Create New Profile
                 </h3>
                 <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>
-                  Give your CV / Resume a name and choose a starting style.
+                  Give your profile a name or target role and choose a starting style.
                 </p>
               </div>
               <button
@@ -441,7 +441,7 @@ export default function Dashboard() {
               {/* Title input */}
               <div>
                 <label className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'var(--text-secondary)' }}>
-                  CV / Resume Title
+                  Profile Name / Target Role
                 </label>
                 <input
                   autoFocus
@@ -576,16 +576,16 @@ export default function Dashboard() {
             setSelectedTemplate(id);
             setPreviewTemplateId(null);
           }}
-          actionButtonLabel="Use for New CV / Resume"
+          actionButtonLabel="Use for New Profile"
         />
       )}
 
       {/* ── In-App Confirm Modal for Deletion ─────────────────────────────── */}
       <ConfirmModal
         isOpen={!!resumeToDelete}
-        title="Delete CV / Resume"
+        title="Delete Profile"
         message={`Are you sure you want to delete "${resumeToDelete?.name}"? All associated sections and configurations will be permanently removed.`}
-        confirmLabel="Delete CV / Resume"
+        confirmLabel="Delete Profile"
         variant="danger"
         onConfirm={() => {
           if (resumeToDelete) {

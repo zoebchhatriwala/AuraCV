@@ -1,6 +1,6 @@
 /**
  * Utilities for normalizing and formatting export filenames.
- * Conforms to: [Candidate Name] + [CV / Resume Name] (e.g. Alex_Morgan_Senior_Staff_Engineer)
+ * Conforms to: [Candidate Name] + [Profile Name] (e.g. Alex_Morgan_Senior_Staff_Engineer)
  */
 
 export function getNormalizedExportName(
@@ -14,7 +14,7 @@ export function getNormalizedExportName(
 
   let rawCv = (cvName || '').trim();
   // Strip common placeholder / default names
-  if (/^(untitled(\s+resume|\s+cv)?|new\s+resume|default)$/i.test(rawCv)) {
+  if (/^(untitled(\s+resume|\s+cv|\s+profile)?|new\s+(resume|profile)|default)$/i.test(rawCv)) {
     rawCv = '';
   }
 
@@ -22,9 +22,9 @@ export function getNormalizedExportName(
     .replace(/[^\p{L}\p{N}]+/gu, '_')
     .replace(/^_+|_+$/g, '');
 
-  // If both candidate name and cv name are provided
+  // If both candidate name and profile name are provided
   if (cleanCandidate && cleanCv) {
-    // If CV / Resume name already contains candidate name (case-insensitive), avoid duplicate
+    // If profile name already contains candidate name (case-insensitive), avoid duplicate
     if (cleanCv.toLowerCase().includes(cleanCandidate.toLowerCase())) {
       return cleanCv;
     }
@@ -32,14 +32,14 @@ export function getNormalizedExportName(
   }
 
   if (cleanCandidate) {
-    return `${cleanCandidate}_CV`;
+    return `${cleanCandidate}_Profile`;
   }
 
   if (cleanCv) {
     return cleanCv;
   }
 
-  return 'Resume_CV';
+  return 'Profile';
 }
 
 export function cleanExportFileName(input?: string | null, fallback?: string): string {
