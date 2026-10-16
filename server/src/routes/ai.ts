@@ -80,15 +80,27 @@ function sectionsToPlainText(sections: ResumeSection[]): string {
     for (const entry of s.content) {
       if (typeof entry === 'string') { lines.push(entry); continue; }
       const e = entry as Record<string, unknown>;
-      if (e.text) lines.push(e.text as string);
-      else if (e.company) {
-        lines.push(`${e.role} at ${e.company} (${e.start_date}–${e.end_date})`);
+      if (e.text) {
+        lines.push(e.text as string);
+      } else if (e.company) {
+        lines.push(`${e.role || 'Role'} at ${e.company} (${e.start_date || ''}–${e.end_date || ''})`);
         if (Array.isArray(e.bullets)) lines.push(...(e.bullets as string[]).map(b => `• ${b}`));
       } else if (Array.isArray(e.items)) {
         if (e.category) lines.push(`${e.category}: ${(e.items as string[]).join(', ')}`);
         else lines.push((e.items as string[]).join(', '));
+      } else if (e.institution) {
+        lines.push(`${e.degree || ''} in ${e.field || ''} - ${e.institution} (${e.start_date || ''}–${e.end_date || ''})`);
+        if (Array.isArray(e.bullets)) lines.push(...(e.bullets as string[]).map(b => `• ${b}`));
+      } else if (e.name && (e.description || e.tech)) {
+        const techStr = Array.isArray(e.tech) && e.tech.length ? ` (Tech: ${(e.tech as string[]).join(', ')})` : '';
+        lines.push(`Project: ${e.name}${techStr}`);
+        if (e.description) lines.push(e.description as string);
+        if (Array.isArray(e.bullets)) lines.push(...(e.bullets as string[]).map(b => `• ${b}`));
+      } else if (e.name && e.issuer) {
+        lines.push(`Certification: ${e.name} (${e.issuer}, ${e.date || ''})`);
+      } else {
+        lines.push(JSON.stringify(entry));
       }
-      else lines.push(JSON.stringify(entry));
     }
     return lines.join('\n');
   }).join('\n\n');

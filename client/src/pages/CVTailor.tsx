@@ -86,6 +86,27 @@ export default function CVTailor() {
     }
   };
 
+  const handleSkipQuestions = async () => {
+    if (!selectedResumeId) return;
+    setLoading(true);
+    setError("");
+    setSuccessMsg("");
+    try {
+      const r = await aiApi.cvTailorRewrite({
+        resume_id: selectedResumeId,
+        role: tailorRole,
+        instructions: tailorInstructions,
+        qna: [],
+      });
+      setTailorResult(r);
+      setTailorStep(3);
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleApplyToResume = async () => {
     const targetResume = resumes.find((r) => r.id === selectedResumeId);
     if (!targetResume || !tailorResult) return;
@@ -278,12 +299,12 @@ export default function CVTailor() {
                   className="text-xs font-semibold uppercase tracking-wider block"
                   style={{ color: "var(--text-secondary)" }}
                 >
-                  Target Role
+                  Target Role &amp; Company
                 </label>
                 <input
                   value={tailorRole}
                   onChange={(e) => setTailorRole(e.target.value)}
-                  placeholder="e.g. Senior Frontend Engineer at Acme Corp"
+                  placeholder="e.g. Senior Software Engineer at Google (or target role title)"
                   className="w-full rounded-2xl px-4 py-3 text-sm transition-all focus:outline-none focus:ring-2 focus:ring-purple-500/20 border"
                   style={{
                     backgroundColor: "var(--bg-surface-elevated)",
@@ -297,14 +318,14 @@ export default function CVTailor() {
                   className="text-xs font-semibold uppercase tracking-wider block"
                   style={{ color: "var(--text-secondary)" }}
                 >
-                  Custom Instructions (Optional)
+                  Target Job Description or Strategic Focus (Optional)
                 </label>
                 <textarea
                   value={tailorInstructions}
                   onChange={(e) => setTailorInstructions(e.target.value)}
-                  rows={3}
-                  placeholder="e.g. Focus on my leadership experience and React performance optimizations."
-                  className="w-full min-h-[80px] rounded-2xl rounded-br-md px-4 py-3 text-sm transition-all focus:outline-none focus:ring-2 focus:ring-purple-500/20 border resize-y"
+                  rows={4}
+                  placeholder="Paste key requirements from the job description or areas to emphasize (e.g. distributed systems, P99 latency, Kubernetes, cross-functional mentorship)..."
+                  className="w-full min-h-[90px] rounded-2xl rounded-br-md px-4 py-3 text-sm transition-all focus:outline-none focus:ring-2 focus:ring-purple-500/20 border resize-y"
                   style={{
                     backgroundColor: "var(--bg-surface-elevated)",
                     borderColor: "var(--border-default)",
@@ -320,13 +341,16 @@ export default function CVTailor() {
                 className="p-4 rounded-2xl bg-purple-500/10 border border-purple-500/20 text-sm"
                 style={{ color: "var(--text-primary)" }}
               >
-                <p className="font-semibold text-purple-600 dark:text-purple-400 mb-1 flex items-center gap-2">
-                  <MessageSquare className="w-4 h-4" /> The AI needs a bit more
-                  context to make your profile perfect:
-                </p>
+                <div className="flex items-center justify-between flex-wrap gap-2 mb-1">
+                  <p className="font-semibold text-purple-600 dark:text-purple-400 flex items-center gap-2">
+                    <MessageSquare className="w-4 h-4" /> Strategic Context &amp; Metrics Gathering
+                  </p>
+                  <span className="text-xs text-purple-600 dark:text-purple-400 font-medium">
+                    Approximations (e.g. ~30%, $150K, 10M reqs) work great!
+                  </span>
+                </div>
                 <p style={{ color: "var(--text-secondary)" }}>
-                  Please answer the questions below to provide quantifiable
-                  metrics and specific details.
+                  Answer these targeted questions to help the AI craft authentic, quantitative achievements for your target role, or skip to generate immediately.
                 </p>
               </div>
               {tailorQuestions.map((q) => (
@@ -345,9 +369,9 @@ export default function CVTailor() {
                         [q.id]: e.target.value,
                       })
                     }
-                    rows={3}
-                    placeholder="Your answer..."
-                    className="w-full min-h-[80px] rounded-xl rounded-br-md px-4 py-2.5 text-sm transition-all focus:outline-none focus:ring-2 focus:ring-purple-500/20 border resize-y"
+                    rows={2}
+                    placeholder="e.g. Reduced API latency by ~35% with Redis caching; supported 40K concurrent users..."
+                    className="w-full min-h-[70px] rounded-xl rounded-br-md px-4 py-2.5 text-sm transition-all focus:outline-none focus:ring-2 focus:ring-purple-500/20 border resize-y"
                     style={{
                       backgroundColor: "var(--bg-surface-elevated)",
                       borderColor: "var(--border-default)",
@@ -378,11 +402,11 @@ export default function CVTailor() {
           )}
         </div>
 
-        <div className="pt-2 flex items-center gap-4">
+        <div className="pt-2 flex flex-wrap items-center gap-3">
           <button
             onClick={runTask}
             disabled={loading || !selectedResumeId || tailorStep === 3}
-            className="btn-primary inline-flex items-center gap-2 px-6 py-3 rounded-2xl text-sm font-semibold disabled:opacity-50 cursor-pointer"
+            className="btn-primary inline-flex items-center gap-2 px-6 py-3 rounded-2xl text-sm font-semibold disabled:opacity-50 cursor-pointer shadow-sm"
           >
             {loading ? (
               <Loader2 className="w-4 h-4 animate-spin" />
@@ -395,6 +419,22 @@ export default function CVTailor() {
                 ? "Submit Answers & Tailor"
                 : "Tailor My Profile"}
           </button>
+
+          {tailorStep === 2 && (
+            <button
+              onClick={handleSkipQuestions}
+              disabled={loading}
+              className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl text-sm font-semibold border hover:bg-slate-100 dark:hover:bg-neutral-800 transition-all cursor-pointer disabled:opacity-50"
+              style={{
+                borderColor: "var(--border-default)",
+                color: "var(--text-secondary)",
+              }}
+              title="Skip answering questions and generate tailored profile directly"
+            >
+              Skip Questions &amp; Generate Now
+            </button>
+          )}
+
           {!selectedResumeId && (
             <span className="text-xs text-amber-500 font-medium">
               Please select a profile first
