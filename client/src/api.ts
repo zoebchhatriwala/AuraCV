@@ -162,6 +162,28 @@ export const vaultApi = {
       suggested_category?: string;
       fallback?: boolean;
     }>('/vault/qa/morph', data),
+
+  draftAnswer: (data: {
+    question: string;
+    instructions?: string;
+    resume_id?: string;
+    model?: string;
+  }) =>
+    post<{
+      ok: boolean;
+      answer: string;
+      key_points_used: string[];
+      suggested_category?: string;
+      suggested_tags?: string[];
+      profile_name?: string;
+      grounding_sources?: {
+        profile_sections: number;
+        vault_metadata: boolean;
+        past_stories_count: number;
+      };
+      provider?: string;
+      fallback?: boolean;
+    }>('/vault/qa/draft', data),
 };
 
 

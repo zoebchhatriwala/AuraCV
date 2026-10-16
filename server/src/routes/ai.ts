@@ -74,7 +74,7 @@ router.delete('/providers/key/:provider', (req: Request, res: Response) => {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function sectionsToPlainText(sections: ResumeSection[]): string {
+export function sectionsToPlainText(sections: ResumeSection[]): string {
   return sections.map(s => {
     const lines = [`== ${s.title} ==`];
     for (const entry of s.content) {

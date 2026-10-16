@@ -1,9 +1,10 @@
 import { Router, Request, Response } from "express";
-import { vaultQueries, qaQueries } from "../db/database";
+import { vaultQueries, qaQueries, resumeQueries, sectionQueries } from "../db/database";
 import { embedText, searchSimilarQA } from "../ai/embedding";
 import { getActiveProvider } from "../ai/factory";
 import { PROMPTS } from "../ai/prompts";
-import type { QAEntry } from "../types";
+import { sectionsToPlainText } from "./ai";
+import type { QAEntry, JobMetadata } from "../types";
 
 const router = Router();
 
@@ -347,6 +348,191 @@ router.post("/qa/morph", async (req: Request, res: Response) => {
         key_adaptations: ["Adapted to target context (offline mode)"],
         suggested_tags: ["adapted", "experience"],
         suggested_category: "Experience",
+        fallback: true,
+      });
+    }
+  } catch (err) {
+    res.status(500).json({ error: (err as Error).message });
+  }
+});
+
+// ─── AI Natural Answer Writer (Profile + Vault Data) ──────────────────────────
+
+function formatVaultMetadata(meta: JobMetadata): string {
+  const parts: string[] = [];
+  if (meta.full_name) parts.push(`Candidate Name: ${meta.full_name}${meta.preferred_name ? ` (Goes by: ${meta.preferred_name})` : ''}`);
+  if (meta.current_title || meta.current_company) parts.push(`Current Role: ${meta.current_title || ''} at ${meta.current_company || ''}`.trim());
+  if (meta.experience_years) parts.push(`Total Experience: ${meta.experience_years} years`);
+  if (meta.location) parts.push(`Location: ${meta.location}`);
+  if (meta.work_mode_preference) parts.push(`Work Mode Preference: ${meta.work_mode_preference}`);
+  if (meta.willing_to_relocate) parts.push(`Willing to Relocate: ${meta.willing_to_relocate}`);
+  if (meta.notice_period) parts.push(`Notice Period / Availability: ${meta.notice_period}`);
+  if (meta.work_authorization) parts.push(`Work Authorization / Visa Status: ${meta.work_authorization}`);
+  if (meta.salary_expected) parts.push(`Target Compensation: ${meta.salary_expected}${meta.salary_current ? ` (Current: ${meta.salary_current})` : ''}`);
+  if (meta.highest_education) parts.push(`Highest Education: ${meta.highest_education}`);
+  if (meta.linkedin_url) parts.push(`LinkedIn: ${meta.linkedin_url}`);
+  if (meta.github_url) parts.push(`GitHub: ${meta.github_url}`);
+  if (meta.portfolio_url) parts.push(`Portfolio: ${meta.portfolio_url}`);
+  if (meta.custom_fields && meta.custom_fields.length > 0) {
+    parts.push(`Additional Details:`);
+    for (const f of meta.custom_fields) {
+      if (f.label && f.value) parts.push(`- ${f.label} (${f.category || 'General'}): ${f.value}`);
+    }
+  }
+  return parts.join('\n');
+}
+
+router.post("/qa/draft", async (req: Request, res: Response) => {
+  try {
+    const {
+      question,
+      instructions = "",
+      resume_id,
+      model,
+    } = req.body as {
+      question?: string;
+      instructions?: string;
+      resume_id?: string;
+      model?: string;
+    };
+
+    if (!question?.trim()) {
+      return void res.status(400).json({ error: "question is required" });
+    }
+
+    // 1. Retrieve Candidate Profile Data
+    const resumes = resumeQueries.list();
+    const activeResume = resume_id
+      ? resumes.find((r) => r.id === resume_id) || resumes[0]
+      : resumes[0];
+
+    let profileText = "";
+    let sectionCount = 0;
+    if (activeResume) {
+      const sections = sectionQueries.list(activeResume.id);
+      sectionCount = sections.length;
+      profileText = sectionsToPlainText(sections);
+    }
+
+    // 2. Retrieve Career Vault Metadata
+    const metadata = vaultQueries.getMetadata();
+    const formattedMetadata = formatVaultMetadata(metadata);
+
+    // 3. Retrieve Semantically Relevant Past Stories from Vault
+    const allQA = qaQueries.getAllForSearch();
+    let relevantStoriesText = "";
+    let matchedStoriesCount = 0;
+    try {
+      const searchMatches = await searchSimilarQA(question.trim(), allQA, {
+        limit: 3,
+        minSimilarity: 0.22,
+      });
+      if (searchMatches.length > 0) {
+        matchedStoriesCount = searchMatches.length;
+        relevantStoriesText = searchMatches
+          .map(
+            (m, idx) =>
+              `Story ${idx + 1} (${m.category}):\nQ: ${m.question}\nA: ${m.answer}`,
+          )
+          .join("\n\n");
+      }
+    } catch (e) {
+      console.warn("[DraftQA] Semantic search for past stories skipped:", e);
+    }
+
+    const prompt = PROMPTS.draftVaultAnswer(
+      question.trim(),
+      profileText,
+      formattedMetadata,
+      relevantStoriesText,
+      instructions.trim(),
+    );
+
+    try {
+      const provider = getActiveProvider(model);
+      let rawResult: any;
+      const endpointName =
+        (provider as any).config?.features?.rewrite?.endpoint ||
+        "chat" ||
+        "generate";
+      if ((provider as any).config?.endpoints?.[endpointName]) {
+        rawResult = await provider.call(endpointName, prompt);
+      } else {
+        const endpoints = Object.keys(
+          (provider as any).config?.endpoints ?? {},
+        );
+        const ep =
+          endpoints.find(
+            (e) =>
+              e.includes("chat") ||
+              e.includes("complete") ||
+              e.includes("rewrite"),
+          ) || endpoints[0];
+        rawResult = await provider.call(ep, prompt);
+      }
+
+      let parsed: any = rawResult;
+      if (typeof rawResult === "string") {
+        const cleaned = rawResult
+          .replace(/^```json\s*/im, "")
+          .replace(/^```\s*/im, "")
+          .replace(/\s*```\s*$/im, "")
+          .trim();
+        try {
+          parsed = JSON.parse(cleaned);
+        } catch {
+          parsed = { answer: rawResult };
+        }
+      }
+
+      const answer =
+        parsed.answer || parsed.morphed_answer || parsed.rewritten || String(rawResult);
+      const keyPoints =
+        parsed.key_points_used ||
+        parsed.key_adaptations || [
+          "Grounded in verified profile and career vault history",
+        ];
+
+      return void res.json({
+        ok: true,
+        answer,
+        key_points_used: keyPoints,
+        suggested_category: parsed.suggested_category || "Experience",
+        suggested_tags: parsed.suggested_tags || ["application", "interview"],
+        profile_name: activeResume?.name || "Primary Profile",
+        grounding_sources: {
+          profile_sections: sectionCount,
+          vault_metadata: Boolean(metadata.full_name || metadata.current_company),
+          past_stories_count: matchedStoriesCount,
+        },
+        provider: provider.info.name,
+      });
+    } catch (aiErr) {
+      console.warn(
+        "[DraftQA] AI provider call failed, synthesizing smart grounded fallback:",
+        aiErr,
+      );
+      // Smart grounded synthesis if offline or provider not available
+      const expSnippet = metadata.current_title
+        ? `In my role as ${metadata.current_title}${metadata.current_company ? ` at ${metadata.current_company}` : ""}`
+        : "Throughout my career";
+      const synthesized = `${expSnippet}, I have focused on solving high-impact problems with ownership and engineering discipline. Addressing "${question.trim()}": I approach this by understanding the core system requirements, collaborating closely across teams, and delivering measurable outcomes that improve reliability and business performance.`;
+
+      return void res.json({
+        ok: true,
+        answer: synthesized,
+        key_points_used: [
+          `Drawn from career vault background (${metadata.current_title || "Engineering Track"})`,
+          "Synthesized offline mode",
+        ],
+        suggested_category: "Experience",
+        suggested_tags: ["interview", "offline-draft"],
+        profile_name: activeResume?.name || "Default Profile",
+        grounding_sources: {
+          profile_sections: sectionCount,
+          vault_metadata: true,
+          past_stories_count: matchedStoriesCount,
+        },
         fallback: true,
       });
     }

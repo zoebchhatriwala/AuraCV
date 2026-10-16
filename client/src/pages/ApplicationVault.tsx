@@ -9,7 +9,6 @@ import {
   Edit3,
   RefreshCw,
   SlidersHorizontal,
-  Wand2,
   Briefcase,
   HelpCircle,
   X,
@@ -21,6 +20,8 @@ import {
 } from "lucide-react";
 import {
   vaultApi,
+  resumeApi,
+  type Resume,
   type JobMetadata,
   type QAEntry,
   type QASearchResult,
@@ -106,7 +107,7 @@ export default function ApplicationVault() {
     tagsInput: "",
   });
 
-  // AI Morpher Modal State
+  // AI Morpher / Adapt Modal State
   const [morphModalOpen, setMorphModalOpen] = useState(false);
   const [morphSource, setMorphSource] = useState<{
     question: string;
@@ -121,6 +122,26 @@ export default function ApplicationVault() {
     suggested_tags?: string[];
     suggested_category?: string;
   } | null>(null);
+
+  // AI Draft Answer (From Profile & Vault) Modal State
+  const [draftModalOpen, setDraftModalOpen] = useState(false);
+  const [draftQuestion, setDraftQuestion] = useState("");
+  const [draftInstructions, setDraftInstructions] = useState("");
+  const [drafting, setDrafting] = useState(false);
+  const [draftOutput, setDraftOutput] = useState<{
+    answer: string;
+    key_points_used: string[];
+    suggested_category?: string;
+    suggested_tags?: string[];
+    profile_name?: string;
+    grounding_sources?: {
+      profile_sections: number;
+      vault_metadata: boolean;
+      past_stories_count: number;
+    };
+  } | null>(null);
+  const [profiles, setProfiles] = useState<Resume[]>([]);
+  const [selectedProfileId, setSelectedProfileId] = useState<string>("");
 
   // Custom Field Form in Profile
   const [newCustomField, setNewCustomField] = useState({
@@ -164,6 +185,17 @@ export default function ApplicationVault() {
       if (!ignore) setQaEntries(data);
     }).catch((err) => {
       console.error("Failed to load QA entries:", err);
+    });
+
+    resumeApi.list().then((list) => {
+      if (!ignore) {
+        setProfiles(list);
+        if (list.length > 0) {
+          setSelectedProfileId(list[0].id);
+        }
+      }
+    }).catch((err) => {
+      console.error("Failed to load profiles:", err);
     });
 
     return () => {
@@ -278,7 +310,7 @@ export default function ApplicationVault() {
       await vaultApi.reindexQA();
       await loadQAEntries();
       showToast(
-        "Embeddings re-indexed successfully with multilingual model!",
+        "Search embeddings re-indexed successfully",
         "success",
       );
     } catch (err) {
@@ -323,14 +355,57 @@ export default function ApplicationVault() {
         question: targetQuestion.trim(),
         answer: morphedOutput.morphed_answer,
         category: morphedOutput.suggested_category || "Experience",
-        tags: morphedOutput.suggested_tags || ["morphed", "interview"],
+        tags: morphedOutput.suggested_tags || ["adapted", "interview"],
       });
       await loadQAEntries();
       setMorphModalOpen(false);
-      showToast("Morphed answer saved to Q&A bank!", "success");
+      showToast("Adapted answer saved to Q&A bank!", "success");
     } catch (err) {
       console.error("Failed to save morphed QA:", err);
-      showToast("Failed to save morphed answer", "error");
+      showToast("Failed to save adapted answer", "error");
+    }
+  };
+
+  const openDraftModal = (initialQuestion = "") => {
+    setDraftQuestion(initialQuestion);
+    setDraftInstructions("");
+    setDraftOutput(null);
+    setDraftModalOpen(true);
+  };
+
+  const handleExecuteDraft = async () => {
+    if (!draftQuestion.trim()) return;
+    setDrafting(true);
+    try {
+      const res = await vaultApi.draftAnswer({
+        question: draftQuestion.trim(),
+        instructions: draftInstructions.trim(),
+        resume_id: selectedProfileId || undefined,
+      });
+      setDraftOutput(res);
+    } catch (err) {
+      console.error("Draft error:", err);
+      showToast("Failed to draft answer with AI", "error");
+    } finally {
+      setDrafting(false);
+    }
+  };
+
+  const handleSaveDraftAsQA = async () => {
+    if (!draftOutput || !draftQuestion.trim()) return;
+    try {
+      await vaultApi.createQA({
+        question: draftQuestion.trim(),
+        answer: draftOutput.answer,
+        category: draftOutput.suggested_category || "Experience",
+        tags: draftOutput.suggested_tags || ["ai-drafted", "interview"],
+      });
+      await loadQAEntries();
+      setDraftModalOpen(false);
+      showToast("Drafted answer saved to Q&A bank!", "success");
+    } catch (err) {
+      console.error("Failed to save drafted QA:", err);
+      showToast("Failed to save answer", "error");
     }
   };
 
@@ -362,6 +437,35 @@ ${morphSource.answer}
     const prompt = generateChatGptPrompt();
     if (!prompt) return;
     copyToClipboard("chatgpt-prompt", prompt);
+    showToast("Prompt copied! Ready to paste into ChatGPT, Claude, etc.", "success");
+  };
+
+  const generateChatGptDraftPrompt = () => {
+    const target = draftQuestion.trim() || "[Paste your target question here]";
+    const instructions = draftInstructions.trim()
+      ? `\n\n### Specific Guidance:\n- ${draftInstructions.trim()}`
+      : "";
+    const chosenProfile = profiles.find((p) => p.id === selectedProfileId);
+    const profileNote = chosenProfile ? `\n- Draw specifically from my profile: "${chosenProfile.name}"` : "";
+
+    return `You are an expert executive career coach and professional ghostwriter.
+Please write a natural, compelling, and human first-person answer to the following job application / interview question.
+
+### Target Question:
+"${target}"${instructions}
+
+### Requirements:
+1. Ground the response strictly in my real background, projects, metrics, and career trajectory${profileNote}. Do NOT invent new employers, fake degrees, or false statistics.
+2. Structure the answer naturally (STAR: Situation, Task, Action, Result) without sounding like a robotic textbook.
+3. FORBIDDEN AI BUZZWORDS: Never use words like "spearheaded", "orchestrated", "synergized", "testament to", "delve", "tapestry", "fast-paced environment", or "plethora".
+4. Write like an articulate, high-performing professional speaking in an interview.
+5. Provide a direct, ready-to-paste answer (approx 120-200 words).`;
+  };
+
+  const handleCopyDraftPromptForChatGpt = () => {
+    const prompt = generateChatGptDraftPrompt();
+    if (!prompt) return;
+    copyToClipboard("chatgpt-draft-prompt", prompt);
     showToast("Prompt copied! Ready to paste into ChatGPT, Claude, etc.", "success");
   };
 
@@ -454,11 +558,10 @@ ${morphSource.answer}
                 className="text-xl font-bold font-display"
                 style={{ color: "var(--text-primary)" }}
               >
-                Job Application Vault
+                Career Vault
               </h1>
               <p className="text-xs" style={{ color: "var(--text-secondary)" }}>
-                Application metadata, custom fields, and multilingual semantic
-                Q&A search
+                Verified career history, application details, and natural AI answer drafting
               </p>
             </div>
           </div>
@@ -475,8 +578,8 @@ ${morphSource.answer}
             }}
           >
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="font-mono text-[11px]">
-              Multilingual MiniLM L12 (Local)
+            <span className="text-[11px] font-medium">
+              Semantic Search Active
             </span>
           </div>
 
@@ -516,7 +619,7 @@ ${morphSource.answer}
           }}
         >
           <Sparkles className="w-4 h-4" />
-          <span>Q&A Bank & Semantic Matcher</span>
+          <span>Q&A Bank & Answer Search</span>
           <span className="px-2 py-0.5 rounded-full text-[10px] bg-blue-500/10 text-blue-600 dark:text-blue-400 font-mono">
             {qaEntries.length}
           </span>
@@ -536,7 +639,7 @@ ${morphSource.answer}
           }}
         >
           <SlidersHorizontal className="w-4 h-4" />
-          <span>Profile & Portal Metadata</span>
+          <span>Profile & Application Details</span>
           {metadata.custom_fields.length > 0 && (
             <span className="px-2 py-0.5 rounded-full text-[10px] bg-purple-500/10 text-purple-600 dark:text-purple-400 font-mono">
               +{metadata.custom_fields.length} Custom
@@ -546,11 +649,11 @@ ${morphSource.answer}
       </div>
 
       {/* ═══════════════════════════════════════════════════════════════════════ */}
-      {/* ── TAB 1: Q&A BANK & SEMANTIC MATCHER ─────────────────────────────── */}
+      {/* ── TAB 1: Q&A BANK & ANSWER SEARCH ───────────────────────────────── */}
       {/* ═══════════════════════════════════════════════════════════════════════ */}
       {activeTab === "qa" && (
         <div className="space-y-6">
-          {/* ── Hero Semantic Search Box ── */}
+          {/* ── Hero Search & AI Writer Box ── */}
           <div
             className="p-5 rounded-3xl border shadow-sm transition-all"
             style={{
@@ -558,44 +661,63 @@ ${morphSource.answer}
               borderColor: "var(--border-default)",
             }}
           >
-            <div className="flex flex-col gap-2 mb-3">
-              <div className="flex items-center gap-2">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+              <div className="flex items-center gap-2 flex-wrap">
                 <span className="px-2.5 py-0.5 rounded-md text-[11px] font-bold uppercase tracking-wider bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20">
-                  Multilingual Semantic Matcher
+                  Question Search & AI Writer
                 </span>
                 <span
                   className="text-xs"
                   style={{ color: "var(--text-muted)" }}
                 >
-                  Paste any portal question to find and adapt your best saved
-                  answer
+                  Search your verified answers or draft a natural human response from your profile
                 </span>
               </div>
+              <button
+                type="button"
+                onClick={() => openDraftModal(portalQuery)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-indigo-500/30 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-500/10 text-xs font-semibold cursor-pointer transition-colors shrink-0"
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>Draft New Answer with AI</span>
+              </button>
             </div>
 
-            <div className="relative">
-              <Search
-                className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2"
-                style={{ color: "var(--text-muted)" }}
-              />
-              <input
-                type="text"
-                value={portalQuery}
-                onChange={(e) => setPortalQuery(e.target.value)}
-                placeholder="Paste any job application or interview question (e.g. 'What was your proudest achievement?' or 'Describe a time you solved a difficult problem')..."
-                className="w-full pl-12 pr-10 py-3.5 rounded-2xl border text-sm font-medium transition-all focus:outline-none focus:ring-2 focus:ring-blue-500/30"
-                style={{
-                  backgroundColor: "var(--bg-surface-elevated)",
-                  borderColor: "var(--border-subtle)",
-                  color: "var(--text-primary)",
-                }}
-              />
-              {portalQuery && (
+            <div className="flex flex-col sm:flex-row gap-2">
+              <div className="relative flex-1">
+                <Search
+                  className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2"
+                  style={{ color: "var(--text-muted)" }}
+                />
+                <input
+                  type="text"
+                  value={portalQuery}
+                  onChange={(e) => setPortalQuery(e.target.value)}
+                  placeholder="Paste any job application or interview question (e.g. 'Describe a challenging project you delivered under tight constraints')..."
+                  className="w-full pl-12 pr-10 py-3.5 rounded-2xl border text-sm font-medium transition-all focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                  style={{
+                    backgroundColor: "var(--bg-surface-elevated)",
+                    borderColor: "var(--border-subtle)",
+                    color: "var(--text-primary)",
+                  }}
+                />
+                {portalQuery && (
+                  <button
+                    onClick={() => setPortalQuery("")}
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 p-1 rounded-lg hover:bg-slate-200 dark:hover:bg-neutral-700 text-slate-400 cursor-pointer"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+              {portalQuery.trim() && (
                 <button
-                  onClick={() => setPortalQuery("")}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 p-1 rounded-lg hover:bg-slate-200 dark:hover:bg-neutral-700 text-slate-400"
+                  type="button"
+                  onClick={() => openDraftModal(portalQuery.trim())}
+                  className="px-4 py-3 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold flex items-center justify-center gap-2 shrink-0 transition-colors cursor-pointer shadow-sm"
                 >
-                  <X className="w-4 h-4" />
+                  <Sparkles className="w-4 h-4" />
+                  <span>Draft Answer</span>
                 </button>
               )}
             </div>
@@ -614,24 +736,33 @@ ${morphSource.answer}
                     {searchingSemantic ? (
                       <span className="flex items-center gap-2">
                         <RefreshCw className="w-3.5 h-3.5 animate-spin text-blue-500" />
-                        Analyzing semantic similarity...
+                        Searching for relevant experiences...
                       </span>
                     ) : (
-                      `Matched ${searchResults.length} relevant answer${searchResults.length === 1 ? "" : "s"}`
+                      `Found ${searchResults.length} matching answer${searchResults.length === 1 ? "" : "s"}`
                     )}
                   </span>
                 </div>
 
                 {searchResults.length === 0 && !searchingSemantic ? (
                   <div
-                    className="p-4 rounded-xl text-center text-xs"
+                    className="p-5 rounded-2xl text-center space-y-2.5 border border-dashed"
                     style={{
-                      color: "var(--text-muted)",
+                      borderColor: "var(--border-subtle)",
                       backgroundColor: "var(--bg-surface-elevated)",
                     }}
                   >
-                    No close match found for this question yet. You can add it
-                    below or adapt another answer with AI!
+                    <p className="text-xs font-medium" style={{ color: "var(--text-secondary)" }}>
+                      No direct match found in your saved Q&A bank for this question.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => openDraftModal(portalQuery.trim())}
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-sm transition-all cursor-pointer"
+                    >
+                      <Sparkles className="w-3.5 h-3.5" />
+                      <span>Draft Natural Answer from Profile & Vault</span>
+                    </button>
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 gap-3">
@@ -715,20 +846,35 @@ ${morphSource.answer}
                               onClick={() =>
                                 openMorphModal(match.question, match.answer)
                               }
-                              className="flex items-center gap-1 px-3 py-1.5 rounded-xl border text-xs font-semibold transition-colors hover:bg-slate-200 dark:hover:bg-neutral-700 cursor-pointer"
+                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-semibold transition-colors hover:bg-slate-200 dark:hover:bg-neutral-700 cursor-pointer"
                               style={{
                                 borderColor: "var(--border-subtle)",
                                 color: "var(--text-primary)",
                               }}
-                              title="Morph this answer to fit a different question"
+                              title="Adapt this answer to address a different question"
                             >
-                              <Wand2 className="w-3.5 h-3.5 text-purple-500" />
-                              <span>Morph AI</span>
+                              <Edit3 className="w-3.5 h-3.5 text-blue-500" />
+                              <span>Adapt Answer</span>
                             </button>
                           </div>
                         </div>
                       );
                     })}
+
+                    {/* Option to draft fresh answer even if matches exist */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 p-3.5 rounded-2xl bg-blue-500/5 border border-blue-500/15">
+                      <span className="text-xs text-blue-700 dark:text-blue-300 font-medium">
+                        Need a custom answer tailored to this exact question?
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => openDraftModal(portalQuery.trim())}
+                        className="inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-xs cursor-pointer shrink-0"
+                      >
+                        <Sparkles className="w-3.5 h-3.5" />
+                        <span>Draft from Profile & Vault</span>
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
@@ -786,6 +932,16 @@ ${morphSource.answer}
                     </button>
                   )}
                 </div>
+
+                <button
+                  type="button"
+                  onClick={() => openDraftModal(keywordFilter || portalQuery || "")}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold border border-purple-500/30 text-purple-600 dark:text-purple-400 hover:bg-purple-500/10 cursor-pointer transition-colors shadow-xs shrink-0"
+                  title="Draft a natural answer from your profile and career vault records"
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>Draft with AI</span>
+                </button>
 
                 <button
                   type="button"
@@ -898,11 +1054,11 @@ ${morphSource.answer}
                         onClick={() =>
                           openMorphModal(entry.question, entry.answer)
                         }
-                        className="px-2 py-1 rounded-lg text-[11px] font-semibold text-purple-600 dark:text-purple-400 hover:bg-purple-500/10 flex items-center gap-1 transition-colors cursor-pointer"
-                        title="Morph this answer into a new question using AI"
+                        className="px-2 py-1 rounded-lg text-[11px] font-semibold text-blue-600 dark:text-blue-400 hover:bg-blue-500/10 flex items-center gap-1 transition-colors cursor-pointer"
+                        title="Adapt this answer to address another question"
                       >
-                        <Wand2 className="w-3 h-3" />
-                        <span className="hidden sm:inline">Morph</span>
+                        <Edit3 className="w-3 h-3" />
+                        <span className="hidden sm:inline">Adapt</span>
                       </button>
 
                       <button
@@ -1498,12 +1654,24 @@ ${morphSource.answer}
 
             <form onSubmit={handleSaveQA} className="space-y-4">
               <div className="space-y-1">
-                <label
-                  className="text-xs font-semibold block"
-                  style={{ color: "var(--text-secondary)" }}
-                >
-                  Question or Prompt
-                </label>
+                <div className="flex items-center justify-between">
+                  <label
+                    className="text-xs font-semibold block"
+                    style={{ color: "var(--text-secondary)" }}
+                  >
+                    Question or Prompt
+                  </label>
+                  {entryForm.question.trim() && (
+                    <button
+                      type="button"
+                      onClick={() => openDraftModal(entryForm.question.trim())}
+                      className="text-[11px] font-semibold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 cursor-pointer"
+                    >
+                      <Sparkles className="w-3 h-3" />
+                      <span>Draft answer with AI</span>
+                    </button>
+                  )}
+                </div>
                 <input
                   type="text"
                   required
@@ -1625,7 +1793,7 @@ ${morphSource.answer}
       )}
 
       {/* ═══════════════════════════════════════════════════════════════════════ */}
-      {/* ── MODAL: AI ANSWER MORPHER ──────────────────────────────────────── */}
+      {/* ── MODAL: ADAPT ANSWER (QUESTION REFRAMER) ────────────────────────── */}
       {/* ═══════════════════════════════════════════════════════════════════════ */}
       {morphModalOpen && morphSource && (
         <div
@@ -1645,28 +1813,27 @@ ${morphSource.answer}
               style={{ borderColor: "var(--border-subtle)" }}
             >
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-purple-500/15 text-purple-600 dark:text-purple-400 flex items-center justify-center">
-                  <Wand2 className="w-4 h-4" />
+                <div className="w-8 h-8 rounded-xl bg-blue-500/15 text-blue-600 dark:text-blue-400 flex items-center justify-center">
+                  <Edit3 className="w-4 h-4" />
                 </div>
                 <div>
                   <h3
                     className="font-display text-base font-bold"
                     style={{ color: "var(--text-primary)" }}
                   >
-                    AI Answer Morpher
+                    Adapt Answer
                   </h3>
                   <p
                     className="text-xs"
                     style={{ color: "var(--text-secondary)" }}
                   >
-                    Reframes your truthful experience to directly answer a new
-                    question
+                    Tailors your authentic experience to directly address a new question
                   </p>
                 </div>
               </div>
               <button
                 onClick={() => setMorphModalOpen(false)}
-                className="p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-neutral-700"
+                className="p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-neutral-700 cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -1680,8 +1847,8 @@ ${morphSource.answer}
                 borderColor: "var(--border-subtle)",
               }}
             >
-              <span className="text-[10px] uppercase font-bold tracking-wider text-purple-600 dark:text-purple-400">
-                Source Experience ({morphSource.question})
+              <span className="text-[10px] uppercase font-bold tracking-wider text-blue-600 dark:text-blue-400">
+                Source Story ({morphSource.question})
               </span>
               <p className="text-xs line-clamp-3 text-slate-600 dark:text-slate-300 leading-relaxed">
                 {morphSource.answer}
@@ -1701,7 +1868,7 @@ ${morphSource.answer}
                 value={targetQuestion}
                 onChange={(e) => setTargetQuestion(e.target.value)}
                 placeholder="e.g. Tell me about a time you led a team under tight deadlines and delivered successfully"
-                className="w-full px-4 py-3 rounded-2xl border text-sm font-medium focus:outline-none focus:ring-2 focus:ring-purple-500/30"
+                className="w-full px-4 py-3 rounded-2xl border text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/30"
                 style={{
                   backgroundColor: "var(--bg-surface-elevated)",
                   borderColor: "var(--border-subtle)",
@@ -1760,8 +1927,8 @@ ${morphSource.answer}
                   </>
                 ) : (
                   <>
-                    <Copy className="w-4 h-4 text-purple-500" />
-                    <span>Copy Prompt for ChatGPT / External AI</span>
+                    <Copy className="w-4 h-4 text-blue-500" />
+                    <span>Copy Prompt for External AI</span>
                   </>
                 )}
               </button>
@@ -1770,23 +1937,23 @@ ${morphSource.answer}
                 type="button"
                 onClick={handleExecuteMorph}
                 disabled={morphing || !targetQuestion.trim()}
-                className="px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white text-xs font-bold flex items-center justify-center gap-2 shadow-sm cursor-pointer"
+                className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-xs font-bold flex items-center justify-center gap-2 shadow-sm cursor-pointer"
               >
                 {morphing ? (
                   <>
                     <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                    <span>Morphing with AI...</span>
+                    <span>Adapting with AI...</span>
                   </>
                 ) : (
                   <>
                     <Sparkles className="w-3.5 h-3.5" />
-                    <span>Morph with Built-in AI</span>
+                    <span>Adapt with Built-in AI</span>
                   </>
                 )}
               </button>
             </div>
 
-            {/* Quick paste helper if user answered outside via ChatGPT */}
+            {/* Quick paste helper */}
             {!morphedOutput && (
               <div
                 className="pt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-t border-dashed"
@@ -1812,23 +1979,23 @@ ${morphSource.answer}
                       suggested_category: "Experience",
                       suggested_tags: ["chatgpt", "adapted"],
                       key_adaptations: [
-                        "Reframed via external AI (ChatGPT / Claude)",
+                        "Reframed via external AI",
                       ],
                     });
                     if (clipboardText) {
                       showToast("Pasted answer from clipboard!", "success");
                     }
                   }}
-                  className="px-3 py-1.5 rounded-xl border text-xs font-semibold flex items-center gap-1.5 hover:bg-purple-500/10 text-purple-600 dark:text-purple-400 cursor-pointer transition-colors"
+                  className="px-3 py-1.5 rounded-xl border text-xs font-semibold flex items-center gap-1.5 hover:bg-blue-500/10 text-blue-600 dark:text-blue-400 cursor-pointer transition-colors"
                   style={{ borderColor: "var(--border-subtle)" }}
                 >
                   <ClipboardPaste className="w-3.5 h-3.5" />
-                  <span>Paste Answer from ChatGPT</span>
+                  <span>Paste Answer from Clipboard</span>
                 </button>
               </div>
             )}
 
-            {/* Morphed Output Preview & Editor */}
+            {/* Adapted Output Preview & Editor */}
             {morphedOutput && (
               <div
                 className="mt-4 pt-4 border-t space-y-3"
@@ -1858,13 +2025,13 @@ ${morphSource.answer}
                           );
                         }
                       }}
-                      className="text-[11px] text-purple-600 dark:text-purple-400 hover:underline flex items-center gap-1 cursor-pointer font-medium"
+                      className="text-[11px] text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 cursor-pointer font-medium"
                     >
                       <ClipboardPaste className="w-3 h-3" />
                       <span>Paste clipboard over text</span>
                     </button>
                     {morphedOutput.suggested_category && (
-                      <span className="text-[10px] px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-600 dark:text-purple-400 font-semibold">
+                      <span className="text-[10px] px-2 py-0.5 rounded-md bg-slate-500/10 text-slate-600 dark:text-slate-400 font-semibold">
                         {morphedOutput.suggested_category}
                       </span>
                     )}
@@ -1881,7 +2048,7 @@ ${morphSource.answer}
                     })
                   }
                   placeholder="Paste or refine your adapted answer here..."
-                  className="w-full min-h-[80px] p-4 rounded-2xl rounded-br-md border text-xs leading-relaxed font-medium focus:outline-none focus:ring-2 focus:ring-purple-500/30 transition-all resize-y"
+                  className="w-full min-h-[80px] p-4 rounded-2xl rounded-br-md border text-xs leading-relaxed font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all resize-y"
                   style={{
                     backgroundColor: "var(--bg-surface-elevated)",
                     borderColor: "var(--border-subtle)",
@@ -1941,6 +2108,314 @@ ${morphSource.answer}
                   >
                     <Save className="w-3.5 h-3.5" />
                     <span>Save as New Q&A</span>
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ═══════════════════════════════════════════════════════════════════════ */}
+      {/* ── MODAL: AI NATURAL ANSWER WRITER (PROFILE + VAULT) ─────────────── */}
+      {/* ═══════════════════════════════════════════════════════════════════════ */}
+      {draftModalOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs"
+          onClick={() => setDraftModalOpen(false)}
+        >
+          <div
+            className="w-full max-w-3xl rounded-3xl p-6 md:p-8 border shadow-2xl space-y-5 max-h-[90vh] overflow-y-auto"
+            style={{
+              backgroundColor: "var(--bg-surface)",
+              borderColor: "var(--border-default)",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div
+              className="flex items-center justify-between border-b pb-4"
+              style={{ borderColor: "var(--border-subtle)" }}
+            >
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-blue-500/15 text-blue-600 dark:text-blue-400 flex items-center justify-center">
+                  <Sparkles className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3
+                    className="font-display text-base font-bold"
+                    style={{ color: "var(--text-primary)" }}
+                  >
+                    AI Answer Writer
+                  </h3>
+                  <p
+                    className="text-xs"
+                    style={{ color: "var(--text-secondary)" }}
+                  >
+                    Drafts a natural, human-written response grounded in your profile and career vault
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setDraftModalOpen(false)}
+                className="p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-neutral-700 cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Grounding Info Banner */}
+            <div
+              className="p-3.5 rounded-2xl border space-y-1.5"
+              style={{
+                backgroundColor: "var(--bg-surface-elevated)",
+                borderColor: "var(--border-subtle)",
+              }}
+            >
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-[10px] uppercase font-bold tracking-wider text-blue-600 dark:text-blue-400">
+                  Grounding Sources Active
+                </span>
+                <span className="text-[11px] text-slate-500">•</span>
+                <span className="text-[11px] font-medium text-slate-700 dark:text-slate-200">
+                  <span className="font-semibold text-blue-600 dark:text-blue-400">
+                    {profiles.find((p) => p.id === selectedProfileId)?.name || "Active Profile"}
+                  </span>{" "}
+                  (Experience & Projects) + Vault Career Records
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                Written strictly from your selected profile's achievements and career vault records in an authentic first-person voice. Zero generic fluff or AI clichés.
+              </p>
+            </div>
+
+            {/* Profile Selection */}
+            {profiles.length > 0 && (
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <label
+                    className="text-xs font-bold block"
+                    style={{ color: "var(--text-primary)" }}
+                  >
+                    Select Profile for Experience & Projects
+                  </label>
+                  <span className="text-[11px] text-slate-500">
+                    Choose which profile AI should ground from
+                  </span>
+                </div>
+                <div className="relative">
+                  <select
+                    value={selectedProfileId}
+                    onChange={(e) => setSelectedProfileId(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl border text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/30 cursor-pointer"
+                    style={{
+                      backgroundColor: "var(--bg-surface-elevated)",
+                      borderColor: "var(--border-subtle)",
+                      color: "var(--text-primary)",
+                    }}
+                  >
+                    {profiles.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.name} {p.version_tag ? `(${p.version_tag})` : ""} {p.meta?.target_role ? `• Target: ${p.meta.target_role}` : ""}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            )}
+
+            {/* Target Question Input */}
+            <div className="space-y-1.5">
+              <label
+                className="text-xs font-bold block"
+                style={{ color: "var(--text-primary)" }}
+              >
+                Application or Interview Question
+              </label>
+              <textarea
+                rows={2}
+                value={draftQuestion}
+                onChange={(e) => setDraftQuestion(e.target.value)}
+                placeholder="e.g. Tell me about a time you handled a critical outage or complex technical trade-off"
+                className="w-full px-4 py-3 rounded-2xl border text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/30 resize-y"
+                style={{
+                  backgroundColor: "var(--bg-surface-elevated)",
+                  borderColor: "var(--border-subtle)",
+                  color: "var(--text-primary)",
+                }}
+              />
+            </div>
+
+            {/* Optional Guidance */}
+            <div className="space-y-1">
+              <label
+                className="text-xs font-medium block"
+                style={{ color: "var(--text-secondary)" }}
+              >
+                Optional Guidance or Angle (Optional)
+              </label>
+              <input
+                type="text"
+                value={draftInstructions}
+                onChange={(e) => setDraftInstructions(e.target.value)}
+                placeholder="e.g. Highlight distributed systems and keep it under 150 words"
+                className="w-full px-3.5 py-2.5 rounded-xl border text-xs focus:outline-none"
+                style={{
+                  backgroundColor: "var(--bg-surface-elevated)",
+                  borderColor: "var(--border-subtle)",
+                  color: "var(--text-primary)",
+                }}
+              />
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
+              <button
+                type="button"
+                onClick={handleCopyDraftPromptForChatGpt}
+                className="px-4 py-2.5 rounded-xl border text-xs font-semibold flex items-center justify-center gap-2 transition-all hover:bg-slate-100 dark:hover:bg-neutral-800 cursor-pointer shadow-xs"
+                style={{
+                  borderColor:
+                    copiedKey === "chatgpt-draft-prompt"
+                      ? "#10b981"
+                      : "var(--border-default)",
+                  color:
+                    copiedKey === "chatgpt-draft-prompt"
+                      ? "#10b981"
+                      : "var(--text-primary)",
+                  backgroundColor: "var(--bg-surface-elevated)",
+                }}
+                title="Copy a structured, grounded prompt to paste into ChatGPT, Claude, etc."
+              >
+                {copiedKey === "chatgpt-draft-prompt" ? (
+                  <>
+                    <Check className="w-4 h-4 text-emerald-500" />
+                    <span className="text-emerald-600 dark:text-emerald-400 font-bold">
+                      Copied Prompt for ChatGPT!
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <Copy className="w-4 h-4 text-blue-500" />
+                    <span>Copy Prompt for External AI</span>
+                  </>
+                )}
+              </button>
+
+              <button
+                type="button"
+                onClick={handleExecuteDraft}
+                disabled={drafting || !draftQuestion.trim()}
+                className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-xs font-bold flex items-center justify-center gap-2 shadow-sm cursor-pointer"
+              >
+                {drafting ? (
+                  <>
+                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                    <span>Drafting from Profile & Vault...</span>
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>Draft Human Answer with AI</span>
+                  </>
+                )}
+              </button>
+            </div>
+
+            {/* Draft Output Preview & Editor */}
+            {draftOutput && (
+              <div
+                className="mt-4 pt-4 border-t space-y-3"
+                style={{ borderColor: "var(--border-subtle)" }}
+              >
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
+                      <CheckCircle2 className="w-4 h-4" />
+                      Authentic Answer Drafted
+                    </span>
+                    {draftOutput.profile_name && (
+                      <span className="text-[10px] px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400 font-semibold">
+                        {draftOutput.profile_name}
+                      </span>
+                    )}
+                  </div>
+                  {draftOutput.suggested_category && (
+                    <span className="text-[10px] px-2 py-0.5 rounded-md bg-slate-500/10 text-slate-600 dark:text-slate-400 font-semibold">
+                      {draftOutput.suggested_category}
+                    </span>
+                  )}
+                </div>
+
+                <textarea
+                  rows={6}
+                  value={draftOutput.answer}
+                  onChange={(e) =>
+                    setDraftOutput({
+                      ...draftOutput,
+                      answer: e.target.value,
+                    })
+                  }
+                  placeholder="Review and polish your drafted answer..."
+                  className="w-full min-h-[90px] p-4 rounded-2xl rounded-br-md border text-xs leading-relaxed font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all resize-y"
+                  style={{
+                    backgroundColor: "var(--bg-surface-elevated)",
+                    borderColor: "var(--border-subtle)",
+                    color: "var(--text-primary)",
+                  }}
+                />
+
+                {draftOutput.key_points_used &&
+                  draftOutput.key_points_used.length > 0 && (
+                    <div
+                      className="text-[11px] space-y-1"
+                      style={{ color: "var(--text-secondary)" }}
+                    >
+                      <span className="font-semibold block text-slate-700 dark:text-slate-300">
+                        Points Grounded From Your Background:
+                      </span>
+                      <ul className="list-disc list-inside space-y-0.5">
+                        {draftOutput.key_points_used.map((a, i) => (
+                          <li key={i}>{a}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                <div className="flex items-center justify-end gap-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      copyToClipboard(
+                        "draft-output",
+                        draftOutput.answer,
+                      )
+                    }
+                    className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer ${
+                      copiedKey === "draft-output"
+                        ? "bg-emerald-600 text-white"
+                        : "bg-slate-200 dark:bg-neutral-700 hover:bg-slate-300 text-slate-900 dark:text-white"
+                    }`}
+                  >
+                    {copiedKey === "draft-output" ? (
+                      <Check className="w-3.5 h-3.5" />
+                    ) : (
+                      <Copy className="w-3.5 h-3.5" />
+                    )}
+                    <span>
+                      {copiedKey === "draft-output"
+                        ? "Copied!"
+                        : "Copy Answer"}
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleSaveDraftAsQA}
+                    disabled={!draftOutput.answer.trim()}
+                    className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-sm"
+                  >
+                    <Save className="w-3.5 h-3.5" />
+                    <span>Save to Q&A Bank</span>
                   </button>
                 </div>
               </div>
