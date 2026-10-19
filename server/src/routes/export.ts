@@ -274,12 +274,19 @@ router.post('/:id/pdf', async (req: Request, res: Response) => {
       args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu'],
     });
     const page = await browser.newPage();
-    await page.setContent(html, { waitUntil: 'domcontentloaded' });
+    try {
+      await page.setContent(html, {
+        waitUntil: ['load', 'networkidle0'],
+        timeout: 15000,
+      });
+    } catch {
+      await page.setContent(html, { waitUntil: 'load', timeout: 5000 });
+    }
 
     try {
       await Promise.race([
-        page.evaluateHandle('document.fonts.ready'),
-        new Promise(resolve => setTimeout(resolve, 3000)),
+        page.evaluate('document.fonts.ready'),
+        new Promise((resolve) => setTimeout(resolve, 3000)),
       ]);
     } catch {
       // Font loading fallback
