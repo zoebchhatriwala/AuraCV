@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAppStore } from '../store';
 import { aiApi, type ATSScoreResult, type KeywordGapResult, type RedlineResult, type RewriteResult } from '../api';
 import { useParams } from 'react-router-dom';
@@ -13,7 +13,16 @@ type AITask = 'ats' | 'keywords' | 'redline' | 'rewrite';
 export default function AIStudio() {
   const { id } = useParams<{ id?: string }>();
   const { resumes, currentResume, fetchResume } = useAppStore();
-  const [selectedResumeId, setSelectedResumeId] = useState(id ?? (resumes[0]?.id ?? ''));
+  const activeResumes = resumes.filter(r => r.is_active !== 0);
+  const [selectedResumeId, setSelectedResumeId] = useState(id ?? (activeResumes[0]?.id ?? ''));
+
+  useEffect(() => {
+    if ((!selectedResumeId || !activeResumes.some(r => r.id === selectedResumeId)) && activeResumes.length > 0) {
+      const nextId = id && activeResumes.some(r => r.id === id) ? id : activeResumes[0].id;
+      setSelectedResumeId(nextId);
+      fetchResume(nextId);
+    }
+  }, [activeResumes, id, selectedResumeId, fetchResume]);
   const [activeTask, setActiveTask] = useState<AITask>('ats');
   const [jobDesc, setJobDesc] = useState('');
   const [bullet, setBullet] = useState('');
@@ -102,7 +111,7 @@ export default function AIStudio() {
           }}
         >
           <option value="">Select a Profile</option>
-          {resumes.map(r => (
+          {activeResumes.map(r => (
             <option key={r.id} value={r.id}>
               {r.name} ({r.version_tag})
             </option>

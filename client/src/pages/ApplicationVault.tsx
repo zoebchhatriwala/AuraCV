@@ -187,11 +187,12 @@ export default function ApplicationVault() {
       console.error("Failed to load QA entries:", err);
     });
 
-    resumeApi.list().then((list) => {
+    resumeApi.list({ is_active: 1 }).then((list) => {
       if (!ignore) {
-        setProfiles(list);
-        if (list.length > 0) {
-          setSelectedProfileId(list[0].id);
+        const activeList = list.filter((p) => p.is_active !== 0);
+        setProfiles(activeList);
+        if (activeList.length > 0) {
+          setSelectedProfileId(activeList[0].id);
         }
       }
     }).catch((err) => {
@@ -2189,7 +2190,7 @@ Please write a natural, compelling, and human first-person answer to the followi
             </div>
 
             {/* Profile Selection */}
-            {profiles.length > 0 && (
+            {profiles.filter((p) => p.is_active !== 0).length > 0 && (
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
                   <label
@@ -2213,11 +2214,13 @@ Please write a natural, compelling, and human first-person answer to the followi
                       color: "var(--text-primary)",
                     }}
                   >
-                    {profiles.map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.name} {p.version_tag ? `(${p.version_tag})` : ""} {p.meta?.target_role ? `• Target: ${p.meta.target_role}` : ""}
-                      </option>
-                    ))}
+                    {profiles
+                      .filter((p) => p.is_active !== 0)
+                      .map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.name} {p.version_tag ? `(${p.version_tag})` : ""} {p.meta?.target_role ? `• Target: ${p.meta.target_role}` : ""}
+                        </option>
+                      ))}
                   </select>
                 </div>
               </div>

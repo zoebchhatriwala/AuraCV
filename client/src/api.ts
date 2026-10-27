@@ -21,7 +21,7 @@ const del  = <T>(path: string) => request<T>(path, { method: 'DELETE' });
 
 // ─── Resume API ───────────────────────────────────────────────────────────────
 export const resumeApi = {
-  list:      ()         => get<Resume[]>('/resumes'),
+  list:      (filter?: { is_active?: number }) => get<Resume[]>(filter?.is_active !== undefined ? `/resumes?is_active=${filter.is_active}` : '/resumes'),
   get:       (id: string) => get<ResumeWithSections>(`/resumes/${id}`),
   create:    (data: Partial<Resume> & { name: string }) => post<{ id: string }>('/resumes', data),
   update:    (id: string, data: Partial<Resume>) => put<{ ok: boolean }>(`/resumes/${id}`, data),

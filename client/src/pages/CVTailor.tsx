@@ -30,16 +30,18 @@ import {
 export default function CVTailor() {
   const { id } = useParams<{ id?: string }>();
   const { resumes, fetchResume } = useAppStore();
+  const activeResumes = resumes.filter((r) => r.is_active !== 0);
   const [selectedResumeId, setSelectedResumeId] = useState(
-    id ?? resumes[0]?.id ?? "",
+    id ?? activeResumes[0]?.id ?? "",
   );
 
   useEffect(() => {
-    if (!selectedResumeId && resumes.length > 0) {
-      setSelectedResumeId(id ?? resumes[0].id);
-      fetchResume(id ?? resumes[0].id);
+    if ((!selectedResumeId || !activeResumes.some((r) => r.id === selectedResumeId)) && activeResumes.length > 0) {
+      const nextId = id && activeResumes.some((r) => r.id === id) ? id : activeResumes[0].id;
+      setSelectedResumeId(nextId);
+      fetchResume(nextId);
     }
-  }, [resumes, id, selectedResumeId, fetchResume]);
+  }, [activeResumes, id, selectedResumeId, fetchResume]);
 
   const [loading, setLoading] = useState(false);
   const [loadingStage, setLoadingStage] = useState(0);
@@ -272,7 +274,7 @@ export default function CVTailor() {
           }}
         >
           <option value="">Select a Profile</option>
-          {resumes.map((r) => (
+          {activeResumes.map((r) => (
             <option key={r.id} value={r.id}>
               {r.name} ({r.version_tag})
             </option>

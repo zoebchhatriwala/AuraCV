@@ -4,9 +4,11 @@ import { resumeQueries, sectionQueries } from '../db/database';
 const router = Router();
 
 // GET /api/resumes
-router.get('/', (_req: Request, res: Response) => {
+router.get('/', (req: Request, res: Response) => {
   try {
-    res.json(resumeQueries.list());
+    const isActiveParam = req.query.is_active;
+    const filter = isActiveParam !== undefined ? { is_active: Number(isActiveParam) } : undefined;
+    res.json(resumeQueries.list(filter));
   } catch (e) {
     res.status(500).json({ error: (e as Error).message });
   }

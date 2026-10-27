@@ -98,13 +98,19 @@ function parseQAEntry(row: QAEntryRow): QAEntry {
 // ─── Resume queries ───────────────────────────────────────────────────────────
 
 export const resumeQueries = {
-  list(): Resume[] {
-    const rows = getDb().prepare(`
+  list(filter?: { is_active?: number }): Resume[] {
+    let query = `
       SELECT r.*, COUNT(rs.id) as section_count
       FROM resumes r
       LEFT JOIN resume_sections rs ON rs.resume_id = r.id
-      GROUP BY r.id ORDER BY r.updated_at DESC
-    `).all() as unknown as ResumeRow[];
+    `;
+    const params: (number | string)[] = [];
+    if (filter?.is_active !== undefined) {
+      query += ` WHERE r.is_active = ?`;
+      params.push(filter.is_active);
+    }
+    query += ` GROUP BY r.id ORDER BY r.updated_at DESC`;
+    const rows = getDb().prepare(query).all(...params) as unknown as ResumeRow[];
     return rows.map(parseResume);
   },
 
