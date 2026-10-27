@@ -65,6 +65,8 @@
     "icon": "desktop/icon.png"
   },
   "linux": {
+    "maintainer": "Zoeb Chhatriwala <zrex.mail@gmail.com>",
+    "syncDesktopName": true,
     "target": [
       {
         "target": "AppImage",

@@ -2,7 +2,8 @@
   "name": "auracv",
   "version": "2.0.0",
   "description": "Privacy-first career intelligence studio and CV / Resume builder",
-  "author": "Zoeb Chhatriwala",
+  "author": "Zoeb Chhatriwala <zrex.mail@gmail.com>",
+  "desktopName": "auracv.desktop",
   "private": true,
   "main": "dist-electron/main.js",
   "scripts": {
