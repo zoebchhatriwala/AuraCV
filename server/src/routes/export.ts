@@ -32,8 +32,25 @@ Handlebars.registerHelper('eq', function (a, b) {
   return a === b;
 });
 
+export function getTemplatesDir(): string {
+  if (process.env.AURACV_TEMPLATES_DIR && existsSync(process.env.AURACV_TEMPLATES_DIR)) {
+    return process.env.AURACV_TEMPLATES_DIR;
+  }
+  const candidates = [
+    join(__dirname, '..', 'templates'),
+    join(__dirname, '..', '..', 'templates'),
+    join(__dirname, '..', '..', 'src', 'templates'),
+    join(process.cwd(), 'server', 'src', 'templates'),
+    join(process.cwd(), 'server', 'templates'),
+  ];
+  for (const candidate of candidates) {
+    if (existsSync(candidate)) return candidate;
+  }
+  return join(__dirname, '..', 'templates');
+}
+
+const TEMPLATES_DIR = getTemplatesDir();
 const router = Router();
-const TEMPLATES_DIR = join(__dirname, '..', 'templates');
 
 // ─── Sample Resume Data for Template Previews ────────────────────────────────
 const SAMPLE_RESUME = {

@@ -24,7 +24,10 @@ try {
   console.log('✅ SQLite database ready');
 } catch (e) {
   console.error('❌ Database initialization failed:', e);
-  process.exit(1);
+  if (!process.env.AURACV_EMBEDDED) {
+    process.exit(1);
+  }
+  throw e;
 }
 
 // ─── Routes ───────────────────────────────────────────────────────────────────
@@ -85,10 +88,14 @@ process.on('unhandledRejection', (reason) => {
 });
 
 // ─── Start ────────────────────────────────────────────────────────────────────
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`\n🚀 AuraCV server running on http://localhost:${PORT}`);
   console.log(`📁 DB: ${getDbPath()}`);
   console.log(`📂 Providers: ${join(process.cwd(), 'providers/')}\n`);
+});
+
+server.on('error', (err: any) => {
+  console.error(`[AuraCV Server] Listen error on port ${PORT}:`, err);
 });
 
 export default app;

@@ -1,14 +1,21 @@
 import { Router, Request, Response } from 'express';
 import multer from 'multer';
 import { join } from 'path';
-import { promises as fsPromises } from 'fs';
+import { existsSync, mkdirSync, promises as fsPromises } from 'fs';
+import { tmpdir } from 'os';
 import pdfParse from 'pdf-parse';
 import { getActiveProvider } from '../ai/factory';
 import { resumeQueries, sectionQueries } from '../db/database';
 import type { ImportParseResult, SectionType, SectionContent } from '../types';
 
 const router = Router();
-const upload = multer({ dest: join(__dirname, '..', '..', 'uploads') });
+const uploadsDir = process.env.AURACV_DATA_DIR
+  ? join(process.env.AURACV_DATA_DIR, 'uploads')
+  : join(tmpdir(), 'auracv-uploads');
+if (!existsSync(uploadsDir)) {
+  mkdirSync(uploadsDir, { recursive: true });
+}
+const upload = multer({ dest: uploadsDir });
 
 /**
  * Intelligent deterministic heuristic parser that structures raw resume text

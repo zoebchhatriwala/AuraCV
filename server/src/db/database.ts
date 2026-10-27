@@ -76,8 +76,27 @@ export function getDb(): DatabaseSync {
   return _db;
 }
 
+export function getSchemaPath(): string {
+  if (process.env.AURACV_SCHEMA_PATH && existsSync(process.env.AURACV_SCHEMA_PATH)) {
+    return process.env.AURACV_SCHEMA_PATH;
+  }
+  const candidates = [
+    join(__dirname, 'schema.sql'),
+    join(__dirname, '..', 'schema.sql'),
+    join(__dirname, '..', '..', 'schema.sql'),
+    join(__dirname, '..', '..', 'src', 'db', 'schema.sql'),
+    join(__dirname, '..', '..', 'server', 'src', 'db', 'schema.sql'),
+    join(process.cwd(), 'server', 'src', 'db', 'schema.sql'),
+    join(process.cwd(), 'server', 'schema.sql'),
+  ];
+  for (const candidate of candidates) {
+    if (existsSync(candidate)) return candidate;
+  }
+  throw new Error(`schema.sql not found in candidate paths: ${candidates.join(', ')}`);
+}
+
 function runMigrations(db: DatabaseSync): void {
-  const schemaPath = join(__dirname, 'schema.sql');
+  const schemaPath = getSchemaPath();
   const schema = readFileSync(schemaPath, 'utf8');
   db.exec(schema);
 }
