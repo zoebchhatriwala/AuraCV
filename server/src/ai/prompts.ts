@@ -358,9 +358,13 @@ Before generating the final CV JSON, perform systematic deep reasoning covering:
 </deep_thinking_framework>
 
 <core_principles>
-1. Full CV Retention (ZERO Data Loss):
+1. Full CV Retention & Fact Integrity (ZERO Data Loss):
    - You MUST generate the FULL CV including all relevant sections: Header, Professional Summary, Work Experience, Skills, Projects, Education, and Certifications.
    - DO NOT drop Education or Projects. Carry over verified details (institution, degree, dates) and tailor project descriptions and bullets to align with the target role.
+   - PRESERVE AUTHENTIC WORK HISTORY FACTS:
+     * Retain the EXACT company name, employment dates, and job 'location' for each experience entry directly from the candidate profile.
+     * NEVER alter, fabricate, combine, or abbreviate job locations. Specifically, do NOT replace an employer's location (such as "Dubai, United Arab Emirates") with the candidate's residence or header location (such as "India & UAE").
+     * Each job's 'location' MUST match the specific location indicated for that job in the candidate profile.
 
 2. Google X-Y-Z Accomplishment Bullets:
    - Every bullet MUST be accomplishment-driven, starting with an active past-tense verb (e.g. Engineered, Architected, Spearheaded, Slashed, Accelerated, Optimized, Delivered).
@@ -397,11 +401,11 @@ Return valid JSON matching this exact structure:
   "summary": "Staff Software Engineer with 8+ years architecting high-throughput distributed systems...",
   "experience": [
     {
-      "company": "Tech Corp",
+      "company": "Company Name from Profile",
       "role": "${role}",
-      "start_date": "2021",
-      "end_date": "Present",
-      "location": "San Francisco, CA",
+      "start_date": "Exact Start Date from Profile",
+      "end_date": "Exact End Date from Profile",
+      "location": "Exact Job Location from Candidate Profile (e.g. Dubai, United Arab Emirates)",
       "bullets": [
         "Architected multi-tier Redis caching layer across 12 microservices, reducing P99 API latency by 35% (from 420ms to 270ms) under peak 40K req/sec traffic.",
         "Spearheaded zero-downtime migration to Kubernetes, trimming annual cloud infrastructure expenditures by $140K while sustaining 99.99% system availability."

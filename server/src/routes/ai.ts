@@ -83,14 +83,29 @@ export function sectionsToPlainText(sections: ResumeSection[]): string {
       const e = entry as Record<string, unknown>;
       if (e.text) {
         lines.push(e.text as string);
+      } else if (s.section_type === 'header' || (e.name && (e.email || e.phone || e.location))) {
+        const parts = [
+          e.name ? `Candidate Name: ${e.name}` : '',
+          e.role ? `Role/Headline: ${e.role}` : '',
+          e.location ? `Candidate Residence / Base Location: ${e.location}` : '',
+          e.email ? `Email: ${e.email}` : '',
+          e.phone ? `Phone: ${e.phone}` : '',
+          e.linkedin ? `LinkedIn: ${e.linkedin}` : '',
+          e.github ? `GitHub: ${e.github}` : '',
+          e.website ? `Website: ${e.website}` : '',
+        ].filter(Boolean);
+        lines.push(parts.join(' | '));
       } else if (e.company) {
-        lines.push(`${e.role || 'Role'} at ${e.company} (${e.start_date || ''}–${e.end_date || ''})`);
+        const loc = e.location ? ` | Location: ${e.location}` : '';
+        lines.push(`${e.role || 'Role'} at ${e.company}${loc} (${e.start_date || ''}–${e.end_date || ''})`);
         if (Array.isArray(e.bullets)) lines.push(...(e.bullets as string[]).map(b => `• ${b}`));
       } else if (Array.isArray(e.items)) {
         if (e.category) lines.push(`${e.category}: ${(e.items as string[]).join(', ')}`);
         else lines.push((e.items as string[]).join(', '));
       } else if (e.institution) {
-        lines.push(`${e.degree || ''} in ${e.field || ''} - ${e.institution} (${e.start_date || ''}–${e.end_date || ''})`);
+        const loc = e.location ? ` | Location: ${e.location}` : '';
+        const gpa = e.gpa ? ` | GPA: ${e.gpa}` : '';
+        lines.push(`${e.degree || ''} in ${e.field || ''} - ${e.institution}${loc} (${e.start_date || ''}–${e.end_date || ''})${gpa}`);
         if (Array.isArray(e.bullets)) lines.push(...(e.bullets as string[]).map(b => `• ${b}`));
       } else if (e.name && (e.description || e.tech)) {
         const techStr = Array.isArray(e.tech) && e.tech.length ? ` (Tech: ${(e.tech as string[]).join(', ')})` : '';

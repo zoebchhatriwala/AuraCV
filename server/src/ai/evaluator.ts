@@ -159,7 +159,10 @@ export function evaluateAndCorrectCVTailor(params: {
     corrections.push('Preserved authentic work history from source profile');
     deduction += 15;
   } else {
-    // Sanitize and normalize experience items
+    // Sanitize, match, and normalize experience items against verified source records
+    const usedSourceExpIndices = new Set<number>();
+    let locationsRepaired = 0;
+
     for (const item of rawExperience) {
       if (!item || typeof item !== 'object') continue;
       const company = item.company || item.organization || item.employer || 'Enterprise';
@@ -181,19 +184,49 @@ export function evaluateAndCorrectCVTailor(params: {
           .map((b: string) => sanitizeBullet(b));
       }
 
-      // Check if dates or location can be matched from source
-      const matchedSource = sourceExpList.find(s =>
-        s.company?.toLowerCase().trim() === company.toLowerCase().trim() ||
-        s.role?.toLowerCase().trim() === itemRole.toLowerCase().trim()
+      // Robust matching: company identity and dates have strict priority over role titles
+      const matchedSource = findMatchingSourceExperience(
+        { company, role: itemRole, start_date: item.start_date, end_date: item.end_date },
+        sourceExpList,
+        usedSourceExpIndices
       );
 
+      // CRITICAL: Preserve authentic company name, dates, and location from source profile.
+      // AI models frequently hallucinate or overwrite job locations with candidate header location.
+      const finalCompany = matchedSource?.company || company;
+      const finalStartDate = matchedSource?.start_date || item.start_date || '';
+      const finalEndDate = matchedSource?.end_date || item.end_date || 'Present';
+
+      let finalLocation = item.location;
+      if (matchedSource?.location && matchedSource.location.trim().length > 0) {
+        if (item.location && item.location.trim().toLowerCase() !== matchedSource.location.trim().toLowerCase()) {
+          corrections.push(`Restored authentic location "${matchedSource.location}" for ${finalCompany} (corrected model hallucination "${item.location}")`);
+          locationsRepaired++;
+        }
+        finalLocation = matchedSource.location;
+      }
+
       finalExperience.push({
-        company,
+        company: finalCompany,
         role: itemRole,
-        start_date: item.start_date || matchedSource?.start_date || '',
-        end_date: item.end_date || matchedSource?.end_date || 'Present',
-        location: item.location || matchedSource?.location,
+        start_date: finalStartDate,
+        end_date: finalEndDate,
+        location: finalLocation,
         bullets: bullets.length > 0 ? bullets : (matchedSource?.bullets || []),
+      });
+    }
+
+    if (locationsRepaired > 0) {
+      checks.push({
+        name: 'Work History & Location Integrity',
+        status: 'repaired',
+        details: `Restored authentic employer locations across ${locationsRepaired} roles, reconciling model hallucinations against profile source.`,
+      });
+    } else {
+      checks.push({
+        name: 'Work History & Location Integrity',
+        status: 'pass',
+        details: 'Verified all employer locations and employment dates match authentic profile records.',
       });
     }
 
@@ -287,16 +320,29 @@ export function evaluateAndCorrectCVTailor(params: {
   const sourceEduList = (sourceEdu?.content || []) as EducationContent[];
 
   if (rawEducation.length > 0) {
+    const usedSourceEduIndices = new Set<number>();
     for (const item of rawEducation) {
       if (!item || typeof item !== 'object') continue;
+      const inst = item.institution || item.school || item.university || '';
+      const normInst = inst.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+      const matchedEduIdx = sourceEduList.findIndex((e, i) => {
+        if (usedSourceEduIndices.has(i)) return false;
+        const normSource = (e.institution || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+        return normInst.length >= 3 && (normSource.includes(normInst) || normInst.includes(normSource));
+      });
+
+      const matchedEdu = matchedEduIdx !== -1 ? sourceEduList[matchedEduIdx] : undefined;
+      if (matchedEduIdx !== -1) usedSourceEduIndices.add(matchedEduIdx);
+
       finalEducation.push({
-        institution: item.institution || item.school || item.university || '',
-        degree: item.degree || '',
-        field: item.field || item.major || '',
-        start_date: item.start_date || '',
-        end_date: item.end_date || '',
-        gpa: item.gpa,
-        bullets: Array.isArray(item.bullets) ? item.bullets : undefined,
+        institution: matchedEdu?.institution || inst,
+        degree: matchedEdu?.degree || item.degree || '',
+        field: matchedEdu?.field || item.field || item.major || '',
+        start_date: matchedEdu?.start_date || item.start_date || '',
+        end_date: matchedEdu?.end_date || item.end_date || '',
+        gpa: matchedEdu?.gpa || item.gpa,
+        bullets: Array.isArray(item.bullets) ? item.bullets : matchedEdu?.bullets,
       });
     }
     checks.push({
@@ -524,6 +570,56 @@ function sanitizeBullet(b: string): string {
   clean = clean.replace(/^(?:Accomplished\s*X\s*as\s*measured\s*by\s*Y\s*by\s*doing\s*Z[:\s-]*)/i, '');
   clean = clean.replace(/^[•\-\*]\s*/, '');
   return clean.trim();
+}
+
+/**
+ * Match a raw experience item from AI output to its authentic source counterpart.
+ * Prioritizes company name matching and employment dates over generic role titles.
+ */
+function findMatchingSourceExperience(
+  item: { company?: string; role?: string; start_date?: string; end_date?: string },
+  sourceList: ExperienceContent[],
+  usedIndices: Set<number>
+): ExperienceContent | undefined {
+  const norm = (str?: string) => (str || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+
+  const normComp = norm(item.company);
+  const normRole = norm(item.role);
+  const start = (item.start_date || '').trim();
+  const end = (item.end_date || '').trim();
+
+  // 1. Exact normalized company match
+  let idx = sourceList.findIndex((s, i) => !usedIndices.has(i) && norm(s.company) === normComp);
+
+  // 2. Substring company match (e.g. "NGS Technology" matches "NGS Technology L.L.C", "Traact" matches "Traact, Inc")
+  if (idx === -1 && normComp.length >= 3) {
+    idx = sourceList.findIndex((s, i) => {
+      if (usedIndices.has(i)) return false;
+      const sComp = norm(s.company);
+      return sComp.includes(normComp) || normComp.includes(sComp);
+    });
+  }
+
+  // 3. Exact date match (dates like "02/2016" - "03/2018" are unique fingerprints of roles)
+  if (idx === -1 && start) {
+    idx = sourceList.findIndex((s, i) => {
+      if (usedIndices.has(i)) return false;
+      const sStart = (s.start_date || '').trim();
+      const sEnd = (s.end_date || '').trim();
+      return sStart === start && (!end || sEnd === end);
+    });
+  }
+
+  // 4. Role match ONLY if company is similar or missing, NOT across distinct companies
+  if (idx === -1 && normRole && (!item.company || normComp.length === 0)) {
+    idx = sourceList.findIndex((s, i) => !usedIndices.has(i) && norm(s.role) === normRole);
+  }
+
+  if (idx !== -1) {
+    usedIndices.add(idx);
+    return sourceList[idx];
+  }
+  return undefined;
 }
 
 /**
