@@ -5,11 +5,13 @@ import { useAppStore } from '../store';
 import {
   Plus, FileText, Copy, Trash2, Pencil, Clock,
   Upload, Layers, CheckCircle2, Eye, X, Loader2,
-  ShieldCheck, Zap, Database,
+  ShieldCheck, Zap, Database, Pin, Archive, ArchiveRestore,
 } from 'lucide-react';
+import type { Resume } from '../api';
 import TemplatePreviewModal from '../components/TemplatePreviewModal';
 import ConfirmModal from '../components/ConfirmModal';
 
+type ProfileTab = 'active' | 'pinned' | 'archived' | 'all';
 
 export default function Dashboard() {
   const { resumes, loadingResumes, hasLoadedResumes, createResume, deleteResume, duplicateResume, updateResume } = useAppStore();
@@ -21,7 +23,9 @@ export default function Dashboard() {
   const [showCreate, setShowCreate] = useState(false);
   const [previewTemplateId, setPreviewTemplateId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [currentTab, setCurrentTab] = useState<ProfileTab>('active');
   const [resumeToDelete, setResumeToDelete] = useState<{ id: string; name: string } | null>(null);
+  const [resumeToArchive, setResumeToArchive] = useState<{ id: string; name: string } | null>(null);
   const [editingVersionId, setEditingVersionId] = useState<string | null>(null);
   const [versionValue, setVersionValue] = useState('');
 
@@ -53,11 +57,51 @@ export default function Dashboard() {
     }
   };
 
-  const filteredResumes = resumes.filter(r =>
+  const handleTogglePin = async (e: React.MouseEvent, resume: Resume) => {
+    e.stopPropagation();
+    const isPinned = Boolean(resume.meta?.is_pinned || resume.meta?.pinned);
+    await updateResume(resume.id, {
+      meta: {
+        ...resume.meta,
+        is_pinned: !isPinned,
+        pinned: !isPinned,
+      },
+    });
+  };
 
+
+  const activeResumes = resumes.filter(r => r.is_active !== 0);
+  const archivedResumes = resumes.filter(r => r.is_active === 0);
+  const pinnedResumes = resumes.filter(r => (r.meta?.is_pinned || r.meta?.pinned) && r.is_active !== 0);
+
+  const baseList = (() => {
+    switch (currentTab) {
+      case 'active':
+        return activeResumes;
+      case 'pinned':
+        return pinnedResumes;
+      case 'archived':
+        return archivedResumes;
+      case 'all':
+      default:
+        return resumes;
+    }
+  })();
+
+  const filteredResumes = baseList.filter(r =>
     r.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     (r.meta?.target_role && r.meta.target_role.toLowerCase().includes(searchQuery.toLowerCase()))
   );
+
+  const sortedResumes = [...filteredResumes].sort((a, b) => {
+    const aPinned = Boolean(a.meta?.is_pinned || a.meta?.pinned);
+    const bPinned = Boolean(b.meta?.is_pinned || b.meta?.pinned);
+    if (currentTab !== 'archived') {
+      if (aPinned && !bPinned) return -1;
+      if (!aPinned && bPinned) return 1;
+    }
+    return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
+  });
 
   // ─── Initial Database Detection Loader ─────────────────────────────────────
   if (!hasLoadedResumes || (loadingResumes && resumes.length === 0)) {
@@ -172,7 +216,7 @@ export default function Dashboard() {
                 </span>
               </div>
               <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>
-                Manage, edit, and export your career profiles.
+                Organize, pin priorities, and archive your career profiles.
               </p>
             </div>
 
@@ -193,7 +237,6 @@ export default function Dashboard() {
               </div>
 
               <div className="flex items-center gap-2 w-full sm:w-auto">
-
                 <button
                   onClick={() => navigate('/import')}
                   className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-sm font-medium border transition-all bg-[var(--bg-surface)] hover:bg-slate-100 dark:hover:bg-neutral-800 cursor-pointer"
@@ -217,34 +260,115 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Stats Bar */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {/* ── Organization Tabs & Quick Scope Filter ────────────────────────── */}
+          <div
+            className="flex items-center gap-1.5 p-1 rounded-2xl border w-fit max-w-full overflow-x-auto glass-card shadow-2xs"
+            style={{
+              backgroundColor: 'var(--bg-surface-elevated)',
+              borderColor: 'var(--border-subtle)',
+            }}
+          >
             {[
-              { label: 'Total Profiles', value: resumes.length, sub: 'Saved in studio' },
-              { label: 'Target Roles', value: new Set(resumes.map(r => r.meta?.target_role || r.name)).size, sub: 'Active variations' },
-              { label: 'Last Modified', value: resumes[0]?.updated_at ? new Date(resumes[0].updated_at).toLocaleDateString() : 'Today', sub: 'Most recent edit' },
-            ].map((stat, i) => (
-              <div
-                key={i}
-                className="p-5 rounded-2xl glass-card border transition-all"
-                style={{ backgroundColor: 'var(--bg-surface-elevated)', borderColor: 'var(--border-subtle)' }}
-              >
-                <p className="text-xs font-semibold uppercase tracking-wider mb-1" style={{ color: 'var(--text-muted)' }}>
-                  {stat.label}
-                </p>
-                <div className="flex items-baseline justify-between">
-                  <span className="font-display text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
-                    {stat.value}
+              { id: 'active', label: 'Active Profiles', count: activeResumes.length },
+              { id: 'pinned', label: 'Pinned', count: pinnedResumes.length, icon: Pin },
+              { id: 'archived', label: 'Archived', count: archivedResumes.length, icon: Archive },
+              { id: 'all', label: 'All Profiles', count: resumes.length },
+            ].map(tab => {
+              const isActive = currentTab === tab.id;
+              const Icon = tab.icon;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setCurrentTab(tab.id as ProfileTab)}
+                  className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${
+                    isActive
+                      ? 'bg-blue-600 text-white shadow-xs'
+                      : 'hover:bg-slate-100 dark:hover:bg-neutral-800 text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+                  }`}
+                >
+                  {Icon && (
+                    <Icon className={`w-3.5 h-3.5 ${tab.id === 'pinned' && isActive ? 'fill-white' : ''}`} />
+                  )}
+                  <span>{tab.label}</span>
+                  <span
+                    className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+                      isActive
+                        ? 'bg-white/20 text-white'
+                        : 'bg-slate-400/10 text-[var(--text-muted)]'
+                    }`}
+                  >
+                    {tab.count}
                   </span>
-                  <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>
-                    {stat.sub}
-                  </span>
-                </div>
-              </div>
-            ))}
+                </button>
+              );
+            })}
           </div>
 
-          {/* Resumes Grid */}
+          {/* ── Interactive Stats Bar (Click to switch view) ──────────────────── */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {[
+              {
+                id: 'active',
+                label: 'Active Profiles',
+                value: activeResumes.length,
+                sub: 'Ready for tailoring & export',
+                icon: FileText,
+                iconColor: 'text-blue-500',
+                active: currentTab === 'active',
+              },
+              {
+                id: 'pinned',
+                label: 'Pinned Priorities',
+                value: pinnedResumes.length,
+                sub: 'Quick-access bookmarked',
+                icon: Pin,
+                iconColor: 'text-amber-500',
+                active: currentTab === 'pinned',
+              },
+              {
+                id: 'archived',
+                label: 'Archived Profiles',
+                value: archivedResumes.length,
+                sub: 'Preserved & stored away',
+                icon: Archive,
+                iconColor: 'text-slate-400',
+                active: currentTab === 'archived',
+              },
+            ].map((stat) => {
+              const Icon = stat.icon;
+              return (
+                <div
+                  key={stat.id}
+                  onClick={() => setCurrentTab(stat.id as ProfileTab)}
+                  className={`p-5 rounded-2xl glass-card border transition-all cursor-pointer hover:shadow-md ${
+                    stat.active ? 'ring-2 ring-blue-500/30 border-blue-500/40' : ''
+                  }`}
+                  style={{
+                    backgroundColor: 'var(--bg-surface-elevated)',
+                    borderColor: stat.active ? undefined : 'var(--border-subtle)',
+                  }}
+                  title={`View ${stat.label.toLowerCase()}`}
+                >
+                  <div className="flex items-center justify-between mb-1.5">
+                    <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>
+                      {stat.label}
+                    </p>
+                    <Icon className={`w-4 h-4 ${stat.iconColor} ${stat.id === 'pinned' ? 'fill-amber-500/20' : ''}`} />
+                  </div>
+                  <div className="flex items-baseline justify-between">
+                    <span className="font-display text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
+                      {stat.value}
+                    </span>
+                    <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+                      {stat.sub}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* ── Profiles Grid / Cards ────────────────────────────────────────── */}
           {loadingResumes ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {[1, 2, 3].map(i => (
@@ -255,146 +379,283 @@ export default function Dashboard() {
                 </div>
               ))}
             </div>
-          ) : filteredResumes.length === 0 ? (
+          ) : sortedResumes.length === 0 ? (
             <div
-              className="py-16 text-center rounded-3xl border glass-card space-y-3"
+              className="py-16 text-center rounded-3xl border glass-card space-y-3.5"
               style={{ borderColor: 'var(--border-subtle)' }}
             >
-              <FileText className="w-10 h-10 text-slate-400 mx-auto" />
-              <h3 className="font-display text-lg font-bold" style={{ color: 'var(--text-primary)' }}>
-                No profiles match "{searchQuery}"
-              </h3>
-              <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
-                Try searching for a different title or keyword.
-              </p>
-              <button
-                onClick={() => setSearchQuery('')}
-                className="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline pt-2 inline-block cursor-pointer"
-              >
-                Clear search
-              </button>
+              {searchQuery ? (
+                <>
+                  <FileText className="w-10 h-10 text-slate-400 mx-auto" />
+                  <h3 className="font-display text-lg font-bold" style={{ color: 'var(--text-primary)' }}>
+                    No profiles match "{searchQuery}"
+                  </h3>
+                  <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+                    Try searching for a different title or keyword.
+                  </p>
+                  <button
+                    onClick={() => setSearchQuery('')}
+                    className="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline pt-2 inline-block cursor-pointer"
+                  >
+                    Clear search
+                  </button>
+                </>
+              ) : currentTab === 'archived' ? (
+                <>
+                  <div className="w-12 h-12 rounded-2xl bg-slate-500/10 text-slate-400 flex items-center justify-center mx-auto">
+                    <Archive className="w-6 h-6" />
+                  </div>
+                  <h3 className="font-display text-lg font-bold" style={{ color: 'var(--text-primary)' }}>
+                    No archived profiles
+                  </h3>
+                  <p className="text-xs max-w-sm mx-auto" style={{ color: 'var(--text-secondary)' }}>
+                    Archive past applications or older drafts to keep your active workspace clean. You can restore them anytime.
+                  </p>
+                  <button
+                    onClick={() => setCurrentTab('active')}
+                    className="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline pt-1 inline-block cursor-pointer"
+                  >
+                    View active profiles
+                  </button>
+                </>
+              ) : currentTab === 'pinned' ? (
+                <>
+                  <div className="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-500 flex items-center justify-center mx-auto">
+                    <Pin className="w-6 h-6 fill-amber-500/30" />
+                  </div>
+                  <h3 className="font-display text-lg font-bold" style={{ color: 'var(--text-primary)' }}>
+                    No pinned profiles yet
+                  </h3>
+                  <p className="text-xs max-w-sm mx-auto" style={{ color: 'var(--text-secondary)' }}>
+                    Click the pin icon on any profile card to pin your primary or priority profiles here.
+                  </p>
+                  <button
+                    onClick={() => setCurrentTab('active')}
+                    className="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline pt-1 inline-block cursor-pointer"
+                  >
+                    Browse active profiles
+                  </button>
+                </>
+              ) : (
+                <>
+                  <FileText className="w-10 h-10 text-slate-400 mx-auto" />
+                  <h3 className="font-display text-lg font-bold" style={{ color: 'var(--text-primary)' }}>
+                    No profiles found
+                  </h3>
+                  <button
+                    onClick={() => setCurrentTab('active')}
+                    className="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline pt-1 inline-block cursor-pointer"
+                  >
+                    Back to active profiles
+                  </button>
+                </>
+              )}
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredResumes.map((resume, idx) => (
-                <div
-                  key={resume.id}
-                  onClick={() => navigate(`/editor/${resume.id}`)}
-                  className="rounded-2xl p-6 border glass-card cursor-pointer group flex flex-col justify-between transition-all"
-                  style={{ animationDelay: `${idx * 50}ms` }}
-                >
-                  <div className="space-y-3">
-                    {/* Header tag and icon */}
-                    <div className="flex items-start justify-between">
-                      <div className="w-11 h-11 rounded-xl bg-blue-500/10 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold">
-                        <FileText className="w-5 h-5" />
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        {editingVersionId === resume.id ? (
-                          <div onClick={e => e.stopPropagation()} className="flex items-center">
-                            <input
-                              autoFocus
-                              type="text"
-                              value={versionValue}
-                              onChange={e => setVersionValue(e.target.value)}
-                              onBlur={() => handleSaveVersion(resume.id)}
-                              onKeyDown={e => {
-                                if (e.key === 'Enter') handleSaveVersion(resume.id);
-                                if (e.key === 'Escape') setEditingVersionId(null);
-                              }}
-                              className="px-2 py-0.5 rounded-full text-[11px] font-semibold uppercase tracking-wider border w-16 text-center focus:outline-none focus:ring-1 focus:ring-blue-500 shadow-xs"
-                              style={{
-                                backgroundColor: 'var(--bg-surface)',
-                                borderColor: 'var(--border-default)',
-                                color: 'var(--text-primary)',
-                              }}
-                            />
+              {sortedResumes.map((resume, idx) => {
+                const isPinned = Boolean(resume.meta?.is_pinned || resume.meta?.pinned);
+                const isArchived = resume.is_active === 0;
+
+                return (
+                  <div
+                    key={resume.id}
+                    onClick={() => navigate(`/editor/${resume.id}`)}
+                    className={`rounded-2xl p-6 border glass-card cursor-pointer group flex flex-col justify-between transition-all ${
+                      isArchived
+                        ? 'opacity-80 hover:opacity-100 bg-[var(--bg-surface)]/60'
+                        : isPinned
+                        ? 'border-amber-500/30 hover:border-amber-500/50 shadow-sm ring-1 ring-amber-500/10'
+                        : ''
+                    }`}
+                    style={{ animationDelay: `${idx * 50}ms` }}
+                  >
+                    <div className="space-y-3">
+                      {/* Header tag, pin toggle, and icon */}
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <div
+                            className={`w-11 h-11 rounded-xl flex items-center justify-center font-bold transition-colors ${
+                              isPinned && !isArchived
+                                ? 'bg-amber-500/15 text-amber-500 border border-amber-500/25 shadow-2xs'
+                                : isArchived
+                                ? 'bg-slate-500/10 text-slate-400 border border-slate-500/20'
+                                : 'bg-blue-500/10 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400'
+                            }`}
+                          >
+                            {isArchived ? (
+                              <Archive className="w-5 h-5" />
+                            ) : (
+                              <FileText className="w-5 h-5" />
+                            )}
                           </div>
-                        ) : (
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            {isPinned && !isArchived && (
+                              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/25 flex items-center gap-1 shadow-2xs">
+                                <Pin className="w-2.5 h-2.5 fill-amber-500 text-amber-500" /> Pinned
+                              </span>
+                            )}
+                            {isArchived && (
+                              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-500/15 text-slate-600 dark:text-slate-400 border border-slate-500/20 flex items-center gap-1">
+                                <Archive className="w-2.5 h-2.5" /> Archived
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-1.5">
+                          {/* Pin Toggle Button */}
+                          {!isArchived && (
+                            <button
+                              onClick={e => handleTogglePin(e, resume)}
+                              className={`p-1.5 rounded-lg border transition-all cursor-pointer ${
+                                isPinned
+                                  ? 'bg-amber-500/15 border-amber-500/30 text-amber-500 shadow-2xs hover:bg-amber-500/25'
+                                  : 'border-transparent text-slate-400 hover:text-amber-500 hover:bg-amber-500/10 hover:border-amber-500/20'
+                              }`}
+                              title={isPinned ? 'Unpin profile' : 'Pin profile to top'}
+                            >
+                              <Pin className={`w-3.5 h-3.5 ${isPinned ? 'fill-amber-500' : ''}`} />
+                            </button>
+                          )}
+
+                          {editingVersionId === resume.id ? (
+                            <div onClick={e => e.stopPropagation()} className="flex items-center">
+                              <input
+                                autoFocus
+                                type="text"
+                                value={versionValue}
+                                onChange={e => setVersionValue(e.target.value)}
+                                onBlur={() => handleSaveVersion(resume.id)}
+                                onKeyDown={e => {
+                                  if (e.key === 'Enter') handleSaveVersion(resume.id);
+                                  if (e.key === 'Escape') setEditingVersionId(null);
+                                }}
+                                className="px-2 py-0.5 rounded-full text-[11px] font-semibold uppercase tracking-wider border w-16 text-center focus:outline-none focus:ring-1 focus:ring-blue-500 shadow-xs"
+                                style={{
+                                  backgroundColor: 'var(--bg-surface)',
+                                  borderColor: 'var(--border-default)',
+                                  color: 'var(--text-primary)',
+                                }}
+                              />
+                            </div>
+                          ) : (
+                            <span
+                              onClick={e => handleStartEditVersion(e, resume.id, resume.version_tag)}
+                              className="px-2.5 py-1 rounded-full text-[11px] font-semibold uppercase tracking-wider border hover:border-blue-500/50 hover:text-blue-600 dark:hover:text-blue-400 transition-all cursor-pointer group/tag flex items-center gap-1"
+                              style={{
+                                backgroundColor: 'var(--bg-surface-elevated)',
+                                borderColor: 'var(--border-subtle)',
+                                color: 'var(--text-secondary)',
+                              }}
+                              title="Click to edit version tag"
+                            >
+                              <span>{resume.version_tag || 'v1'}</span>
+                              <Pencil className="w-2.5 h-2.5 opacity-0 group-hover/tag:opacity-70 transition-opacity" />
+                            </span>
+                          )}
+
                           <span
-                            onClick={e => handleStartEditVersion(e, resume.id, resume.version_tag)}
-                            className="px-2.5 py-1 rounded-full text-[11px] font-semibold uppercase tracking-wider border hover:border-blue-500/50 hover:text-blue-600 dark:hover:text-blue-400 transition-all cursor-pointer group/tag flex items-center gap-1"
+                            className="px-2.5 py-1 rounded-full text-[11px] font-medium capitalize border"
                             style={{
                               backgroundColor: 'var(--bg-surface-elevated)',
                               borderColor: 'var(--border-subtle)',
                               color: 'var(--text-secondary)',
                             }}
-                            title="Click to edit version tag"
                           >
-                            <span>{resume.version_tag || 'v1'}</span>
-                            <Pencil className="w-2.5 h-2.5 opacity-0 group-hover/tag:opacity-70 transition-opacity" />
+                            {resume.template_id}
                           </span>
-                        )}
-                        <span
-                          className="px-2.5 py-1 rounded-full text-[11px] font-medium capitalize border"
-                          style={{
-                            backgroundColor: 'var(--bg-surface-elevated)',
-                            borderColor: 'var(--border-subtle)',
-                            color: 'var(--text-secondary)',
-                          }}
+                        </div>
+                      </div>
+
+                      {/* Title and target role */}
+                      <div>
+                        <h3
+                          className="font-display font-bold text-base line-clamp-1 group-hover:text-blue-600 transition-colors"
+                          style={{ color: 'var(--text-primary)' }}
                         >
-                          {resume.template_id}
+                          {resume.name}
+                        </h3>
+                        {resume.meta?.target_role && (
+                          <p className="text-xs mt-0.5 line-clamp-1" style={{ color: 'var(--text-secondary)' }}>
+                            {resume.meta.target_role} {resume.meta.target_company && `· ${resume.meta.target_company}`}
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Meta details */}
+                      <div className="flex items-center gap-3 text-xs pt-1" style={{ color: 'var(--text-muted)' }}>
+                        <span className="flex items-center gap-1">
+                          <Clock className="w-3.5 h-3.5" />
+                          {new Date(resume.updated_at).toLocaleDateString()}
                         </span>
+                        <span>·</span>
+                        <span>{resume.section_count ?? 5} sections</span>
                       </div>
                     </div>
 
-                    {/* Title and target role */}
-                    <div>
-                      <h3
-                        className="font-display font-bold text-base line-clamp-1 group-hover:text-blue-600 transition-colors"
-                        style={{ color: 'var(--text-primary)' }}
+                    {/* Action Toolbar */}
+                    <div
+                      className="flex items-center gap-2 pt-6 mt-4 border-t"
+                      style={{ borderColor: 'var(--border-subtle)' }}
+                      onClick={e => e.stopPropagation()}
+                    >
+                      <button
+                        onClick={() => navigate(`/editor/${resume.id}`)}
+                        className="flex-1 inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-xs font-semibold transition-all bg-blue-600 text-white hover:bg-blue-700 cursor-pointer shadow-sm"
                       >
-                        {resume.name}
-                      </h3>
-                      {resume.meta?.target_role && (
-                        <p className="text-xs mt-0.5 line-clamp-1" style={{ color: 'var(--text-secondary)' }}>
-                          {resume.meta.target_role} {resume.meta.target_company && `· ${resume.meta.target_company}`}
-                        </p>
-                      )}
-                    </div>
+                        <Pencil className="w-3.5 h-3.5" /> Edit
+                      </button>
 
-                    {/* Meta details */}
-                    <div className="flex items-center gap-3 text-xs pt-1" style={{ color: 'var(--text-muted)' }}>
-                      <span className="flex items-center gap-1">
-                        <Clock className="w-3.5 h-3.5" />
-                        {new Date(resume.updated_at).toLocaleDateString()}
-                      </span>
-                      <span>·</span>
-                      <span>{resume.section_count ?? 5} sections</span>
+                      <button
+                        onClick={() => duplicateResume(resume.id)}
+                        className="p-2 rounded-xl border transition-all bg-[var(--bg-surface)] hover:bg-slate-100 dark:hover:bg-neutral-700 hover:text-slate-950 dark:hover:text-white cursor-pointer"
+                        style={{ borderColor: 'var(--border-default)', color: 'var(--text-secondary)' }}
+                        title="Duplicate profile version"
+                      >
+                        <Copy className="w-3.5 h-3.5" />
+                      </button>
+
+                      {/* Archive / Restore Button */}
+                      <button
+                        onClick={e => {
+                          e.stopPropagation();
+                          if (isArchived) {
+                            updateResume(resume.id, { is_active: 1 });
+                          } else {
+                            setResumeToArchive({ id: resume.id, name: resume.name });
+                          }
+                        }}
+                        className={`p-2 rounded-xl border transition-all cursor-pointer ${
+                          isArchived
+                            ? 'bg-blue-500/10 border-blue-500/25 text-blue-600 dark:text-blue-400 hover:bg-blue-500/20'
+                            : 'bg-[var(--bg-surface)] hover:bg-slate-100 dark:hover:bg-neutral-800 hover:text-slate-900 dark:hover:text-white'
+                        }`}
+                        style={{
+                          borderColor: isArchived ? undefined : 'var(--border-default)',
+                          color: isArchived ? undefined : 'var(--text-secondary)',
+                        }}
+                        title={isArchived ? 'Restore profile to active' : 'Archive profile'}
+                      >
+                        {isArchived ? (
+                          <ArchiveRestore className="w-3.5 h-3.5 text-blue-500" />
+                        ) : (
+                          <Archive className="w-3.5 h-3.5" />
+                        )}
+                      </button>
+
+                      <button
+                        onClick={() => setResumeToDelete({ id: resume.id, name: resume.name })}
+                        className="p-2 rounded-xl border transition-all bg-[var(--bg-surface)] hover:bg-rose-50 dark:hover:bg-rose-950/30 hover:text-rose-600 dark:hover:text-rose-400 cursor-pointer"
+                        style={{ borderColor: 'var(--border-default)', color: 'var(--text-secondary)' }}
+                        title="Delete profile"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
                     </div>
                   </div>
-
-                  {/* Action Toolbar */}
-                  <div
-                    className="flex items-center gap-2 pt-6 mt-4 border-t"
-                    style={{ borderColor: 'var(--border-subtle)' }}
-                    onClick={e => e.stopPropagation()}
-                  >
-                    <button
-                      onClick={() => navigate(`/editor/${resume.id}`)}
-                      className="flex-1 inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-xs font-semibold transition-all bg-blue-600 text-white hover:bg-blue-700 cursor-pointer shadow-sm"
-                    >
-                      <Pencil className="w-3.5 h-3.5" /> Edit
-                    </button>
-                    <button
-                      onClick={() => duplicateResume(resume.id)}
-                      className="p-2 rounded-xl border transition-all bg-[var(--bg-surface)] hover:bg-slate-100 dark:hover:bg-neutral-700 hover:text-slate-950 dark:hover:text-white cursor-pointer"
-                      style={{ borderColor: 'var(--border-default)', color: 'var(--text-secondary)' }}
-                      title="Duplicate profile version"
-                    >
-                      <Copy className="w-3.5 h-3.5" />
-                    </button>
-                    <button
-                      onClick={() => setResumeToDelete({ id: resume.id, name: resume.name })}
-                      className="p-2 rounded-xl border transition-all bg-[var(--bg-surface)] hover:bg-rose-50 dark:hover:bg-rose-950/30 hover:text-rose-600 dark:hover:text-rose-400 cursor-pointer"
-                      style={{ borderColor: 'var(--border-default)', color: 'var(--text-secondary)' }}
-                      title="Delete profile"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </>
@@ -683,6 +944,22 @@ export default function Dashboard() {
           }
         }}
         onCancel={() => setResumeToDelete(null)}
+      />
+
+      {/* ── In-App Confirm Modal for Archiving ────────────────────────────── */}
+      <ConfirmModal
+        isOpen={!!resumeToArchive}
+        title="Archive Profile"
+        message={`Are you sure you want to archive "${resumeToArchive?.name}"? It will be safely moved to the Archived tab and can be restored at any time.`}
+        confirmLabel="Archive Profile"
+        variant="warning"
+        onConfirm={async () => {
+          if (resumeToArchive) {
+            await updateResume(resumeToArchive.id, { is_active: 0 });
+            setResumeToArchive(null);
+          }
+        }}
+        onCancel={() => setResumeToArchive(null)}
       />
     </div>
   );

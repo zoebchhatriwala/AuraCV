@@ -17,6 +17,8 @@ export interface ResumeMeta {
   target_role?: string;
   target_company?: string;
   notes?: string;
+  is_pinned?: boolean;
+  pinned?: boolean;
   [key: string]: unknown;
 }
 

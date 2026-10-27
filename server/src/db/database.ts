@@ -126,12 +126,13 @@ export const resumeQueries = {
     const existing = resumeQueries.get(id);
     if (!existing) return;
     getDb().prepare(`
-      UPDATE resumes SET name=?, version_tag=?, template_id=?, meta=?, updated_at=datetime('now')
+      UPDATE resumes SET name=?, version_tag=?, template_id=?, is_active=?, meta=?, updated_at=datetime('now')
       WHERE id=?
     `).run(
       data.name ?? existing.name,
       data.version_tag ?? existing.version_tag,
       data.template_id ?? existing.template_id,
+      data.is_active !== undefined ? (data.is_active ? 1 : 0) : existing.is_active,
       JSON.stringify(data.meta ?? existing.meta),
       id
     );
