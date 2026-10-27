@@ -25,9 +25,13 @@ const userDataPath = app.getPath('userData');
 process.env.AURACV_DATA_DIR = userDataPath;
 process.env.AURACV_DB_PATH = path.join(userDataPath, 'auracv.db');
 
-// Ensure app data directory exists
+// Ensure app data directory and custom providers directory exist
 if (!fs.existsSync(userDataPath)) {
   fs.mkdirSync(userDataPath, { recursive: true });
+}
+const userCustomProvidersDir = path.join(userDataPath, 'providers');
+if (!fs.existsSync(userCustomProvidersDir)) {
+  fs.mkdirSync(userCustomProvidersDir, { recursive: true });
 }
 
 // Resolve bundled providers directory

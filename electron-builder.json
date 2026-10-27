@@ -1,6 +1,6 @@
 {
-  "$schema": "https://raw.githubusercontent.com/electron-userland/electron-builder/master/packages/app-builder-lib/scheme.json",
-  "appId": "com.auracv.app",
+  "$schema": "https://json.schemastore.org/electron-builder.json",
+  "appId": "com.chhatriwala.auracv",
   "productName": "AuraCV",
   "copyright": "Copyright © 2026 Zoeb Chhatriwala",
   "directories": {

@@ -100,6 +100,19 @@ export const exportApi = {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
   },
+  restoreDb: async (file: File): Promise<{ ok: boolean; message: string; stats: DatabaseStats }> => {
+    const formData = new FormData();
+    formData.append('database', file);
+    const res = await fetch('/api/export/db/restore', {
+      method: 'POST',
+      body: formData,
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: res.statusText }));
+      throw new Error((err as { error?: string }).error ?? `HTTP ${res.status}`);
+    }
+    return res.json();
+  },
 };
 
 

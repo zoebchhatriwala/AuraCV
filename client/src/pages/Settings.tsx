@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAppStore } from "../store";
 import {
   Key,
@@ -16,13 +16,12 @@ import {
   FolderOpen,
   Database,
   Download,
+  Upload,
   HardDrive,
   Check,
-  ChevronDown,
-  ChevronUp,
   RotateCcw,
-  Terminal,
   AlertTriangle,
+  X,
 } from "lucide-react";
 import { exportApi, type DatabaseStats } from "../api";
 
@@ -48,8 +47,6 @@ export default function Settings() {
   const [dbStats, setDbStats] = useState<DatabaseStats | null>(null);
   const [exportingDb, setExportingDb] = useState(false);
   const [exportDbSuccess, setExportDbSuccess] = useState(false);
-  const [showRestoreGuide, setShowRestoreGuide] = useState(false);
-  const [restoreTab, setRestoreTab] = useState<"unix" | "windows">("unix");
 
   const fetchDbStats = async () => {
     try {
@@ -88,6 +85,46 @@ export default function Settings() {
       );
     } finally {
       setExportingDb(false);
+    }
+  };
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [restoringDb, setRestoringDb] = useState(false);
+  const [restoreDbSuccess, setRestoreDbSuccess] = useState(false);
+  const [restoreDbError, setRestoreDbError] = useState<string | null>(null);
+  const [selectedRestoreFile, setSelectedRestoreFile] = useState<File | null>(null);
+  const [showConfirmRestoreModal, setShowConfirmRestoreModal] = useState(false);
+
+  const handleSelectFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setSelectedRestoreFile(file);
+    setShowConfirmRestoreModal(true);
+    e.target.value = "";
+  };
+
+  const handleConfirmRestore = async () => {
+    if (!selectedRestoreFile) return;
+    setRestoringDb(true);
+    setRestoreDbError(null);
+    setRestoreDbSuccess(false);
+
+    try {
+      const res = await exportApi.restoreDb(selectedRestoreFile);
+      setRestoreDbSuccess(true);
+      setShowConfirmRestoreModal(false);
+      setSelectedRestoreFile(null);
+      if (res.stats) {
+        setDbStats(res.stats);
+      }
+      setTimeout(() => {
+        window.location.reload();
+      }, 1500);
+    } catch (err) {
+      setRestoreDbError(err instanceof Error ? err.message : String(err));
+      setShowConfirmRestoreModal(false);
+    } finally {
+      setRestoringDb(false);
     }
   };
 
@@ -569,31 +606,80 @@ export default function Settings() {
               </div>
             </div>
 
-            <button
-              onClick={handleExportDb}
-              disabled={exportingDb}
-              className={`inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer shadow-sm ${
-                exportDbSuccess ? "bg-emerald-600 text-white" : "btn-primary"
-              }`}
-            >
-              {exportingDb ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  Generating Snapshot…
-                </>
-              ) : exportDbSuccess ? (
-                <>
-                  <Check className="w-4 h-4" />
-                  Database Exported!
-                </>
-              ) : (
-                <>
-                  <Download className="w-4 h-4" />
-                  Download Backup File
-                </>
-              )}
-            </button>
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full sm:w-auto">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".db,.sqlite,.sqlite3"
+                className="hidden"
+                onChange={handleSelectFile}
+              />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={restoringDb || exportingDb}
+                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold border transition-all hover:bg-slate-100 dark:hover:bg-neutral-800 cursor-pointer shadow-xs disabled:opacity-50 whitespace-nowrap w-full sm:w-auto"
+                style={{
+                  backgroundColor: "var(--bg-surface-elevated)",
+                  borderColor: "var(--border-subtle)",
+                  color: "var(--text-primary)",
+                }}
+              >
+                <Upload className="w-4 h-4 text-blue-500 shrink-0" />
+                <span>Restore Database (.db)</span>
+              </button>
+
+              <button
+                onClick={handleExportDb}
+                disabled={exportingDb || restoringDb}
+                className={`inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer shadow-sm disabled:opacity-50 whitespace-nowrap w-full sm:w-auto ${
+                  exportDbSuccess ? "bg-emerald-600 text-white" : "btn-primary"
+                }`}
+              >
+                {exportingDb ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin shrink-0" />
+                    <span>Generating Snapshot…</span>
+                  </>
+                ) : exportDbSuccess ? (
+                  <>
+                    <Check className="w-4 h-4 shrink-0" />
+                    <span>Database Exported!</span>
+                  </>
+                ) : (
+                  <>
+                    <Download className="w-4 h-4 shrink-0" />
+                    <span>Download Backup File</span>
+                  </>
+                )}
+              </button>
+            </div>
           </div>
+
+          {restoreDbSuccess && (
+            <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs flex items-center gap-2.5 animate-fade-in">
+              <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-500" />
+              <span>
+                <strong>Database restored successfully!</strong> All profiles and settings swapped. Reloading workspace…
+              </span>
+            </div>
+          )}
+
+          {restoreDbError && (
+            <div className="p-3.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 text-xs flex items-center justify-between animate-fade-in">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 shrink-0 text-red-500" />
+                <span>{restoreDbError}</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setRestoreDbError(null)}
+                className="text-xs font-semibold hover:underline ml-2"
+              >
+                Dismiss
+              </button>
+            </div>
+          )}
 
           {exportDbError && (
             <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 text-xs flex items-center justify-between">
@@ -712,218 +798,120 @@ export default function Settings() {
             </span>
           </div>
 
-          {/* Restore Guide Accordion */}
+        </div>
+      </section>
+
+      {/* Database Restore Overwrite Confirmation Modal */}
+      {showConfirmRestoreModal && selectedRestoreFile && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-xs animate-fade-in">
           <div
-            className="pt-2 border-t"
-            style={{ borderColor: "var(--border-subtle)" }}
+            className="w-full max-w-md rounded-2xl border p-6 shadow-2xl space-y-4 animate-scale-up"
+            style={{
+              backgroundColor: "var(--bg-surface)",
+              borderColor: "var(--border-subtle)",
+              color: "var(--text-primary)",
+            }}
           >
-            <button
-              type="button"
-              onClick={() => setShowRestoreGuide(!showRestoreGuide)}
-              className="w-full flex items-center justify-between p-3.5 rounded-2xl border text-xs font-semibold transition-all hover:bg-slate-100 dark:hover:bg-neutral-800 cursor-pointer"
+            {/* Header with Danger Warning */}
+            <div className="flex items-start gap-3">
+              <div className="p-3 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-500 shrink-0">
+                <AlertTriangle className="w-6 h-6" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="text-base font-bold text-red-600 dark:text-red-400">
+                  Overwrite Existing Database?
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-neutral-400 mt-0.5">
+                  Action requires explicit confirmation
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowConfirmRestoreModal(false);
+                  setSelectedRestoreFile(null);
+                }}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-200 transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Warning Details Callout */}
+            <div className="p-3.5 rounded-xl bg-red-500/10 border border-red-500/25 text-xs space-y-2 text-red-700 dark:text-red-300">
+              <p className="font-semibold flex items-center gap-1.5">
+                <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                Irreversible Data Loss Warning
+              </p>
+              <p>
+                Restoring this file will <strong>completely replace</strong> your active SQLite database (<code>auracv.db</code>).
+              </p>
+              <ul className="list-disc list-inside space-y-1 text-[11px] opacity-90 pl-1">
+                <li>All currently saved resumes, versions, and sections will be overwritten.</li>
+                <li>Custom vault fields, AI generation histories, and preferences will be replaced.</li>
+              </ul>
+              <p className="text-[11px] font-medium pt-1 border-t border-red-500/20 text-slate-600 dark:text-neutral-300">
+                💡 <strong>Safety Recommendation:</strong> If you have unsaved profiles, cancel and click <em>Download Backup File</em> first.
+              </p>
+            </div>
+
+            {/* Uploaded File Snapshot */}
+            <div
+              className="p-3 rounded-xl border text-xs flex items-center justify-between"
               style={{
                 backgroundColor: "var(--bg-surface-elevated)",
                 borderColor: "var(--border-subtle)",
-                color: "var(--text-primary)",
               }}
             >
-              <div className="flex items-center gap-2.5">
-                <RotateCcw className="w-4 h-4 text-blue-500" />
-                <span>How to Restore a Database Backup</span>
+              <div className="flex items-center gap-2 truncate">
+                <Database className="w-4 h-4 text-blue-500 shrink-0" />
+                <span className="font-mono truncate font-medium">{selectedRestoreFile.name}</span>
               </div>
-              {showRestoreGuide ? (
-                <ChevronUp className="w-4 h-4" />
-              ) : (
-                <ChevronDown className="w-4 h-4" />
-              )}
-            </button>
+              <span className="text-[11px] shrink-0 font-medium" style={{ color: "var(--text-muted)" }}>
+                {(selectedRestoreFile.size / 1024).toFixed(1)} KB
+              </span>
+            </div>
 
-            {showRestoreGuide && (
-              <div
-                className="mt-3 p-4 rounded-2xl border text-xs space-y-3.5 animate-fade-in"
+            {/* Dialog Action Buttons */}
+            <div className="flex items-center justify-end gap-2.5 pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowConfirmRestoreModal(false);
+                  setSelectedRestoreFile(null);
+                }}
+                disabled={restoringDb}
+                className="px-4 py-2 rounded-xl text-xs font-semibold border transition-all hover:bg-slate-100 dark:hover:bg-neutral-800 cursor-pointer disabled:opacity-50"
                 style={{
                   backgroundColor: "var(--bg-surface-elevated)",
                   borderColor: "var(--border-subtle)",
+                  color: "var(--text-secondary)",
                 }}
               >
-                <div className="flex items-start gap-2.5 text-amber-600 dark:text-amber-400 bg-amber-500/10 p-3 rounded-xl border border-amber-500/20">
-                  <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
-                  <span>
-                    <strong>Safety First:</strong> Make sure to export your
-                    current database as a safety backup before restoring an
-                    older file.
-                  </span>
-                </div>
-
-                <div className="space-y-2">
-                  <p
-                    className="font-semibold"
-                    style={{ color: "var(--text-primary)" }}
-                  >
-                    Restoring with an exported{" "}
-                    <code className="font-mono text-[11px] text-blue-500">
-                      auracv.db
-                    </code>{" "}
-                    file:
-                  </p>
-                  <ol
-                    className="list-decimal list-inside space-y-1.5 pl-1"
-                    style={{ color: "var(--text-secondary)" }}
-                  >
-                    <li>
-                      <strong>Stop the server:</strong> Press{" "}
-                      <kbd className="px-1.5 py-0.5 rounded bg-slate-200 dark:bg-neutral-700 font-mono text-[10px]">
-                        Ctrl + C
-                      </kbd>{" "}
-                      in your running terminal.
-                    </li>
-                    <li>
-                      <strong>Replace database file:</strong> Copy your backup
-                      file into the{" "}
-                      <code className="font-mono text-[11px]">server/</code>{" "}
-                      folder and name it{" "}
-                      <code className="font-mono text-[11px] text-blue-500">
-                        auracv.db
-                      </code>
-                      .
-                    </li>
-                    <li>
-                      <strong>Clear WAL journals:</strong> Delete{" "}
-                      <code className="font-mono text-[11px]">
-                        server/auracv.db-wal
-                      </code>{" "}
-                      and{" "}
-                      <code className="font-mono text-[11px]">
-                        server/auracv.db-shm
-                      </code>{" "}
-                      if present to prevent journal conflicts.
-                    </li>
-                    <li>
-                      <strong>Restart the server:</strong> Run{" "}
-                      <code className="font-mono text-[11px]">npm run dev</code>{" "}
-                      from root. AuraCV will automatically load all your
-                      restored resumes, sections, and settings.
-                    </li>
-                  </ol>
-                </div>
-
-                {/* OS Selector Tabs */}
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <span
-                      className="text-[11px] font-semibold"
-                      style={{ color: "var(--text-muted)" }}
-                    >
-                      Terminal OS:
-                    </span>
-                    <div
-                      className="flex p-1 rounded-xl border"
-                      style={{
-                        backgroundColor: "var(--bg-surface)",
-                        borderColor: "var(--border-subtle)",
-                      }}
-                    >
-                      <button
-                        type="button"
-                        onClick={() => setRestoreTab("unix")}
-                        className={`px-3 py-1 rounded-lg text-[11px] font-semibold transition-all cursor-pointer ${
-                          restoreTab === "unix"
-                            ? "bg-blue-600 text-white shadow-xs"
-                            : "hover:bg-slate-100 dark:hover:bg-neutral-800"
-                        }`}
-                        style={{
-                          color:
-                            restoreTab === "unix"
-                              ? "#ffffff"
-                              : "var(--text-secondary)",
-                        }}
-                      >
-                        macOS / Linux (Bash)
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setRestoreTab("windows")}
-                        className={`px-3 py-1 rounded-lg text-[11px] font-semibold transition-all cursor-pointer ${
-                          restoreTab === "windows"
-                            ? "bg-blue-600 text-white shadow-xs"
-                            : "hover:bg-slate-100 dark:hover:bg-neutral-800"
-                        }`}
-                        style={{
-                          color:
-                            restoreTab === "windows"
-                              ? "#ffffff"
-                              : "var(--text-secondary)",
-                        }}
-                      >
-                        Windows (PowerShell)
-                      </button>
-                    </div>
-                  </div>
-
-                  {restoreTab === "unix" ? (
-                    <div className="p-3.5 rounded-xl bg-slate-950 text-slate-200 font-mono text-[11px] space-y-1.5 shadow-inner">
-                      <div className="flex items-center gap-1.5 text-slate-400 pb-1.5 border-b border-slate-800">
-                        <Terminal className="w-3.5 h-3.5 text-cyan-400" /> Unix
-                        / macOS / Linux (Bash or Zsh)
-                      </div>
-                      <p className="text-slate-500">
-                        # 1. Stop server (Ctrl + C in running terminal)
-                      </p>
-                      <p className="text-slate-500">
-                        # 2. In server/ directory:
-                      </p>
-                      <p className="text-emerald-400">
-                        rm -f auracv.db-wal auracv.db-shm
-                      </p>
-                      <p className="text-emerald-400">
-                        cp /path/to/your_backup.db auracv.db
-                      </p>
-                      <p className="text-slate-500">
-                        # 3. Start server again from project root
-                      </p>
-                      <p className="text-cyan-400">cd .. && npm run dev</p>
-                    </div>
-                  ) : (
-                    <div className="p-3.5 rounded-xl bg-slate-950 text-slate-200 font-mono text-[11px] space-y-1.5 shadow-inner">
-                      <div className="flex items-center gap-1.5 text-slate-400 pb-1.5 border-b border-slate-800">
-                        <Terminal className="w-3.5 h-3.5 text-blue-400" />{" "}
-                        Windows (PowerShell)
-                      </div>
-                      <p className="text-slate-500">
-                        # 1. Stop server (Ctrl + C in running terminal)
-                      </p>
-                      <p className="text-slate-500">
-                        # 2. In server/ directory:
-                      </p>
-                      <p className="text-emerald-400">
-                        Remove-Item auracv.db-wal, auracv.db-shm -ErrorAction
-                        SilentlyContinue
-                      </p>
-                      <p className="text-emerald-400">
-                        Copy-Item path\to\your_backup.db auracv.db -Force
-                      </p>
-                      <p className="text-slate-500">
-                        # 3. Start server again from project root
-                      </p>
-                      <p className="text-cyan-400">cd ..; npm run dev</p>
-                    </div>
-                  )}
-                </div>
-
-                <p
-                  className="text-[11px]"
-                  style={{ color: "var(--text-muted)" }}
-                >
-                  Tip: If you only want to restore a single profile without
-                  replacing the entire database, go to the{" "}
-                  <strong>Import</strong> page and upload an individual profile
-                  JSON backup.
-                </p>
-              </div>
-            )}
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmRestore}
+                disabled={restoringDb}
+                className="px-4 py-2 rounded-xl text-xs font-semibold bg-red-600 hover:bg-red-700 text-white transition-all shadow-md cursor-pointer flex items-center gap-2 disabled:opacity-50"
+              >
+                {restoringDb ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Restoring & Hot-Swapping…
+                  </>
+                ) : (
+                  <>
+                    <RotateCcw className="w-4 h-4" />
+                    Yes, Overwrite & Restore
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </div>
-      </section>
+      )}
     </div>
   );
 }

@@ -1,9 +1,11 @@
 import { Router, Request, Response } from 'express';
 import { join } from 'path';
+import { tmpdir } from 'os';
 import { readFileSync, existsSync, unlink, unlinkSync } from 'fs';
+import multer from 'multer';
 import Handlebars from 'handlebars';
 import { marked } from 'marked';
-import { resumeQueries, sectionQueries, exportDatabaseSnapshot, getDatabaseStats } from '../db/database';
+import { resumeQueries, sectionQueries, exportDatabaseSnapshot, restoreDatabase, getDatabaseStats } from '../db/database';
 import { getCandidateName, getNormalizedExportName, cleanExportFileName } from '../export/exportName';
 import puppeteer from 'puppeteer';
 import {
@@ -233,6 +235,36 @@ const handleDbDownload = (req: Request, res: Response) => {
 
 router.get('/db', handleDbDownload);
 router.get('/database', handleDbDownload);
+
+// POST /api/export/db/restore — upload and hot-swap raw SQLite database
+const uploadDb = multer({ dest: join(tmpdir(), 'auracv-uploads') });
+const handleDbRestore = (req: Request, res: Response): void => {
+  if (!req.file) {
+    res.status(400).json({ error: 'No database file provided. Please upload a valid .db file.' });
+    return;
+  }
+
+  const uploadedPath = req.file.path;
+  try {
+    restoreDatabase(uploadedPath);
+    try { unlinkSync(uploadedPath); } catch {}
+    const stats = getDatabaseStats();
+    res.json({
+      ok: true,
+      message: 'Database restored successfully',
+      stats,
+    });
+  } catch (e) {
+    if (existsSync(uploadedPath)) {
+      try { unlinkSync(uploadedPath); } catch {}
+    }
+    console.error('Database restore error:', e);
+    res.status(500).json({ error: (e as Error).message });
+  }
+};
+
+router.post('/db/restore', uploadDb.single('database'), handleDbRestore);
+router.post('/database/restore', uploadDb.single('database'), handleDbRestore);
 
 // GET /api/export/:id/preview — render HTML for live preview
 router.get('/:id/preview', (req: Request, res: Response) => {

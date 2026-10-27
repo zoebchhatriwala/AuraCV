@@ -5,6 +5,13 @@ import { settingsQueries, apiKeyQueries } from '../db/database';
 import HttpProvider from './providers/HttpProvider';
 import type { ProviderConfig } from '../types';
 
+export function getUserProvidersDir(): string | null {
+  if (process.env.AURACV_DATA_DIR) {
+    return join(process.env.AURACV_DATA_DIR, 'providers');
+  }
+  return null;
+}
+
 export function getProvidersDir(): string {
   if (process.env.AURACV_PROVIDERS_DIR && existsSync(process.env.AURACV_PROVIDERS_DIR)) {
     return process.env.AURACV_PROVIDERS_DIR;
@@ -17,6 +24,14 @@ export function getProvidersDir(): string {
 }
 
 export function readProviderConfig(name: string): ProviderConfig {
+  const userDir = getUserProvidersDir();
+  if (userDir && existsSync(userDir)) {
+    const userFilePath = join(userDir, `${name}.yml`);
+    if (existsSync(userFilePath)) {
+      return yaml.load(readFileSync(userFilePath, 'utf8')) as ProviderConfig;
+    }
+  }
+
   const filePath = join(getProvidersDir(), `${name}.yml`);
   if (!existsSync(filePath)) {
     throw new Error(`Provider config not found: providers/${name}.yml`);
@@ -40,10 +55,21 @@ export interface ProviderListItem {
 
 export function listProviderFiles(): ProviderListItem[] {
   const dir = getProvidersDir();
-  if (!existsSync(dir)) return [];
-  return readdirSync(dir)
-    .filter(f => f.endsWith('.yml'))
-    .map(file => {
+  const userDir = getUserProvidersDir();
+  const fileNames = new Set<string>();
+
+  if (existsSync(dir)) {
+    readdirSync(dir)
+      .filter(f => f.endsWith('.yml'))
+      .forEach(f => fileNames.add(f));
+  }
+  if (userDir && existsSync(userDir)) {
+    readdirSync(userDir)
+      .filter(f => f.endsWith('.yml'))
+      .forEach(f => fileNames.add(f));
+  }
+
+  return Array.from(fileNames).map(file => {
       const name = file.replace('.yml', '');
       try {
         const config = readProviderConfig(name);

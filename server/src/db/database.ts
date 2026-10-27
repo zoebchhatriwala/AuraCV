@@ -1,5 +1,5 @@
 import { DatabaseSync } from 'node:sqlite';
-import { readFileSync, statSync, existsSync, copyFileSync, mkdirSync } from 'fs';
+import { readFileSync, statSync, existsSync, copyFileSync, mkdirSync, rmSync } from 'fs';
 import { join, dirname } from 'path';
 import { createCipheriv, createDecipheriv, randomBytes, createHash, randomUUID } from 'crypto';
 import { networkInterfaces, tmpdir } from 'os';
@@ -369,6 +369,77 @@ export function exportDatabaseSnapshot(): string {
     copyFileSync(getDbPath(), tempFile);
     return tempFile;
   }
+}
+
+export function restoreDatabase(uploadedFilePath: string): void {
+  const dbPath = getDbPath();
+  const dbDir = dirname(dbPath);
+  if (!existsSync(dbDir)) {
+    mkdirSync(dbDir, { recursive: true });
+  }
+
+  // 1. Close active db connection
+  if (_db) {
+    try {
+      _db.exec('PRAGMA wal_checkpoint(TRUNCATE)');
+      _db.close();
+    } catch (e) {
+      console.warn('Warning during db close prior to restore:', e);
+    }
+    _db = null;
+  }
+
+  // 2. Keep emergency rollback snapshot of current database
+  const backupPath = join(tmpdir(), `auracv_rollback_${Date.now()}_${randomUUID().slice(0, 8)}.db`);
+  let hadExisting = false;
+  if (existsSync(dbPath)) {
+    try {
+      copyFileSync(dbPath, backupPath);
+      hadExisting = true;
+    } catch (err) {
+      console.warn('Warning creating rollback snapshot:', err);
+    }
+  }
+
+  // 3. Clear existing WAL and SHM journal files
+  const walPath = `${dbPath}-wal`;
+  const shmPath = `${dbPath}-shm`;
+  if (existsSync(walPath)) {
+    try { rmSync(walPath); } catch {}
+  }
+  if (existsSync(shmPath)) {
+    try { rmSync(shmPath); } catch {}
+  }
+
+  // 4. Copy uploaded file into active db path
+  try {
+    copyFileSync(uploadedFilePath, dbPath);
+
+    // 5. Test integrity and run any missing migrations
+    const testDb = new DatabaseSync(dbPath);
+    const integrity = testDb.prepare('PRAGMA integrity_check').get() as { integrity_check?: string } | undefined;
+    if (integrity && integrity.integrity_check !== 'ok') {
+      testDb.close();
+      throw new Error(`Database integrity check failed: ${integrity.integrity_check}`);
+    }
+    runMigrations(testDb);
+    testDb.close();
+  } catch (err) {
+    // Roll back if corrupt or invalid
+    if (hadExisting && existsSync(backupPath)) {
+      try {
+        copyFileSync(backupPath, dbPath);
+      } catch {}
+    }
+    throw new Error(`Failed to restore database (file may be invalid or corrupt): ${err instanceof Error ? err.message : String(err)}`);
+  } finally {
+    if (hadExisting && existsSync(backupPath)) {
+      try { rmSync(backupPath); } catch {}
+    }
+  }
+
+  // 6. Re-open connection
+  getDb();
 }
 
 // ─── Job Application Vault queries ───────────────────────────────────────────
