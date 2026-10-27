@@ -65,7 +65,7 @@
     "icon": "desktop/icon.png"
   },
   "linux": {
-    "maintainer": "Zoeb Chhatriwala <zrex.mail@gmail.com>",
+    "maintainer": "Zoeb Chhatriwala <zoeb@chhatriwala.com>",
     "syncDesktopName": true,
     "target": [
       {
