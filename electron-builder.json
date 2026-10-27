@@ -48,7 +48,7 @@
         "arch": ["x64"]
       }
     ],
-    "icon": "client/public/logo.svg"
+    "icon": "desktop/icon.png"
   },
   "mac": {
     "target": [
@@ -62,7 +62,7 @@
       }
     ],
     "category": "public.app-category.productivity",
-    "icon": "client/public/logo.svg"
+    "icon": "desktop/icon.png"
   },
   "linux": {
     "target": [
@@ -76,7 +76,7 @@
       }
     ],
     "category": "Office",
-    "icon": "client/public/logo.svg"
+    "icon": "desktop/icon.png"
   },
   "nsis": {
     "oneClick": false,

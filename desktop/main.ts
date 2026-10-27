@@ -108,7 +108,7 @@ async function createWindow() {
       contextIsolation: true,
       sandbox: true,
     },
-    icon: path.join(__dirname, '..', 'client', 'public', 'logo.svg'),
+    icon: path.join(__dirname, '..', 'client', 'public', 'icon.png'),
     show: false, // Show once ready-to-show to prevent white flash
   });
 
