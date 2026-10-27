@@ -1,6 +1,6 @@
 # AuraCV
 
-AuraCV is a modern, privacy-first career intelligence studio and resume builder. It combines the speed of local execution with the intelligence of cloud and local LLMs to help you craft, tailor, evaluate, and export professional profiles. Available as a cross-platform desktop application (Windows, macOS, Linux) or a self-hosted web app.
+AuraCV is a modern, privacy-first career intelligence studio and CV / Resume builder. It combines the speed of local execution with the intelligence of cloud and local LLMs to help you craft, tailor, evaluate, and export professional profiles. Available as a cross-platform desktop application (Windows, macOS, Linux) or a self-hosted web app.
 
 <img width="1278" height="637" alt="image" src="https://github.com/user-attachments/assets/5a379c2b-4985-4f60-be98-90167390e9c8" />
 
@@ -46,9 +46,11 @@ AuraCV is a modern, privacy-first career intelligence studio and resume builder.
 ### Running Locally
 
 - **Web Mode:**
+
   ```bash
   npm run dev
   ```
+
   Runs both the backend server (port `3847`) and frontend Vite client (`http://localhost:5842`).
 
 - **Desktop Mode:**
@@ -80,12 +82,15 @@ Installers and packages are output to the `release/` directory.
 ## Configuration & Custom Providers
 
 ### Managing API Keys
+
 Configure your AI providers (such as NVIDIA NIM, OpenAI, Anthropic, Gemini, or Ollama) directly in **Settings > AI Providers**. API keys are encrypted at rest with AES-256 and stored locally in your database.
 
 ### Provider YAML Contracts & Overrides
+
 Providers in AuraCV are declared via clean YAML specification files located in the `providers/` directory.
 
 To customize existing models, endpoints, or add custom private providers without modifying source code:
+
 - Place custom YAML files in your user data directory (`providers/` inside `~/.auracv/` or the app's user data folder).
 - AuraCV automatically merges user directory overrides at runtime, ensuring your custom providers persist across app updates.
 
@@ -101,10 +106,12 @@ AuraCV stores all profiles, job applications, AI writing sessions, and configura
 ### 2. Manual CLI Restore (Offline Fallback)
 
 If restoring offline or troubleshooting:
+
 1. Stop the running app / server (`Ctrl + C`).
 2. Replace `auracv.db` with your backup file and remove lingering WAL journals:
 
 **macOS / Linux:**
+
 ```bash
 # In the server/ or user data directory:
 rm -f auracv.db-wal auracv.db-shm
@@ -113,6 +120,7 @@ npm run dev
 ```
 
 **Windows (PowerShell):**
+
 ```powershell
 # In the server/ or user data directory:
 Remove-Item auracv.db-wal, auracv.db-shm -ErrorAction SilentlyContinue
@@ -120,7 +128,7 @@ Copy-Item "path\to\backup.db" auracv.db -Force
 npm run dev
 ```
 
-*Tip: For migrating individual profiles between workspaces, you can also use JSON export/import via the **Import / Export** section without replacing the entire database.*
+_Tip: For migrating individual profiles between workspaces, you can also use JSON export/import via the **Import / Export** section without replacing the entire database._
 
 ## Contributing
 
