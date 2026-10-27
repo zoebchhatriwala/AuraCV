@@ -11,6 +11,8 @@ dist/
 build/
 client/dist/
 server/dist/
+dist-electron/
+release/
 
 # Environment variables
 .env

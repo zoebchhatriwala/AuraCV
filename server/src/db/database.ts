@@ -1,6 +1,6 @@
 import { DatabaseSync } from 'node:sqlite';
-import { readFileSync, statSync, existsSync, copyFileSync } from 'fs';
-import { join } from 'path';
+import { readFileSync, statSync, existsSync, copyFileSync, mkdirSync } from 'fs';
+import { join, dirname } from 'path';
 import { createCipheriv, createDecipheriv, randomBytes, createHash, randomUUID } from 'crypto';
 import { networkInterfaces, tmpdir } from 'os';
 import type {
@@ -10,8 +10,16 @@ import type {
   JobMetadata, JobMetadataRow, QAEntry, QAEntryRow, CustomField
 } from '../types';
 
-// Single source of truth SQLite database
-const DB_PATH = join(__dirname, '..', '..', 'auracv.db');
+// Dynamic database location (supports OS-specific AppData / userData in Desktop mode)
+export function getDbPath(): string {
+  if (process.env.AURACV_DB_PATH) {
+    return process.env.AURACV_DB_PATH;
+  }
+  if (process.env.AURACV_DATA_DIR) {
+    return join(process.env.AURACV_DATA_DIR, 'auracv.db');
+  }
+  return join(__dirname, '..', '..', 'auracv.db');
+}
 
 let _db: DatabaseSync | null = null;
 
@@ -55,7 +63,12 @@ export function decrypt(data: string): string | null {
 
 export function getDb(): DatabaseSync {
   if (!_db) {
-    _db = new DatabaseSync(DB_PATH);
+    const dbPath = getDbPath();
+    const dbDir = dirname(dbPath);
+    if (!existsSync(dbDir)) {
+      mkdirSync(dbDir, { recursive: true });
+    }
+    _db = new DatabaseSync(dbPath);
     _db.exec('PRAGMA journal_mode = WAL');
     _db.exec('PRAGMA foreign_keys = ON');
     runMigrations(_db);
@@ -319,14 +332,15 @@ export function getDatabaseStats(): DatabaseStats {
 
   let fileSizeBytes = 0;
   let lastModified = new Date().toISOString();
-  if (existsSync(DB_PATH)) {
-    const stat = statSync(DB_PATH);
+  const dbPath = getDbPath();
+  if (existsSync(dbPath)) {
+    const stat = statSync(dbPath);
     fileSizeBytes = stat.size;
     lastModified = stat.mtime.toISOString();
   }
 
   let walSizeBytes = 0;
-  const walPath = `${DB_PATH}-wal`;
+  const walPath = `${dbPath}-wal`;
   if (existsSync(walPath)) {
     walSizeBytes = statSync(walPath).size;
   }
@@ -352,7 +366,7 @@ export function exportDatabaseSnapshot(): string {
     console.warn('VACUUM INTO failed, falling back to direct checkpoint and copy:', err);
     db.exec('PRAGMA wal_checkpoint(TRUNCATE)');
     const tempFile = join(tmpdir(), `auracv_snapshot_${Date.now()}_${randomUUID().slice(0, 8)}.db`);
-    copyFileSync(DB_PATH, tempFile);
+    copyFileSync(getDbPath(), tempFile);
     return tempFile;
   }
 }

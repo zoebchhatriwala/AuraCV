@@ -1,7 +1,8 @@
 import express from 'express';
 import cors from 'cors';
 import { join } from 'path';
-import { getDb } from './db/database';
+import { existsSync } from 'fs';
+import { getDb, getDbPath } from './db/database';
 import resumeRoutes from './routes/resumes';
 import aiRoutes from './routes/ai';
 import settingsRoutes from './routes/settings';
@@ -56,6 +57,16 @@ app.get('/api/templates', (_req, res) => {
 // ─── Health check ─────────────────────────────────────────────────────────────
 app.get('/api/health', (_req, res) => res.json({ ok: true, timestamp: new Date().toISOString() }));
 
+// ─── Static Client (Desktop & Production SPA Fallback) ────────────────────────
+const clientDist = process.env.AURACV_CLIENT_DIST || join(__dirname, '..', '..', 'client', 'dist');
+if (existsSync(clientDist)) {
+  app.use(express.static(clientDist));
+  app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api')) return next();
+    res.sendFile(join(clientDist, 'index.html'));
+  });
+}
+
 // ─── Global Error Handler ──────────────────────────────────────────────────────
 app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   console.error('[Global Server Error]:', err);
@@ -76,7 +87,7 @@ process.on('unhandledRejection', (reason) => {
 // ─── Start ────────────────────────────────────────────────────────────────────
 app.listen(PORT, () => {
   console.log(`\n🚀 AuraCV server running on http://localhost:${PORT}`);
-  console.log(`📁 DB: ${join(process.cwd(), 'auracv.db')}`);
+  console.log(`📁 DB: ${getDbPath()}`);
   console.log(`📂 Providers: ${join(process.cwd(), 'providers/')}\n`);
 });
 

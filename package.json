@@ -2,14 +2,28 @@
   "name": "auracv",
   "version": "1.0.0",
   "private": true,
+  "main": "dist-electron/main.js",
   "scripts": {
     "setup": "npm install && npm install --prefix server && npm install --prefix client",
     "dev": "concurrently --names SERVER,CLIENT --prefix-colors magenta,cyan \"npm run dev:server\" \"npm run dev:client\"",
     "dev:server": "cd server && npm run dev",
     "dev:client": "cd client && npm run dev",
-    "build": "cd client && npm run build"
+    "build": "cd client && npm run build",
+    "build:client": "cd client && npm run build",
+    "build:server": "cd server && npm run build",
+    "build:electron": "tsc -p desktop",
+    "desktop": "concurrently --kill-others --names SERVER,CLIENT,DESKTOP --prefix-colors magenta,cyan,green \"npm run dev:server\" \"npm run dev:client\" \"wait-on http://localhost:5842 && npm run build:electron && electron .\"",
+    "build:desktop": "npm run build:client && npm run build:server && npm run build:electron && electron-builder",
+    "build:desktop:win": "npm run build:client && npm run build:server && npm run build:electron && electron-builder --win",
+    "build:desktop:mac": "npm run build:client && npm run build:server && npm run build:electron && electron-builder --mac",
+    "build:desktop:linux": "npm run build:client && npm run build:server && npm run build:electron && electron-builder --linux"
   },
   "devDependencies": {
-    "concurrently": "^9.1.0"
+    "@types/node": "^26.6.5",
+    "concurrently": "^9.1.0",
+    "electron": "^45.0.0",
+    "electron-builder": "^25.1.8",
+    "typescript": "^5.7.3",
+    "wait-on": "^9.5.1"
   }
 }

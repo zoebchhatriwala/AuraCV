@@ -5,11 +5,19 @@ import { settingsQueries, apiKeyQueries } from '../db/database';
 import HttpProvider from './providers/HttpProvider';
 import type { ProviderConfig } from '../types';
 
-// tsx runs as CommonJS — __dirname is natively available
-const PROVIDERS_DIR = join(__dirname, '..', '..', '..', 'providers');
+export function getProvidersDir(): string {
+  if (process.env.AURACV_PROVIDERS_DIR && existsSync(process.env.AURACV_PROVIDERS_DIR)) {
+    return process.env.AURACV_PROVIDERS_DIR;
+  }
+  const rootDir = join(__dirname, '..', '..', '..', 'providers');
+  if (existsSync(rootDir)) return rootDir;
+  const distDir = join(__dirname, '..', '..', 'providers');
+  if (existsSync(distDir)) return distDir;
+  return rootDir;
+}
 
 export function readProviderConfig(name: string): ProviderConfig {
-  const filePath = join(PROVIDERS_DIR, `${name}.yml`);
+  const filePath = join(getProvidersDir(), `${name}.yml`);
   if (!existsSync(filePath)) {
     throw new Error(`Provider config not found: providers/${name}.yml`);
   }
@@ -31,8 +39,9 @@ export interface ProviderListItem {
 }
 
 export function listProviderFiles(): ProviderListItem[] {
-  if (!existsSync(PROVIDERS_DIR)) return [];
-  return readdirSync(PROVIDERS_DIR)
+  const dir = getProvidersDir();
+  if (!existsSync(dir)) return [];
+  return readdirSync(dir)
     .filter(f => f.endsWith('.yml'))
     .map(file => {
       const name = file.replace('.yml', '');

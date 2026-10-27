@@ -1,0 +1,87 @@
+{
+  "$schema": "https://raw.githubusercontent.com/electron-userland/electron-builder/master/packages/app-builder-lib/scheme.json",
+  "appId": "com.auracv.app",
+  "productName": "AuraCV",
+  "copyright": "Copyright © 2026 Zoeb Chhatriwala",
+  "directories": {
+    "output": "release"
+  },
+  "files": [
+    "dist-electron/**/*",
+    "package.json"
+  ],
+  "extraResources": [
+    {
+      "from": "providers",
+      "to": "providers",
+      "filter": ["**/*.yml"]
+    },
+    {
+      "from": "client/dist",
+      "to": "client/dist"
+    },
+    {
+      "from": "server/dist",
+      "to": "server/dist"
+    },
+    {
+      "from": "server/src/templates",
+      "to": "server/templates"
+    },
+    {
+      "from": "server/src/db/schema.sql",
+      "to": "server/schema.sql"
+    },
+    {
+      "from": "server/node_modules",
+      "to": "server/node_modules"
+    }
+  ],
+  "win": {
+    "target": [
+      {
+        "target": "nsis",
+        "arch": ["x64"]
+      },
+      {
+        "target": "portable",
+        "arch": ["x64"]
+      }
+    ],
+    "icon": "client/public/logo.svg"
+  },
+  "mac": {
+    "target": [
+      {
+        "target": "dmg",
+        "arch": ["arm64", "x64"]
+      },
+      {
+        "target": "zip",
+        "arch": ["arm64", "x64"]
+      }
+    ],
+    "category": "public.app-category.productivity",
+    "icon": "client/public/logo.svg"
+  },
+  "linux": {
+    "target": [
+      {
+        "target": "AppImage",
+        "arch": ["x64"]
+      },
+      {
+        "target": "deb",
+        "arch": ["x64"]
+      }
+    ],
+    "category": "Office",
+    "icon": "client/public/logo.svg"
+  },
+  "nsis": {
+    "oneClick": false,
+    "allowToChangeInstallationDirectory": true,
+    "createDesktopShortcut": true,
+    "createStartMenuShortcut": true
+  }
+}
