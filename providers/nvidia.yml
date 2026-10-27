@@ -21,42 +21,52 @@ api:
 
 # ─── Models ──────────────────────────────────────────────────────────────────
 models:
-  default: google/diffusiongemma-26b-a4b-it
+  default: nvidia/nemotron-3.5-lightning-30b-a3b
   options:
-    - id: google/diffusiongemma-26b-a4b-it
-      name: "Gemma Diffusion 26B"
-      context_window: 128000
-      recommended: true
-
     - id: nvidia/nemotron-3.5-lightning-30b-a3b
-      name: "NVIDIA Nemotron 3.5 Lightning 30B"
-      context_window: 128000
-
-    - id: meta/muse-glimmer-30b
-      name: "Muse Glimmer 30B"
-      context_window: 128000
+      name: "NVIDIA Nemotron 3.5 Lightning 30B (3B active)"
+      context_window: 262144
+      recommended: true
 
     - id: nvidia/nemotron-3-ultra-550b-a55b
       name: "NVIDIA Nemotron 3 Ultra 550B"
-      context_window: 128000
-
-    - id: nvidia/nemotron-3-super-120b-a12b
-      name: "NVIDIA Nemotron 3 Super 120B"
-      context_window: 128000
+      context_window: 262144
 
     - id: openai/gpt-oss-20b
       name: "GPT-OSS 20B"
-      context_window: 128000
+      context_window: 131072
 
-    - id: nvidia/nemotron-3-nano-omni-30b-a3b-reasoning
-      name: "NVIDIA Nemotron 3 Nano Omni 30B"
-      context_window: 128000
+    - id: nvidia/nemotron-3.5-bolt-e4b
+      name: "NVIDIA Nemotron 3.5 Bolt E4B (compact, tool calling)"
+      context_window: 128000 # unverified
+
+    - id: nvidia/nemotron-3.5-super-vl-120b-a12b
+      name: "NVIDIA Nemotron 3.5 Super VL 120B (early access)"
+      context_window: 128000 # unverified
+
+    - id: google/gemma-4-31b-it
+      name: "Gemma 4 31B"
+      context_window: 128000 # unverified
+
+    - id: z-ai/glm-5.3-flash
+      name: "GLM 5.3 Flash (320B, 18B active)"
+      context_window: 128000 # unverified
+
+    - id: meta/muse-glimmer-30b
+      name: "Muse Glimmer 30B"
+      context_window: 128000 # unverified
+
+    - id: minimaxai/minimax-m3.1-flash
+      name: "MiniMax M3.1 Flash"
+      context_window: 128000 # unverified
 
 # ─── Endpoints ───────────────────────────────────────────────────────────────
 endpoints:
   chat:
     path: /chat/completions
     method: POST
+    stream: true                        # Stream SSE tokens to prevent timeouts during full CV generation
+    timeout: 90000                      # 90s connection / idle timeout for high-token output
     content_type: application/json
     request:
       model: "{{model}}"
@@ -65,6 +75,7 @@ endpoints:
           content: "{{prompt}}"
       temperature: 0.6
       max_tokens: 4096
+      stream: true
     response:
       extract: "choices[0].message.content"
       parse: json

@@ -64,10 +64,19 @@ export default class HttpProvider {
     return url;
   }
 
+  private isStreamingEnabled(endpointCfg: EndpointConfig): boolean {
+    if (endpointCfg.stream !== undefined) return Boolean(endpointCfg.stream);
+    if ((endpointCfg.request as any)?.stream !== undefined) return Boolean((endpointCfg.request as any).stream);
+    if (this.config.api?.stream !== undefined) return Boolean(this.config.api.stream);
+    return false;
+  }
+
   private buildHeaders(endpointCfg: EndpointConfig): Record<string, string> {
+    const isStream = this.isStreamingEnabled(endpointCfg);
+    const defaultAccept = isStream ? 'text/event-stream, application/json' : (this.config.api.accept ?? 'application/json');
     const headers: Record<string, string> = {
       'Content-Type': endpointCfg.content_type ?? this.config.api.content_type ?? 'application/json',
-      'Accept': this.config.api.accept ?? 'application/json',
+      'Accept': defaultAccept,
     };
     const auth = this.config.api.auth;
     if (auth.type === 'bearer' && this.apiKey) {
@@ -83,6 +92,10 @@ export default class HttpProvider {
 
   private buildBody(endpointCfg: EndpointConfig, prompt: string | null = null): unknown {
     const template = JSON.parse(JSON.stringify(endpointCfg.request ?? {}));
+
+    if (this.isStreamingEnabled(endpointCfg) && typeof template === 'object' && template !== null && template.stream === undefined) {
+      template.stream = true;
+    }
     
     const modelCfg = this.config.models?.options.find(m => m.id === this.model);
     if (modelCfg?.request_overrides) {
@@ -156,19 +169,23 @@ export default class HttpProvider {
     return raw;
   }
 
-  /** Execute a named endpoint from the YAML config. */
-  async call(endpointName: string, prompt: string | null = null): Promise<unknown> {
-    const endpointCfg = this.config.endpoints?.[endpointName];
-    if (!endpointCfg) throw new Error(`Endpoint "${endpointName}" not defined in provider YAML for ${this.config.provider}`);
-
+  /** Execute HTTP request with streaming support and configurable timeouts */
+  private async execute(endpointCfg: EndpointConfig, prompt: string | null = null): Promise<unknown> {
     const url = this.buildUrl(endpointCfg);
     const headers = this.buildHeaders(endpointCfg);
     const method = (endpointCfg.method ?? 'POST').toUpperCase();
+    const timeoutMs = endpointCfg.timeout ?? this.config.api.timeout ?? 60000;
+    const isStream = this.isStreamingEnabled(endpointCfg);
+
+    const controller = new AbortController();
+    let initialTimer: NodeJS.Timeout | null = setTimeout(() => {
+      controller.abort(new Error('TIMEOUT'));
+    }, timeoutMs);
 
     const fetchOpts: RequestInit = {
       method,
       headers,
-      signal: AbortSignal.timeout(45000),
+      signal: controller.signal,
     };
     if (method !== 'GET' && endpointCfg.request) {
       fetchOpts.body = JSON.stringify(this.buildBody(endpointCfg, prompt));
@@ -178,18 +195,175 @@ export default class HttpProvider {
     try {
       res = await fetch(url, fetchOpts);
     } catch (err: any) {
-      if (err.name === 'TimeoutError' || err.name === 'AbortError') {
-        throw new Error(`${this.config.name} request timed out after 45 seconds. The selected model (${this.model}) took too long to respond. Please try another model.`);
+      if (initialTimer) clearTimeout(initialTimer);
+      if (err.name === 'TimeoutError' || err.name === 'AbortError' || err.message === 'TIMEOUT' || err.message === 'IDLE_TIMEOUT') {
+        const sec = Math.round(timeoutMs / 1000);
+        throw new Error(`${this.config.name} request timed out after ${sec} seconds. The selected model (${this.model}) took too long to respond. Please try a faster model.`);
       }
       throw err;
     }
 
     if (!res.ok) {
+      if (initialTimer) clearTimeout(initialTimer);
       const errText = await res.text().catch(() => res.statusText);
       throw new Error(`${this.config.name} API ${res.status}: ${errText.substring(0, 300)}`);
     }
 
-    const body = await res.json() as unknown;
+    const contentType = res.headers.get('content-type') || '';
+    const isStreamingResponse = isStream && (
+      contentType.includes('text/event-stream') ||
+      contentType.includes('application/x-ndjson') ||
+      !contentType.includes('application/json')
+    );
+
+    if (isStreamingResponse && res.body) {
+      return this.readStream(res, controller, initialTimer, timeoutMs, endpointCfg);
+    }
+
+    if (initialTimer) clearTimeout(initialTimer);
+    return res.json() as unknown;
+  }
+
+  /** Stream accumulator supporting OpenAI/NVIDIA SSE, Anthropic SSE, and Ollama NDJSON */
+  private async readStream(
+    res: Response,
+    controller: AbortController,
+    initialTimer: NodeJS.Timeout | null,
+    timeoutMs: number,
+    _endpointCfg: EndpointConfig
+  ): Promise<unknown> {
+    const reader = res.body!.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    let accumulatedContent = '';
+    let accumulatedReasoning = '';
+
+    let idleTimer: NodeJS.Timeout | null = null;
+    const resetIdleTimer = () => {
+      if (initialTimer) {
+        clearTimeout(initialTimer);
+        initialTimer = null;
+      }
+      if (idleTimer) clearTimeout(idleTimer);
+      idleTimer = setTimeout(() => {
+        controller.abort(new Error('IDLE_TIMEOUT'));
+      }, timeoutMs);
+    };
+
+    resetIdleTimer();
+
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        resetIdleTimer();
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() ?? '';
+
+        for (const rawLine of lines) {
+          const line = rawLine.trim();
+          if (!line || line.startsWith(':')) continue;
+
+          if (line.startsWith('data:')) {
+            const dataStr = line.slice(5).trim();
+            if (dataStr === '[DONE]') continue;
+            try {
+              const parsed = JSON.parse(dataStr);
+              // OpenAI / NVIDIA NIM delta extraction
+              const delta = parsed.choices?.[0]?.delta;
+              if (delta) {
+                if (typeof delta.content === 'string') {
+                  accumulatedContent += delta.content;
+                }
+                const reasoning = delta.reasoning_content ?? delta.reasoning;
+                if (typeof reasoning === 'string') {
+                  accumulatedReasoning += reasoning;
+                }
+              }
+              // Anthropic delta extraction
+              if (parsed.type === 'content_block_delta') {
+                if (parsed.delta?.type === 'text_delta' && typeof parsed.delta.text === 'string') {
+                  accumulatedContent += parsed.delta.text;
+                }
+                if (parsed.delta?.type === 'thinking_delta' && typeof parsed.delta.thinking === 'string') {
+                  accumulatedReasoning += parsed.delta.thinking;
+                }
+              }
+              if (parsed.delta?.text && typeof parsed.delta.text === 'string') {
+                accumulatedContent += parsed.delta.text;
+              }
+            } catch {
+              // Ignore partial JSON chunks
+            }
+          } else if (line.startsWith('{') && line.endsWith('}')) {
+            // Ollama or other NDJSON
+            try {
+              const parsed = JSON.parse(line);
+              if (parsed.message?.content) {
+                accumulatedContent += parsed.message.content;
+              } else if (typeof parsed.response === 'string') {
+                accumulatedContent += parsed.response;
+              }
+              if (parsed.message?.reasoning_content) {
+                accumulatedReasoning += parsed.message.reasoning_content;
+              }
+            } catch {
+              // Ignore
+            }
+          }
+        }
+      }
+
+      if (buffer.trim()) {
+        const line = buffer.trim();
+        if (line.startsWith('data:')) {
+          const dataStr = line.slice(5).trim();
+          if (dataStr !== '[DONE]') {
+            try {
+              const parsed = JSON.parse(dataStr);
+              const delta = parsed.choices?.[0]?.delta;
+              if (delta?.content) accumulatedContent += delta.content;
+              const reasoning = delta?.reasoning_content ?? delta?.reasoning;
+              if (reasoning) accumulatedReasoning += reasoning;
+            } catch {}
+          }
+        }
+      }
+    } catch (err: any) {
+      if (err.name === 'TimeoutError' || err.name === 'AbortError' || err.message === 'TIMEOUT' || err.message === 'IDLE_TIMEOUT') {
+        const sec = Math.round(timeoutMs / 1000);
+        throw new Error(`${this.config.name} request timed out after ${sec} seconds. The selected model (${this.model}) took too long to respond. Please try a faster model.`);
+      }
+      throw err;
+    } finally {
+      if (initialTimer) clearTimeout(initialTimer);
+      if (idleTimer) clearTimeout(idleTimer);
+    }
+
+    return {
+      choices: [
+        {
+          message: {
+            role: 'assistant',
+            content: accumulatedContent,
+            reasoning_content: accumulatedReasoning || undefined,
+          },
+        },
+      ],
+      content: [{ type: 'text', text: accumulatedContent }],
+      message: { role: 'assistant', content: accumulatedContent },
+      response: accumulatedContent,
+    };
+  }
+
+  /** Execute a named endpoint from the YAML config. */
+  async call(endpointName: string, prompt: string | null = null): Promise<unknown> {
+    const endpointCfg = this.config.endpoints?.[endpointName];
+    if (!endpointCfg) throw new Error(`Endpoint "${endpointName}" not defined in provider YAML for ${this.config.provider}`);
+
+    const body = await this.execute(endpointCfg, prompt);
     const extracted = this.extract(body, endpointCfg.response.extract);
     return this.parseResponse(extracted, endpointCfg.response);
   }
@@ -199,35 +373,7 @@ export default class HttpProvider {
     const endpointCfg = this.config.endpoints?.[endpointName];
     if (!endpointCfg) throw new Error(`Endpoint "${endpointName}" not defined in provider YAML for ${this.config.provider}`);
 
-    const url = this.buildUrl(endpointCfg);
-    const headers = this.buildHeaders(endpointCfg);
-    const method = (endpointCfg.method ?? 'POST').toUpperCase();
-
-    const fetchOpts: RequestInit = {
-      method,
-      headers,
-      signal: AbortSignal.timeout(45000),
-    };
-    if (method !== 'GET' && endpointCfg.request) {
-      fetchOpts.body = JSON.stringify(this.buildBody(endpointCfg, prompt));
-    }
-
-    let res: Response;
-    try {
-      res = await fetch(url, fetchOpts);
-    } catch (err: any) {
-      if (err.name === 'TimeoutError' || err.name === 'AbortError') {
-        throw new Error(`${this.config.name} request timed out after 45 seconds. The selected model (${this.model}) took too long to respond. Please try a faster model.`);
-      }
-      throw err;
-    }
-
-    if (!res.ok) {
-      const errText = await res.text().catch(() => res.statusText);
-      throw new Error(`${this.config.name} API ${res.status}: ${errText.substring(0, 300)}`);
-    }
-
-    const body = await res.json() as unknown;
+    const body = await this.execute(endpointCfg, prompt);
     const content = this.extract(body, endpointCfg.response.extract);
     const reasoning = this.extract(body, 'choices[0].message.reasoning_content') as string | undefined;
 

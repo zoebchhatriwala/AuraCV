@@ -262,6 +262,8 @@ export interface ProviderApiConfig {
   accept?: string;
   auth: AuthConfig;
   extra_headers?: Record<string, string>;
+  stream?: boolean;
+  timeout?: number;
 }
 
 export interface AuthConfig {
@@ -288,6 +290,8 @@ export interface EndpointConfig {
   path: string;
   method: 'GET' | 'POST' | 'PUT' | 'DELETE';
   content_type?: string;
+  stream?: boolean;
+  timeout?: number;
   request?: Record<string, unknown>;
   response: ResponseConfig;
 }

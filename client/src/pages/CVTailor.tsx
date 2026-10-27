@@ -492,7 +492,7 @@ export default function CVTailor() {
             </div>
             {createdResumeId && (
               <Link
-                to={`/builder/${createdResumeId}`}
+                to={`/editor/${createdResumeId}`}
                 className="text-xs font-bold px-3 py-1.5 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition-colors flex items-center gap-1.5 shadow-sm"
               >
                 Open in Resume Builder <ExternalLink className="w-3.5 h-3.5" />
@@ -604,7 +604,7 @@ function TailorPanel({
 
           {createdResumeId ? (
             <Link
-              to={`/builder/${createdResumeId}`}
+              to={`/editor/${createdResumeId}`}
               className="text-xs font-semibold px-4 py-2 rounded-xl text-white bg-emerald-600 hover:bg-emerald-700 transition-colors flex items-center gap-1.5 shadow-sm"
             >
               Open in Resume Builder <ExternalLink className="w-3.5 h-3.5" />

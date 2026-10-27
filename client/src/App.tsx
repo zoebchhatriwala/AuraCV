@@ -30,6 +30,7 @@ export default function App() {
           <Route path="/dashboard"         element={<Dashboard />} />
           <Route path="/vault"             element={<ApplicationVault />} />
           <Route path="/editor/:id"        element={<Editor />} />
+          <Route path="/builder/:id"       element={<Editor />} />
           <Route path="/templates"         element={<Templates />} />
           <Route path="/ai-studio/:id?"   element={<AIStudio />} />
           <Route path="/cv-tailor/:id?"    element={<CVTailor />} />
