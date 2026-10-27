@@ -26,35 +26,36 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: 'yarn'
+          cache: 'npm'
 
       - name: Install dependencies
         run: |
-          yarn install --frozen-lockfile || yarn install
-          cd server && (yarn install --frozen-lockfile || yarn install) && cd ..
-          cd client && (yarn install --frozen-lockfile || yarn install) && cd ..
+          npm ci || npm install
+          npm --prefix server ci || npm --prefix server install
+          npm --prefix client ci || npm --prefix client install
 
       - name: Build Web Client & Backend
         run: |
-          yarn build:client
-          yarn build:server
-          yarn build:electron
+          npm run build:client
+          npm run build:server
+          npm run build:electron
 
       - name: Package Desktop Installer (Windows)
         if: matrix.os == 'windows-latest'
-        run: yarn build:desktop:win
+        run: npm run build:desktop:win
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Package Desktop Installer (macOS)
         if: matrix.os == 'macos-latest'
-        run: yarn build:desktop:mac
+        run: npm run build:desktop:mac
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CSC_IDENTITY_AUTO_DISCOVERY: false
 
       - name: Package Desktop Installer (Linux)
         if: matrix.os == 'ubuntu-latest'
-        run: yarn build:desktop:linux
+        run: npm run build:desktop:linux
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
