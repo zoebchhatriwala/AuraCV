@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { useAppStore } from "../store";
 import {
   Key,
@@ -127,6 +128,18 @@ export default function Settings() {
       setRestoringDb(false);
     }
   };
+
+  useEffect(() => {
+    if (!showConfirmRestoreModal) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setShowConfirmRestoreModal(false);
+        setSelectedRestoreFile(null);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [showConfirmRestoreModal]);
 
   const formatSize = (bytes?: number) => {
     if (bytes === undefined || bytes === null) return "—";
@@ -802,78 +815,89 @@ export default function Settings() {
       </section>
 
       {/* Database Restore Overwrite Confirmation Modal */}
-      {showConfirmRestoreModal && selectedRestoreFile && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-xs animate-fade-in">
+      {showConfirmRestoreModal && selectedRestoreFile && createPortal(
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 dark:bg-black/70 backdrop-blur-sm animate-fade-in"
+          onClick={() => {
+            if (!restoringDb) {
+              setShowConfirmRestoreModal(false);
+              setSelectedRestoreFile(null);
+            }
+          }}
+        >
           <div
-            className="w-full max-w-md rounded-2xl border p-6 shadow-2xl space-y-4 animate-scale-up"
-            style={{
-              backgroundColor: "var(--bg-surface)",
-              borderColor: "var(--border-subtle)",
-              color: "var(--text-primary)",
-            }}
+            className="w-full max-w-lg rounded-3xl border glass-card p-6 md:p-8 space-y-6 shadow-2xl relative animate-scale-up"
+            onClick={(e) => e.stopPropagation()}
           >
-            {/* Header with Danger Warning */}
-            <div className="flex items-start gap-3">
-              <div className="p-3 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-500 shrink-0">
-                <AlertTriangle className="w-6 h-6" />
+            {/* Top Right Close Button */}
+            <button
+              type="button"
+              onClick={() => {
+                setShowConfirmRestoreModal(false);
+                setSelectedRestoreFile(null);
+              }}
+              disabled={restoringDb}
+              className="absolute top-5 right-5 p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer disabled:opacity-50"
+              style={{ color: "var(--text-muted)" }}
+              title="Close dialog"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            {/* Header with Danger Warning Icon */}
+            <div className="flex items-start gap-4">
+              <div className="w-11 h-11 rounded-2xl bg-rose-500/10 text-rose-500 border border-rose-500/20 flex items-center justify-center shrink-0">
+                <AlertTriangle className="w-5 h-5" />
               </div>
-              <div className="flex-1 min-w-0">
-                <h3 className="text-base font-bold text-red-600 dark:text-red-400">
+              <div className="space-y-1 pr-6">
+                <h3 className="font-display font-bold text-xl" style={{ color: "var(--text-primary)" }}>
                   Overwrite Existing Database?
                 </h3>
-                <p className="text-xs text-slate-500 dark:text-neutral-400 mt-0.5">
-                  Action requires explicit confirmation
+                <p className="text-xs" style={{ color: "var(--text-secondary)" }}>
+                  Restoring a backup will permanently replace your active database file.
                 </p>
               </div>
-              <button
-                type="button"
-                onClick={() => {
-                  setShowConfirmRestoreModal(false);
-                  setSelectedRestoreFile(null);
-                }}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-200 transition-colors cursor-pointer"
-              >
-                <X className="w-4 h-4" />
-              </button>
             </div>
 
             {/* Warning Details Callout */}
-            <div className="p-3.5 rounded-xl bg-red-500/10 border border-red-500/25 text-xs space-y-2 text-red-700 dark:text-red-300">
+            <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-xs space-y-2 text-rose-700 dark:text-rose-300">
               <p className="font-semibold flex items-center gap-1.5">
                 <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
                 Irreversible Data Loss Warning
               </p>
-              <p>
-                Restoring this file will <strong>completely replace</strong> your active SQLite database (<code>auracv.db</code>).
+              <p className="leading-relaxed">
+                Restoring this file will <strong>completely replace</strong> your active SQLite database (<span className="font-mono font-semibold px-1.5 py-0.5 rounded bg-rose-500/15">auracv.db</span>).
               </p>
               <ul className="list-disc list-inside space-y-1 text-[11px] opacity-90 pl-1">
                 <li>All currently saved resumes, versions, and sections will be overwritten.</li>
                 <li>Custom vault fields, AI generation histories, and preferences will be replaced.</li>
               </ul>
-              <p className="text-[11px] font-medium pt-1 border-t border-red-500/20 text-slate-600 dark:text-neutral-300">
+              <p className="text-[11px] font-medium pt-2 border-t border-rose-500/20 text-slate-600 dark:text-neutral-300">
                 💡 <strong>Safety Recommendation:</strong> If you have unsaved profiles, cancel and click <em>Download Backup File</em> first.
               </p>
             </div>
 
             {/* Uploaded File Snapshot */}
             <div
-              className="p-3 rounded-xl border text-xs flex items-center justify-between"
+              className="p-3.5 rounded-2xl border text-xs flex items-center justify-between"
               style={{
                 backgroundColor: "var(--bg-surface-elevated)",
                 borderColor: "var(--border-subtle)",
               }}
             >
-              <div className="flex items-center gap-2 truncate">
+              <div className="flex items-center gap-2.5 truncate">
                 <Database className="w-4 h-4 text-blue-500 shrink-0" />
-                <span className="font-mono truncate font-medium">{selectedRestoreFile.name}</span>
+                <span className="font-mono font-medium truncate" style={{ color: "var(--text-primary)" }}>
+                  {selectedRestoreFile.name}
+                </span>
               </div>
-              <span className="text-[11px] shrink-0 font-medium" style={{ color: "var(--text-muted)" }}>
+              <span className="text-[11px] font-semibold shrink-0" style={{ color: "var(--text-muted)" }}>
                 {(selectedRestoreFile.size / 1024).toFixed(1)} KB
               </span>
             </div>
 
             {/* Dialog Action Buttons */}
-            <div className="flex items-center justify-end gap-2.5 pt-2">
+            <div className="flex items-center justify-end gap-3 pt-3 border-t" style={{ borderColor: "var(--border-subtle)" }}>
               <button
                 type="button"
                 onClick={() => {
@@ -881,12 +905,7 @@ export default function Settings() {
                   setSelectedRestoreFile(null);
                 }}
                 disabled={restoringDb}
-                className="px-4 py-2 rounded-xl text-xs font-semibold border transition-all hover:bg-slate-100 dark:hover:bg-neutral-800 cursor-pointer disabled:opacity-50"
-                style={{
-                  backgroundColor: "var(--bg-surface-elevated)",
-                  borderColor: "var(--border-subtle)",
-                  color: "var(--text-secondary)",
-                }}
+                className="btn-secondary px-5 py-2.5 rounded-xl text-xs font-semibold cursor-pointer disabled:opacity-50"
               >
                 Cancel
               </button>
@@ -894,23 +913,24 @@ export default function Settings() {
                 type="button"
                 onClick={handleConfirmRestore}
                 disabled={restoringDb}
-                className="px-4 py-2 rounded-xl text-xs font-semibold bg-red-600 hover:bg-red-700 text-white transition-all shadow-md cursor-pointer flex items-center gap-2 disabled:opacity-50"
+                className="btn-danger px-5 py-2.5 rounded-xl text-xs font-semibold cursor-pointer shadow-sm flex items-center gap-2 disabled:opacity-50"
               >
                 {restoringDb ? (
                   <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    Restoring & Hot-Swapping…
+                    <Loader2 className="w-4 h-4 animate-spin shrink-0" />
+                    <span>Restoring & Hot-Swapping…</span>
                   </>
                 ) : (
                   <>
-                    <RotateCcw className="w-4 h-4" />
-                    Yes, Overwrite & Restore
+                    <RotateCcw className="w-4 h-4 shrink-0" />
+                    <span>Yes, Overwrite & Restore</span>
                   </>
                 )}
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
