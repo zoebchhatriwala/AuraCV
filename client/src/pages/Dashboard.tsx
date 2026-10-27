@@ -476,9 +476,7 @@ export default function Dashboard() {
                         <div className="flex items-center gap-2">
                           <div
                             className={`w-11 h-11 rounded-xl flex items-center justify-center font-bold transition-colors ${
-                              isPinned && !isArchived
-                                ? 'bg-amber-500/15 text-amber-500 border border-amber-500/25 shadow-2xs'
-                                : isArchived
+                              isArchived
                                 ? 'bg-slate-500/10 text-slate-400 border border-slate-500/20'
                                 : 'bg-blue-500/10 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400'
                             }`}
@@ -489,18 +487,11 @@ export default function Dashboard() {
                               <FileText className="w-5 h-5" />
                             )}
                           </div>
-                          <div className="flex flex-wrap items-center gap-1.5">
-                            {isPinned && !isArchived && (
-                              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/25 flex items-center gap-1 shadow-2xs">
-                                <Pin className="w-2.5 h-2.5 fill-amber-500 text-amber-500" /> Pinned
-                              </span>
-                            )}
-                            {isArchived && (
-                              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-500/15 text-slate-600 dark:text-slate-400 border border-slate-500/20 flex items-center gap-1">
-                                <Archive className="w-2.5 h-2.5" /> Archived
-                              </span>
-                            )}
-                          </div>
+                          {isArchived && (
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-500/15 text-slate-600 dark:text-slate-400 border border-slate-500/20 flex items-center gap-1">
+                              <Archive className="w-2.5 h-2.5" /> Archived
+                            </span>
+                          )}
                         </div>
 
                         <div className="flex items-center gap-1.5">
