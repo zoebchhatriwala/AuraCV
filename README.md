@@ -1,28 +1,31 @@
 # AuraCV
 
-AuraCV is a modern, privacy-first career intelligence studio. It combines the speed of local execution with the intelligence of cloud and local LLMs to help you craft, refine, and export professional profiles.
+AuraCV is a modern, privacy-first career intelligence studio and resume builder. It combines the speed of local execution with the intelligence of cloud and local LLMs to help you craft, tailor, evaluate, and export professional profiles. Available as a cross-platform desktop application (Windows, macOS, Linux) or a self-hosted web app.
 
 <img width="1278" height="637" alt="image" src="https://github.com/user-attachments/assets/5a379c2b-4985-4f60-be98-90167390e9c8" />
 
+## Key Features
 
-## Features
-
-- **Multi-Provider AI Engine:** Bring your own API keys for NVIDIA NIM, OpenAI, Anthropic, Gemini, OpenRouter, or run completely offline with Ollama.
-- **AI-Powered Editing:** Highlight text to instantly rewrite, redline, or expand bullet points with AI Copilot.
-- **Privacy-First:** Your data stays in your local SQLite database. Keys are AES-256 encrypted.
-- **Live Preview:** Instantly see how your profile looks across multiple professional templates (ATS-friendly, Classic, Modern, Minimal, etc).
-- **Import/Export:** Import existing profiles and export your finished work to pixel-perfect PDF or DOCX formats.
+- **Cross-Platform Desktop & Web:** Run AuraCV as a native desktop application on Windows, macOS, and Linux, or host it as a web service.
+- **Multi-Provider AI Engine:** Connect any provider using standard YAML contracts — NVIDIA NIM, OpenAI, Anthropic, Gemini, OpenRouter, or run completely offline with Ollama.
+- **Streaming & Deep Thinking:** Native server-sent events (SSE) streaming accumulator and extraction of reasoning/thinking content (`reasoning_content`) for models that support it.
+- **Fault-Tolerant CV Tailor:** Multi-pass JSON repair engine for budget or small models, zero-loss live evaluation and reconciliation, and 45s request timeout guards.
+- **Privacy-First Local Storage:** Your profiles, job applications, and secrets stay local in a WAL-checkpointed SQLite database (`auracv.db`) with AES-256 encrypted API keys.
+- **Seamless In-App Database Management:** Direct in-app database backups and one-click database restore with atomic hot-swapping and confirmation safeguards.
+- **Live Preview & Multi-Format Export:** Live visual editing across ATS-friendly, Modern, Minimal, and Classic templates, with pixel-perfect PDF rendering (via headless Chrome) and DOCX export.
+- **Dashboard Organization:** Pin critical profiles to the top, search and filter effortlessly, and safely archive older revisions without cluttering active tailoring workflows.
 
 ## Tech Stack
 
-- **Frontend:** React, TypeScript, Tailwind CSS, Zustand, Vite
-- **Backend:** Node.js, Express, Better-SQLite3, Puppeteer (for PDF generation)
+- **Desktop Shell:** Electron, TypeScript, electron-builder
+- **Frontend:** React 19, TypeScript, Tailwind CSS, Zustand, Vite
+- **Backend:** Node.js, Express, Better-SQLite3, Puppeteer, Hugging Face Transformers
 
 ## Getting Started
 
 ### Prerequisites
 
-- [Node.js](https://nodejs.org/) (v18 or higher)
+- [Node.js](https://nodejs.org/) (v20 or higher recommended, v18+ supported)
 - [npm](https://www.npmjs.com/) (bundled with Node.js)
 
 ### Installation
@@ -34,63 +37,94 @@ AuraCV is a modern, privacy-first career intelligence studio. It combines the sp
    cd AuraCV
    ```
 
-2. Install dependencies (installs root, server, and client packages):
+2. Install dependencies across root, server, and client:
 
    ```bash
    npm run setup
    ```
 
-3. Start the development environment:
+### Running Locally
 
-   ```bash
-   npm run dev
-   ```
+- **Web Mode:**
+  ```bash
+  npm run dev
+  ```
+  Runs both the backend server (port `3847`) and frontend Vite client (`http://localhost:5842`).
 
-   This runs both the backend server (port 3847) and frontend client concurrently with a single command.
+- **Desktop Mode:**
+  ```bash
+  npm run desktop
+  ```
+  Launches the local development server and opens AuraCV inside an Electron window with hot reload.
 
-4. Open your browser and navigate to `http://localhost:5842`.
+### Building Desktop Installers
 
-## Configuration
+Package production installers for your target operating system:
 
-Configure your AI providers (like NVIDIA, OpenAI, or Ollama) directly in the **Settings** page of the UI. Your API keys are encrypted and saved locally in your SQLite database (`server/auracv.db`).
+```bash
+# Package for your current operating system
+npm run build:desktop
 
-To add or modify providers at a system level, you can edit the YAML files located in the `providers/` directory.
+# Package specifically for Windows (.exe / installer)
+npm run build:desktop:win
+
+# Package specifically for macOS (.dmg / .zip)
+npm run build:desktop:mac
+
+# Package specifically for Linux (.AppImage / .deb)
+npm run build:desktop:linux
+```
+
+Installers and packages are output to the `release/` directory.
+
+## Configuration & Custom Providers
+
+### Managing API Keys
+Configure your AI providers (such as NVIDIA NIM, OpenAI, Anthropic, Gemini, or Ollama) directly in **Settings > AI Providers**. API keys are encrypted at rest with AES-256 and stored locally in your database.
+
+### Provider YAML Contracts & Overrides
+Providers in AuraCV are declared via clean YAML specification files located in the `providers/` directory.
+
+To customize existing models, endpoints, or add custom private providers without modifying source code:
+- Place custom YAML files in your user data directory (`providers/` inside `~/.auracv/` or the app's user data folder).
+- AuraCV automatically merges user directory overrides at runtime, ensuring your custom providers persist across app updates.
 
 ## Database Backup & Restore
 
-AuraCV stores all profiles, custom sections, AI writing sessions, and configurations in a single SQLite database (`server/auracv.db`).
+AuraCV stores all profiles, job applications, AI writing sessions, and configurations in a single SQLite database (`auracv.db`).
 
-### Exporting Database (.db)
-- Click **Export DB** in the Dashboard top bar, or navigate to **Settings > Data Backup & Storage** and click **Download Backup File**.
-- This creates a consolidated SQLite snapshot using `VACUUM INTO` that can be queried or stored offline.
+### 1. In-App Backup & Restore (Recommended)
 
-### Restoring Database (.db)
-1. Stop the server (`Ctrl + C` in the running terminal).
-2. Copy your exported backup file to `server/auracv.db` (overwrite existing).
-3. Delete `server/auracv.db-wal` and `server/auracv.db-shm` if they exist to prevent journal mismatch.
-4. Restart the server (`npm run dev`). All profiles, sections, and settings will be restored.
+- **Export Backup:** Click **Export DB** in the top navigation bar, or navigate to **Settings > Data Backup & Storage** and select **Download Backup File**. This creates a clean `VACUUM INTO` SQLite snapshot.
+- **Restore Backup:** Navigate to **Settings > Data Backup & Storage**, expand **Restore Database Backup**, and select your `.db` file. AuraCV safely checkpoints WAL files, performs a live hot-swap, and reloads your workspace with zero command-line steps.
 
-**macOS / Linux (Bash or Zsh):**
+### 2. Manual CLI Restore (Offline Fallback)
+
+If restoring offline or troubleshooting:
+1. Stop the running app / server (`Ctrl + C`).
+2. Replace `auracv.db` with your backup file and remove lingering WAL journals:
+
+**macOS / Linux:**
 ```bash
-# In the server/ directory:
+# In the server/ or user data directory:
 rm -f auracv.db-wal auracv.db-shm
-cp /path/to/your_backup.db auracv.db
-cd .. && npm run dev
+cp /path/to/backup.db auracv.db
+npm run dev
 ```
 
 **Windows (PowerShell):**
 ```powershell
-# In the server/ directory:
+# In the server/ or user data directory:
 Remove-Item auracv.db-wal, auracv.db-shm -ErrorAction SilentlyContinue
-Copy-Item "path\to\your_backup.db" auracv.db -Force
-cd ..; npm run dev
+Copy-Item "path\to\backup.db" auracv.db -Force
+npm run dev
 ```
 
-*Note: For single profile backups, you can also use JSON export/import via the **Import** page without replacing the database.*
+*Tip: For migrating individual profiles between workspaces, you can also use JSON export/import via the **Import / Export** section without replacing the entire database.*
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+Contributions are welcome! Please feel free to submit an issue or pull request.
 
 ## License
 
