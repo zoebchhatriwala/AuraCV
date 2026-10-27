@@ -165,6 +165,83 @@ export interface ImportParseResult {
   }>;
 }
 
+export interface CVTailorThinking {
+  gap_analysis: string;
+  strategic_angle: string;
+  xyz_transformations: Array<{
+    target: string;
+    action: string;
+    impact_metric: string;
+    bullet: string;
+  }>;
+  keyword_alignment: string[];
+}
+
+export interface CVTailorEvaluationCheck {
+  name: string;
+  status: 'pass' | 'repaired' | 'warning';
+  details: string;
+}
+
+export interface CVTailorEvaluation {
+  schema_valid: boolean;
+  json_repaired: boolean;
+  completeness_score: number;
+  checks: CVTailorEvaluationCheck[];
+  corrections: string[];
+}
+
+export interface CVTailorResult {
+  name: string;
+  target_role: string;
+  target_company?: string;
+  summary: string;
+  sections: Array<{
+    section_type: SectionType;
+    title: string;
+    content: SectionContent[];
+  }>;
+  experience: Array<{
+    company: string;
+    role: string;
+    bullets: string[];
+    start_date?: string;
+    end_date?: string;
+    location?: string;
+  }>;
+  skills: Array<{
+    category: string;
+    items: string[];
+  }>;
+  projects?: Array<{
+    name: string;
+    description: string;
+    tech: string[];
+    bullets?: string[];
+    url?: string;
+  }>;
+  education?: Array<{
+    institution: string;
+    degree: string;
+    field: string;
+    start_date?: string;
+    end_date?: string;
+    gpa?: string;
+    bullets?: string[];
+  }>;
+  certifications?: Array<{
+    name: string;
+    issuer: string;
+    date?: string;
+    url?: string;
+  }>;
+  improvement_notes: string;
+  thinking_process: CVTailorThinking;
+  evaluation: CVTailorEvaluation;
+  raw_cv_json: Record<string, unknown>;
+}
+
+
 // ─── Provider YAML config types ───────────────────────────────────────────────
 
 export interface ProviderConfig {

@@ -5,14 +5,14 @@ import { useAppStore } from '../store';
 import {
   Plus, FileText, Copy, Trash2, Pencil, Clock,
   Upload, Layers, CheckCircle2, Eye, X, Loader2,
-  ShieldCheck, Zap,
+  ShieldCheck, Zap, Database,
 } from 'lucide-react';
 import TemplatePreviewModal from '../components/TemplatePreviewModal';
 import ConfirmModal from '../components/ConfirmModal';
 
 
 export default function Dashboard() {
-  const { resumes, loadingResumes, createResume, deleteResume, duplicateResume, updateResume } = useAppStore();
+  const { resumes, loadingResumes, hasLoadedResumes, createResume, deleteResume, duplicateResume, updateResume } = useAppStore();
   const navigate = useNavigate();
   const [creating, setCreating] = useState(false);
   const [newName, setNewName] = useState('');
@@ -58,6 +58,95 @@ export default function Dashboard() {
     r.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     (r.meta?.target_role && r.meta.target_role.toLowerCase().includes(searchQuery.toLowerCase()))
   );
+
+  // ─── Initial Database Detection Loader ─────────────────────────────────────
+  if (!hasLoadedResumes || (loadingResumes && resumes.length === 0)) {
+    return (
+      <div className="p-4 sm:p-6 md:p-10 max-w-7xl mx-auto animate-fade-in-up space-y-6 sm:space-y-8">
+        {/* Top Header Placeholder */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="space-y-2">
+            <div className="h-8 w-48 rounded-xl bg-slate-400/20 animate-pulse" />
+            <div className="h-4 w-64 rounded-lg bg-slate-400/15 animate-pulse" />
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="h-10 w-44 rounded-xl bg-slate-400/20 animate-pulse" />
+            <div className="h-10 w-28 rounded-xl bg-slate-400/20 animate-pulse" />
+          </div>
+        </div>
+
+        {/* Database Connecting & Detection Banner */}
+        <div
+          className="p-5 rounded-2xl border flex items-center justify-between flex-wrap gap-4 glass-card"
+          style={{
+            borderColor: 'var(--border-subtle)',
+            backgroundColor: 'var(--bg-surface-elevated)',
+          }}
+        >
+          <div className="flex items-center gap-3.5">
+            <div className="w-10 h-10 rounded-xl bg-blue-500/15 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+              <Database className="w-5 h-5 animate-pulse text-blue-500" />
+            </div>
+            <div className="space-y-0.5">
+              <p className="text-sm font-semibold flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
+                <span>Detecting &amp; Synchronizing Career Profiles…</span>
+                <Loader2 className="w-3.5 h-3.5 animate-spin text-blue-500" />
+              </p>
+              <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+                Connecting to database and retrieving your active profiles and version history.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 text-xs font-medium text-slate-400">
+            <span className="w-2 h-2 rounded-full bg-blue-500 animate-ping" />
+            <span className="font-mono text-[11px]">Connecting</span>
+          </div>
+        </div>
+
+        {/* Stats Skeletons */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {[1, 2, 3].map((i) => (
+            <div
+              key={i}
+              className="p-5 rounded-2xl glass-card border space-y-2 animate-pulse"
+              style={{
+                backgroundColor: 'var(--bg-surface-elevated)',
+                borderColor: 'var(--border-subtle)',
+              }}
+            >
+              <div className="h-3.5 w-24 rounded bg-slate-400/20" />
+              <div className="h-8 w-16 rounded bg-slate-400/25" />
+            </div>
+          ))}
+        </div>
+
+        {/* Profile Card Skeletons */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[1, 2, 3].map((i) => (
+            <div
+              key={i}
+              className="rounded-2xl p-6 border glass-card space-y-4 animate-pulse"
+              style={{
+                backgroundColor: 'var(--bg-surface-elevated)',
+                borderColor: 'var(--border-subtle)',
+              }}
+            >
+              <div className="flex items-start justify-between">
+                <div className="w-11 h-11 rounded-xl bg-slate-400/20" />
+                <div className="h-5 w-16 rounded-full bg-slate-400/15" />
+              </div>
+              <div className="space-y-2 pt-2">
+                <div className="h-5 w-3/4 rounded-lg bg-slate-400/20" />
+                <div className="h-3.5 w-1/2 rounded bg-slate-400/15" />
+              </div>
+              <div className="h-16 rounded-xl bg-slate-400/10 pt-4" />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-4 sm:p-6 md:p-10 max-w-7xl mx-auto animate-fade-in-up space-y-6 sm:space-y-8">

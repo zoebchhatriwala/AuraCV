@@ -5,6 +5,7 @@ import {
 } from '../ai/factory';
 import { settingsQueries, apiKeyQueries, aiSessionQueries, sectionQueries } from '../db/database';
 import type { ResumeSection } from '../types';
+import { evaluateAndCorrectCVTailor } from '../ai/evaluator';
 
 const router = Router();
 
@@ -202,14 +203,36 @@ router.post('/cv-tailor/questions', async (req: Request, res: Response) => {
 
 router.post('/cv-tailor/rewrite', async (req: Request, res: Response) => {
   try {
-    const { resume_id, role, instructions, qna, model } = req.body as { resume_id?: string; role?: string; instructions?: string; qna?: Array<{question: string, answer: string}>; model?: string };
+    const { resume_id, role, instructions, qna, model } = req.body as {
+      resume_id?: string;
+      role?: string;
+      instructions?: string;
+      qna?: Array<{ question: string; answer: string }>;
+      model?: string;
+    };
     if (!resume_id || !role || !qna) return void res.status(400).json({ error: 'resume_id, role, and qna required' });
     const sections = sectionQueries.list(resume_id);
     const resumeText = sectionsToPlainText(sections);
     const provider = getActiveProvider(model);
-    const result = await provider.cvTailorRewrite(resumeText, role, instructions || '', qna);
-    res.json(result);
-  } catch (e) { res.status(500).json({ error: (e as Error).message }); }
+
+    // Call provider with repair extraction
+    const rawResult = await provider.cvTailorRewrite(resumeText, role, instructions || '', qna);
+
+    // Run live evaluation and auto-correction pipeline against source sections
+    const evaluatedResult = evaluateAndCorrectCVTailor({
+      raw: rawResult.data,
+      sourceSections: sections,
+      role,
+      instructions: instructions || '',
+      qna,
+      wasRepaired: rawResult.wasRepaired,
+      extractedThinking: rawResult.extractedThinking,
+    });
+
+    res.json(evaluatedResult);
+  } catch (e) {
+    res.status(500).json({ error: (e as Error).message });
+  }
 });
 
 router.get('/sessions/:resumeId', (req: Request, res: Response) => {

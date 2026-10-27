@@ -8,6 +8,7 @@ interface AppState {
   resumes: Resume[];
   currentResume: ResumeWithSections | null;
   loadingResumes: boolean;
+  hasLoadedResumes: boolean;
 
   // Providers
   providers: ProviderInfo[];
@@ -72,7 +73,8 @@ applyTheme(initialTheme);
 export const useAppStore = create<AppState>((set, get) => ({
   resumes: [],
   currentResume: null,
-  loadingResumes: false,
+  loadingResumes: true,
+  hasLoadedResumes: false,
   providers: [],
   activeProvider: null,
   settings: {},
@@ -84,9 +86,9 @@ export const useAppStore = create<AppState>((set, get) => ({
     set({ loadingResumes: true });
     try {
       const resumes = await resumeApi.list();
-      set({ resumes, loadingResumes: false });
+      set({ resumes, loadingResumes: false, hasLoadedResumes: true });
     } catch (e) {
-      set({ loadingResumes: false });
+      set({ loadingResumes: false, hasLoadedResumes: true });
       throw e;
     }
   },

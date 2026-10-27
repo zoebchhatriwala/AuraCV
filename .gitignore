@@ -45,3 +45,6 @@ Thumbs.db
 *.njsproj
 *.sln
 *.sw?
+
+# DevMind Agent Workspace
+.devmind/

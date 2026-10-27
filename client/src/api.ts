@@ -58,7 +58,7 @@ export const aiApi = {
   cvTailorQuestions: (data: { resume_id: string; role: string; instructions?: string; model?: string }) =>
                  post<{questions: Array<{id: string, question: string}>}>('/ai/cv-tailor/questions', data),
   cvTailorRewrite: (data: { resume_id: string; role: string; instructions?: string; qna: Array<{question: string, answer: string}>; model?: string }) =>
-                 post<{summary: string, experience: Array<{company: string, role: string, bullets: string[]}>, skills?: Array<{category: string, items: string[]}>, improvement_notes: string}>('/ai/cv-tailor/rewrite', data),
+                 post<CVTailorResult>('/ai/cv-tailor/rewrite', data),
   sessions:    (resumeId: string) => get<AISession[]>(`/ai/sessions/${resumeId}`),
   acceptSession: (id: string)     => post<{ ok: boolean }>(`/ai/sessions/${id}/accept`),
 };
@@ -379,5 +379,84 @@ export interface QASearchResult extends QAEntry {
   similarity: number;
   match_confidence: 'high' | 'medium' | 'low';
 }
+
+export interface CVTailorThinking {
+  gap_analysis: string;
+  strategic_angle: string;
+  xyz_transformations: Array<{
+    target: string;
+    action: string;
+    impact_metric: string;
+    bullet: string;
+  }>;
+  keyword_alignment: string[];
+}
+
+export interface CVTailorEvaluationCheck {
+  name: string;
+  status: 'pass' | 'repaired' | 'warning';
+  details: string;
+}
+
+export interface CVTailorEvaluation {
+  schema_valid: boolean;
+  json_repaired: boolean;
+  completeness_score: number;
+  checks: CVTailorEvaluationCheck[];
+  corrections: string[];
+}
+
+export interface CVTailorSection {
+  section_type: string;
+  title: string;
+  content: unknown[];
+}
+
+export interface CVTailorResult {
+  name: string;
+  target_role: string;
+  target_company?: string;
+  summary: string;
+  sections: CVTailorSection[];
+  experience: Array<{
+    company: string;
+    role: string;
+    bullets: string[];
+    start_date?: string;
+    end_date?: string;
+    location?: string;
+  }>;
+  skills: Array<{
+    category: string;
+    items: string[];
+  }>;
+  projects?: Array<{
+    name: string;
+    description: string;
+    tech: string[];
+    bullets?: string[];
+    url?: string;
+  }>;
+  education?: Array<{
+    institution: string;
+    degree: string;
+    field: string;
+    start_date?: string;
+    end_date?: string;
+    gpa?: string;
+    bullets?: string[];
+  }>;
+  certifications?: Array<{
+    name: string;
+    issuer: string;
+    date?: string;
+    url?: string;
+  }>;
+  improvement_notes: string;
+  thinking_process: CVTailorThinking;
+  evaluation: CVTailorEvaluation;
+  raw_cv_json: Record<string, unknown>;
+}
+
 
 

@@ -7,6 +7,7 @@
  */
 
 import { PROMPTS } from '../prompts';
+import { extractAndRepairJson, type JsonRepairResult } from '../jsonRepair';
 import type {
   ProviderConfig, EndpointConfig,
   RedlineResult, RewriteResult, ATSScoreResult,
@@ -136,67 +137,7 @@ export default class HttpProvider {
   }
 
   private extractJsonFromText(text: string): unknown {
-    // 1. Try markdown blocks (last one first)
-    const blocks = Array.from(text.matchAll(/```(?:json)?\s*([\s\S]*?)\s*```/gi));
-    for (let i = blocks.length - 1; i >= 0; i--) {
-      try {
-        const parsed = JSON.parse(blocks[i][1].trim());
-        if (parsed && typeof parsed === 'object') return parsed;
-      } catch (e) {}
-    }
-
-    // 2. Scan for balanced '{ ... }' blocks ignoring strings
-    const candidates: string[] = [];
-    let depth = 0;
-    let start = -1;
-    let inString = false;
-    let escape = false;
-
-    for (let i = 0; i < text.length; i++) {
-      const char = text[i];
-      if (escape) {
-        escape = false;
-        continue;
-      }
-      if (char === '\\') {
-        escape = true;
-        continue;
-      }
-      if (char === '"') {
-        inString = !inString;
-        continue;
-      }
-      if (!inString) {
-        if (char === '{') {
-          if (depth === 0) start = i;
-          depth++;
-        } else if (char === '}') {
-          depth--;
-          if (depth === 0 && start !== -1) {
-            candidates.push(text.substring(start, i + 1));
-            start = -1;
-          } else if (depth < 0) {
-            depth = 0;
-          }
-        }
-      }
-    }
-
-    // Try parsing candidates from last to first
-    for (let i = candidates.length - 1; i >= 0; i--) {
-      try {
-        const parsed = JSON.parse(candidates[i]);
-        if (parsed && typeof parsed === 'object') return parsed;
-      } catch (e) {
-        try {
-          const fixed = candidates[i].replace(/,\s*([\]}])/g, '$1');
-          const parsed = JSON.parse(fixed);
-          if (parsed && typeof parsed === 'object') return parsed;
-        } catch (e2) {}
-      }
-    }
-
-    throw new Error("No valid JSON object found in text");
+    return extractAndRepairJson(text).data;
   }
 
   private parseResponse(raw: unknown, responseCfg: EndpointConfig['response']): unknown {
@@ -224,12 +165,25 @@ export default class HttpProvider {
     const headers = this.buildHeaders(endpointCfg);
     const method = (endpointCfg.method ?? 'POST').toUpperCase();
 
-    const fetchOpts: RequestInit = { method, headers };
+    const fetchOpts: RequestInit = {
+      method,
+      headers,
+      signal: AbortSignal.timeout(45000),
+    };
     if (method !== 'GET' && endpointCfg.request) {
       fetchOpts.body = JSON.stringify(this.buildBody(endpointCfg, prompt));
     }
 
-    const res = await fetch(url, fetchOpts);
+    let res: Response;
+    try {
+      res = await fetch(url, fetchOpts);
+    } catch (err: any) {
+      if (err.name === 'TimeoutError' || err.name === 'AbortError') {
+        throw new Error(`${this.config.name} request timed out after 45 seconds. The selected model (${this.model}) took too long to respond. Please try another model.`);
+      }
+      throw err;
+    }
+
     if (!res.ok) {
       const errText = await res.text().catch(() => res.statusText);
       throw new Error(`${this.config.name} API ${res.status}: ${errText.substring(0, 300)}`);
@@ -238,6 +192,55 @@ export default class HttpProvider {
     const body = await res.json() as unknown;
     const extracted = this.extract(body, endpointCfg.response.extract);
     return this.parseResponse(extracted, endpointCfg.response);
+  }
+
+  /** Execute a named endpoint and return the full repair & thinking context. */
+  async callWithRepair(endpointName: string, prompt: string | null = null): Promise<JsonRepairResult<unknown>> {
+    const endpointCfg = this.config.endpoints?.[endpointName];
+    if (!endpointCfg) throw new Error(`Endpoint "${endpointName}" not defined in provider YAML for ${this.config.provider}`);
+
+    const url = this.buildUrl(endpointCfg);
+    const headers = this.buildHeaders(endpointCfg);
+    const method = (endpointCfg.method ?? 'POST').toUpperCase();
+
+    const fetchOpts: RequestInit = {
+      method,
+      headers,
+      signal: AbortSignal.timeout(45000),
+    };
+    if (method !== 'GET' && endpointCfg.request) {
+      fetchOpts.body = JSON.stringify(this.buildBody(endpointCfg, prompt));
+    }
+
+    let res: Response;
+    try {
+      res = await fetch(url, fetchOpts);
+    } catch (err: any) {
+      if (err.name === 'TimeoutError' || err.name === 'AbortError') {
+        throw new Error(`${this.config.name} request timed out after 45 seconds. The selected model (${this.model}) took too long to respond. Please try a faster model.`);
+      }
+      throw err;
+    }
+
+    if (!res.ok) {
+      const errText = await res.text().catch(() => res.statusText);
+      throw new Error(`${this.config.name} API ${res.status}: ${errText.substring(0, 300)}`);
+    }
+
+    const body = await res.json() as unknown;
+    const content = this.extract(body, endpointCfg.response.extract);
+    const reasoning = this.extract(body, 'choices[0].message.reasoning_content') as string | undefined;
+
+    // Use content if non-empty, otherwise fallback to reasoning
+    const targetPayload = (content !== null && content !== undefined && content !== '') ? content : reasoning;
+    const repairResult = extractAndRepairJson(targetPayload);
+
+    // If native reasoning exists and wasn't extracted from <think> tags, attach it
+    if (!repairResult.extractedThinking && reasoning && typeof reasoning === 'string') {
+      repairResult.extractedThinking = reasoning.trim();
+    }
+
+    return repairResult;
   }
 
   // ─── Feature methods ───────────────────────────────────────────────────────
@@ -277,9 +280,15 @@ export default class HttpProvider {
     return this.call('chat', PROMPTS.cvTailorQuestions(resumeText, role, instructions)) as Promise<{questions: Array<{id: string, question: string}>}>;
   }
 
-  async cvTailorRewrite(resumeText: string, role: string, instructions: string, qna: Array<{question: string, answer: string}>): Promise<{summary: string, experience: Array<{company: string, role: string, bullets: string[]}>, improvement_notes: string}> {
-    return this.call('chat', PROMPTS.cvTailorRewrite(resumeText, role, instructions, qna)) as Promise<{summary: string, experience: Array<{company: string, role: string, bullets: string[]}>, improvement_notes: string}>;
+  async cvTailorRewrite(
+    resumeText: string,
+    role: string,
+    instructions: string,
+    qna: Array<{question: string, answer: string}>
+  ): Promise<JsonRepairResult<unknown>> {
+    return this.callWithRepair('chat', PROMPTS.cvTailorRewrite(resumeText, role, instructions, qna));
   }
+
 
   async test(): Promise<unknown> {
     return this.call('test');

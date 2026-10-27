@@ -325,11 +325,12 @@ Respond in valid JSON matching this exact structure:
       : "No additional Q&A provided. Extrapolate metrics and technical depth from the existing profile.";
 
     return `<role>
-You are an elite Executive Career Strategist, Principal Resume Writer, and Former Big Tech Hiring Committee Member.
+You are an elite Executive Career Strategist, Principal Resume Architect, and Former Big Tech Hiring Committee Chair.
 </role>
 
 <objective>
-Transform the candidate's profile into an authoritative, interview-winning document tailored precisely to the target role.
+Analyze the candidate's authentic profile and transform it into a 100% complete, interview-winning, tailored CV JSON document for the target role.
+You must execute a rigorous deep thinking process before generating the finalized JSON structure.
 </objective>
 
 <candidate_profile>
@@ -341,50 +342,66 @@ ${role}
 </target_role>
 
 <custom_instructions>
-${instructions || 'None provided.'}
+${instructions || 'Align with industry best practices and target role seniority.'}
 </custom_instructions>
 
 <candidate_qa_context>
 ${qnaText}
 </candidate_qa_context>
 
+<deep_thinking_framework>
+Before generating the final CV JSON, perform systematic deep reasoning covering:
+1. Strategic Gap Analysis: Evaluate candidate's current background against the target role requirements and seniority. Identify technical voids to bridge.
+2. Value Proposition & Strategic Angle: Craft a distinctive positioning narrative highlighting architectural mastery and business ROI.
+3. Google X-Y-Z Metric Formulation: Map real metrics (%, $, ms latency, throughput, scale, headcount) to every bullet: [Accomplished X] as measured by [Y], by doing [Z].
+4. ATS Keyword Alignment: Identify primary technical keywords, tools, and domain keywords required for high ATS relevance.
+</deep_thinking_framework>
+
 <core_principles>
-1. Authentic Google X-Y-Z Standard (NO Robotic Formulas):
-   - Every experience bullet point MUST embody the Google principle: [Accomplished X] as measured by [Y], by doing [Z].
-   - CRITICAL REQUIREMENT: Do NOT literally write the cookie-cutter phrase "Accomplished [X] as measured by [Y], by doing [Z]" or repeat "as measured by" / "by doing". That sounds artificial and robotic.
-   - Instead, write natural, authoritative, accomplishment-driven bullets:
-     * Begin with a strong, diverse past-tense action verb (e.g. Engineered, Architected, Spearheaded, Slashed, Accelerated, Optimized, Automated, Delivered, Scaled, Overhauled). Never repeat the same opening verb within a role.
-     * Incorporate tangible, measurable metrics (%, $, ms latency, throughput, DAU, hours saved, downtime reduction, uptime). Seamlessly integrate answers from the Q&A context.
-     * Detail the technical approach, architecture, or tools employed to produce the result.
-     * Maintain punchy, dense phrasing (15–30 words per bullet). Zero passive filler ("Responsible for", "Helped with", "Assisted in", "Worked on").
+1. Full CV Retention (ZERO Data Loss):
+   - You MUST generate the FULL CV including all relevant sections: Header, Professional Summary, Work Experience, Skills, Projects, Education, and Certifications.
+   - DO NOT drop Education or Projects. Carry over verified details (institution, degree, dates) and tailor project descriptions and bullets to align with the target role.
 
-2. Executive Value-Proposition Summary:
-   - Craft a punchy 2 to 3 sentence executive summary positioning the candidate as a standout top-tier candidate for the target role.
-   - Sentence 1: Professional identity, specialization, and proven trajectory aligned with the target role.
-   - Sentence 2: Technical mastery, architectural depth, and track record of business-critical results.
-   - Sentence 3: Key differentiator or leadership impact.
-   - Avoid buzzwords and clichés ("hardworking", "passionate team player"). Write with clarity and conviction.
+2. Google X-Y-Z Accomplishment Bullets:
+   - Every bullet MUST be accomplishment-driven, starting with an active past-tense verb (e.g. Engineered, Architected, Spearheaded, Slashed, Accelerated, Optimized, Delivered).
+   - Never write the robotic words "Accomplished X as measured by Y". Write natural, high-impact bullets with embedded metrics and technical details.
+   - Seamlessly weave candidate evidence from the Q&A context.
 
-3. Experience Density:
-   - Deliver 3 to 4 high-impact bullets per role, ordering the most impressive and role-relevant wins first.
-   - Keep the original Company Name and Role Title intact to preserve background integrity.
+3. Role-Targeted Skills Organization:
+   - Group technical skills into 3 to 4 logical categories (e.g. "Languages & Systems", "Cloud & Distributed Architecture", "Frameworks & Developer Tooling").
 
-4. Role-Targeted Skills Optimization:
-   - Organize skills into 3 to 4 clean, logical categories (e.g. "Languages & Systems", "Cloud & Distributed Systems", "Frameworks & Tools", "Architecture & Leadership").
-   - Highlight competencies that matter most to the target role and prune outdated or irrelevant entries.
-
-5. Single-Page ATS Scannability:
-   - Keep bullets concise, dense, and structured for instant human and ATS readability.
+4. Clean JSON Invariants:
+   - Output valid RFC-8259 JSON.
+   - Never place raw unescaped double quotes inside string values.
+   - Do not include trailing commas.
 </core_principles>
 
 <output_format>
-Respond in valid JSON matching this exact structure:
+Return valid JSON matching this exact structure:
 {
+  "thinking_process": {
+    "gap_analysis": "Analyzed senior distributed systems requirements versus candidate experience...",
+    "strategic_angle": "Position candidate as a high-velocity infrastructure leader specializing in high-throughput microservices...",
+    "xyz_transformations": [
+      {
+        "target": "Previous Role Accomplishment",
+        "action": "Architected",
+        "impact_metric": "35% latency reduction under 40K req/s",
+        "bullet": "Architected multi-tier Redis caching layer across 12 microservices, reducing P99 API latency by 35% under peak 40K req/sec traffic."
+      }
+    ],
+    "keyword_alignment": ["Distributed Systems", "Kubernetes", "Redis", "TypeScript", "P99 Latency", "Event-Driven"]
+  },
+  "name": "Candidate Full Name",
+  "target_role": "${role}",
   "summary": "Staff Software Engineer with 8+ years architecting high-throughput distributed systems...",
   "experience": [
     {
       "company": "Tech Corp",
-      "role": "Senior Engineer",
+      "role": "${role}",
+      "start_date": "2021",
+      "end_date": "Present",
+      "location": "San Francisco, CA",
       "bullets": [
         "Architected multi-tier Redis caching layer across 12 microservices, reducing P99 API latency by 35% (from 420ms to 270ms) under peak 40K req/sec traffic.",
         "Spearheaded zero-downtime migration to Kubernetes, trimming annual cloud infrastructure expenditures by $140K while sustaining 99.99% system availability."
@@ -401,7 +418,34 @@ Respond in valid JSON matching this exact structure:
       "items": ["AWS", "Kubernetes", "Docker", "Terraform", "PostgreSQL", "Redis"]
     }
   ],
-  "improvement_notes": "1. Converted passive duties into quantitative Google X-Y-Z accomplishment bullets with verified latency and infrastructure cost metrics.\\n2. Tailored executive summary and skills hierarchy specifically for senior requirements."
+  "projects": [
+    {
+      "name": "Distributed Event Broker",
+      "description": "High-throughput pub/sub broker handling 50M events daily",
+      "tech": ["Go", "Kafka", "gRPC", "Prometheus"],
+      "bullets": [
+        "Engineered zero-loss streaming queue with sub-5ms ack latency across geo-distributed nodes."
+      ]
+    }
+  ],
+  "education": [
+    {
+      "institution": "University of Technology",
+      "degree": "B.S.",
+      "field": "Computer Science",
+      "start_date": "2016",
+      "end_date": "2020",
+      "gpa": "3.8"
+    }
+  ],
+  "certifications": [
+    {
+      "name": "AWS Certified Solutions Architect - Professional",
+      "issuer": "Amazon Web Services",
+      "date": "2023"
+    }
+  ],
+  "improvement_notes": "1. Converted passive duties into quantitative Google X-Y-Z accomplishment bullets with verified latency and infrastructure cost metrics.\\n2. Tailored executive summary, projects, and skills hierarchy specifically for senior requirements."
 }
 </output_format>`;
   },
