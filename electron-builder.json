@@ -66,7 +66,6 @@
   },
   "linux": {
     "maintainer": "Zoeb Chhatriwala <zoeb@chhatriwala.com>",
-    "syncDesktopName": true,
     "target": [
       {
         "target": "AppImage",
