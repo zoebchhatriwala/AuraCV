@@ -1,8 +1,8 @@
 import { DatabaseSync } from 'node:sqlite';
-import { readFileSync, statSync, existsSync, copyFileSync, mkdirSync, rmSync } from 'fs';
+import { readFileSync, writeFileSync, statSync, existsSync, copyFileSync, mkdirSync, rmSync } from 'fs';
 import { join, dirname } from 'path';
 import { createCipheriv, createDecipheriv, randomBytes, createHash, randomUUID } from 'crypto';
-import { networkInterfaces, tmpdir } from 'os';
+import { networkInterfaces, tmpdir, hostname, userInfo } from 'os';
 import type {
   ResumeRow, SectionRow, AISessionRow,
   Resume, ResumeSection, SectionType, SectionContent,
@@ -24,32 +24,113 @@ export function getDbPath(): string {
 let _db: DatabaseSync | null = null;
 
 
-// ─── Encryption (AES-256, machine-fingerprint key) ────────────────────────────
+// ─── Encryption (AES-256 with persistent local vault secret & multi-candidate fallback) ────────
 
-function getMachineKey(): Buffer {
-  const nets = networkInterfaces();
-  const macs: string[] = [];
-  for (const ifaces of Object.values(nets)) {
-    for (const iface of ifaces ?? []) {
-      if (!iface.internal && iface.mac !== '00:00:00:00:00:00') macs.push(iface.mac);
+let _cachedVaultKey: Buffer | null = null;
+
+function getVaultKeyPath(): string {
+  const dbDir = dirname(getDbPath());
+  return join(dbDir, '.auracv_vault.key');
+}
+
+function getPrimaryVaultKey(): Buffer {
+  if (_cachedVaultKey) return _cachedVaultKey;
+
+  const keyPath = getVaultKeyPath();
+  const dbDir = dirname(keyPath);
+
+  try {
+    if (existsSync(keyPath)) {
+      const raw = readFileSync(keyPath);
+      if (raw.length >= 32) {
+        _cachedVaultKey = createHash('sha256').update(raw).digest();
+        return _cachedVaultKey;
+      }
+    }
+
+    if (!existsSync(dbDir)) {
+      mkdirSync(dbDir, { recursive: true });
+    }
+
+    // Generate 32 secure random bytes for a permanent local machine vault secret
+    const secret = randomBytes(32);
+    try {
+      writeFileSync(keyPath, secret, { mode: 0o600 });
+      _cachedVaultKey = createHash('sha256').update(secret).digest();
+      return _cachedVaultKey;
+    } catch {
+      // If filesystem is read-only or restricted, derive stable machine fallback
+      const host = hostname() || 'local';
+      let user = 'user';
+      try { user = userInfo().username; } catch {}
+      const fallbackSecret = `auracv-vault-secret-${host}-${user}`;
+      _cachedVaultKey = createHash('sha256').update(fallbackSecret).digest();
+      return _cachedVaultKey;
+    }
+  } catch {
+    const host = hostname() || 'local';
+    let user = 'user';
+    try { user = userInfo().username; } catch {}
+    const fallbackSecret = `auracv-vault-secret-${host}-${user}`;
+    _cachedVaultKey = createHash('sha256').update(fallbackSecret).digest();
+    return _cachedVaultKey;
+  }
+}
+
+function getFallbackCandidateKeys(): Buffer[] {
+  const seeds: string[] = [];
+
+  // Candidate A: Network interfaces (legacy implementation vulnerable to adapter changes)
+  try {
+    const nets = networkInterfaces();
+    const macs: string[] = [];
+    for (const ifaces of Object.values(nets)) {
+      for (const iface of ifaces ?? []) {
+        if (!iface.internal && iface.mac !== '00:00:00:00:00:00') macs.push(iface.mac);
+      }
+    }
+    if (macs.length > 0) {
+      seeds.push(macs.sort().join('|'));
+      const uniqueMacs = Array.from(new Set(macs));
+      seeds.push(uniqueMacs.sort().join('|'));
+      for (const m of uniqueMacs) {
+        seeds.push(m);
+      }
+    }
+  } catch {}
+
+  // Candidate B: Legacy fallback seed
+  seeds.push('auracv-fallback-seed-2024');
+
+  // Candidate C: Hostname & user fallback
+  try {
+    const host = hostname() || '';
+    let user = '';
+    try { user = userInfo().username; } catch {}
+    if (host || user) seeds.push(`auracv-vault-secret-${host}-${user}`);
+  } catch {}
+
+  const primaryKey = getPrimaryVaultKey();
+  const seen = new Set<string>([primaryKey.toString('hex')]);
+  const candidates: Buffer[] = [];
+
+  for (const s of seeds) {
+    if (!s) continue;
+    const buf = createHash('sha256').update(s).digest();
+    const hex = buf.toString('hex');
+    if (!seen.has(hex)) {
+      seen.add(hex);
+      candidates.push(buf);
     }
   }
-  const seed = macs.sort().join('|') || 'auracv-fallback-seed-2024';
-  return createHash('sha256').update(seed).digest();
+
+  return candidates;
 }
 
-export function encrypt(text: string): string {
-  const key = getMachineKey();
-  const iv = randomBytes(16);
-  const cipher = createCipheriv('aes-256-cbc', key, iv);
-  const encrypted = Buffer.concat([cipher.update(text, 'utf8'), cipher.final()]);
-  return iv.toString('hex') + ':' + encrypted.toString('hex');
-}
-
-export function decrypt(data: string): string | null {
+function decryptWithKey(data: string, key: Buffer): string | null {
   try {
     const [ivHex, encHex] = data.split(':');
-    const key = getMachineKey();
+    if (!ivHex || !encHex) return null;
     const iv = Buffer.from(ivHex, 'hex');
     const decipher = createDecipheriv('aes-256-cbc', key, iv);
     const decrypted = Buffer.concat([decipher.update(Buffer.from(encHex, 'hex')), decipher.final()]);
@@ -57,6 +138,46 @@ export function decrypt(data: string): string | null {
   } catch {
     return null;
   }
+}
+
+export function encrypt(text: string): string {
+  const key = getPrimaryVaultKey();
+  const iv = randomBytes(16);
+  const cipher = createCipheriv('aes-256-cbc', key, iv);
+  const encrypted = Buffer.concat([cipher.update(text, 'utf8'), cipher.final()]);
+  return iv.toString('hex') + ':' + encrypted.toString('hex');
+}
+
+export function decryptWithMigration(data: string): { text: string; needsMigration: boolean } | null {
+  // 1. Primary stable vault key
+  const primaryKey = getPrimaryVaultKey();
+  const primaryDecrypted = decryptWithKey(data, primaryKey);
+  if (primaryDecrypted !== null) {
+    return { text: primaryDecrypted, needsMigration: false };
+  }
+
+  // 2. Legacy fallback candidate keys
+  for (const fallbackKey of getFallbackCandidateKeys()) {
+    const legacyDecrypted = decryptWithKey(data, fallbackKey);
+    if (legacyDecrypted !== null) {
+      return { text: legacyDecrypted, needsMigration: true };
+    }
+  }
+
+  return null;
+}
+
+export function decrypt(data: string): string | null {
+  const result = decryptWithMigration(data);
+  return result ? result.text : null;
+}
+
+export function maskKey(plain: string): string {
+  if (!plain) return '';
+  if (plain.length <= 8) return '••••••••';
+  const prefix = plain.slice(0, Math.min(8, Math.floor(plain.length / 4)));
+  const suffix = plain.slice(-4);
+  return `${prefix}••••••••${suffix}`;
 }
 
 // ─── DB singleton ─────────────────────────────────────────────────────────────
@@ -299,7 +420,18 @@ export const apiKeyQueries = {
   },
   get(provider: string): string | null {
     const row = getDb().prepare(`SELECT encrypted FROM api_keys WHERE provider=?`).get(provider) as unknown as { encrypted: string } | undefined;
-    return row ? decrypt(row.encrypted) : null;
+    if (!row) return null;
+    const result = decryptWithMigration(row.encrypted);
+    if (!result) return null;
+    if (result.needsMigration) {
+      // Seamlessly migrate legacy key to persistent primary vault key
+      apiKeyQueries.set(provider, result.text);
+    }
+    return result.text;
+  },
+  getMasked(provider: string): string | null {
+    const plain = apiKeyQueries.get(provider);
+    return plain ? maskKey(plain) : null;
   },
   list(): Array<{ provider: string; updated_at: string }> {
     const rows = getDb().prepare(`SELECT provider, updated_at FROM api_keys`).all() as unknown as Array<{ provider: string; updated_at: string }>;

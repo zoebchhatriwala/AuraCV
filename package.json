@@ -1,6 +1,6 @@
 {
   "name": "auracv",
-  "version": "2.0.1",
+  "version": "2.1.0",
   "description": "Privacy-first career intelligence studio and CV / Resume builder",
   "author": "Zoeb Chhatriwala <zoeb@chhatriwala.com>",
   "desktopName": "auracv.desktop",
@@ -15,7 +15,7 @@
     "build:client": "cd client && npm run build",
     "build:server": "cd server && npm run build",
     "build:electron": "tsc -p desktop",
-    "desktop": "concurrently --kill-others --names SERVER,CLIENT,DESKTOP --prefix-colors magenta,cyan,green \"npm run dev:server\" \"npm run dev:client\" \"wait-on http://localhost:5842 && npm run build:electron && electron .\"",
+    "desktop": "concurrently --kill-others --names SERVER,CLIENT,DESKTOP --prefix-colors magenta,cyan,green \"npm run dev:server\" \"npm run dev:client\" \"wait-on http://localhost:5842 http-get://127.0.0.1:3847/api/health && npm run build:electron && electron .\"",
     "build:desktop": "npm run build:client && npm run build:server && npm run build:electron && electron-builder",
     "build:desktop:win": "npm run build:client && npm run build:server && npm run build:electron && electron-builder --win",
     "build:desktop:mac": "npm run build:client && npm run build:server && npm run build:electron && electron-builder --mac",

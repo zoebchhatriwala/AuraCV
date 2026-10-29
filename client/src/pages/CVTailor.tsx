@@ -218,7 +218,7 @@ export default function CVTailor() {
             AI Profile Tailor
           </h1>
           <p className="text-sm mt-1" style={{ color: "var(--text-secondary)" }}>
-            Tailor your profile for a target role, highlighting relevant metrics and generating a complete CV.
+            Tailor your profile for a target role, highlighting relevant metrics and generating a complete CV / Resume.
           </p>
         </div>
 
@@ -386,7 +386,7 @@ export default function CVTailor() {
                 <CheckCircle2 className="w-5 h-5" /> Tailoring Complete!
               </div>
               <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">
-                Complete CV generated with all sections preserved.
+                Complete CV / Resume generated with all sections preserved.
               </span>
             </div>
           )}
@@ -542,7 +542,7 @@ function TailorPanel({
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(result.raw_cv_json || result, null, 2));
     const downloadAnchor = document.createElement("a");
     downloadAnchor.setAttribute("href", dataStr);
-    downloadAnchor.setAttribute("download", `tailored-cv-${(result.target_role || "profile").toLowerCase().replace(/[^a-z0-9]/g, "-")}.json`);
+    downloadAnchor.setAttribute("download", `tailored-cv-resume-${(result.target_role || "profile").toLowerCase().replace(/[^a-z0-9]/g, "-")}.json`);
     document.body.appendChild(downloadAnchor);
     downloadAnchor.click();
     downloadAnchor.remove();
@@ -563,7 +563,7 @@ function TailorPanel({
               className="font-display text-xl font-bold"
               style={{ color: "var(--text-primary)" }}
             >
-              Tailored CV Document
+              Tailored CV / Resume Document
             </h3>
             <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20">
               {result.target_role}
@@ -582,7 +582,7 @@ function TailorPanel({
               borderColor: "var(--border-default)",
               color: "var(--text-primary)",
             }}
-            title="Copy full CV JSON to clipboard"
+            title="Copy full CV / Resume JSON to clipboard"
           >
             {copied ? (
               <Check className="w-3.5 h-3.5 text-emerald-500" />
@@ -599,7 +599,7 @@ function TailorPanel({
               borderColor: "var(--border-default)",
               color: "var(--text-primary)",
             }}
-            title="Download CV JSON file"
+            title="Download CV / Resume JSON file"
           >
             <Download className="w-3.5 h-3.5" /> Download JSON
           </button>
@@ -609,7 +609,7 @@ function TailorPanel({
               to={`/editor/${createdResumeId}`}
               className="text-xs font-semibold px-4 py-2 rounded-xl text-white bg-emerald-600 hover:bg-emerald-700 transition-colors flex items-center gap-1.5 shadow-sm"
             >
-              Open in Resume Builder <ExternalLink className="w-3.5 h-3.5" />
+              Open in CV / Resume Builder <ExternalLink className="w-3.5 h-3.5" />
             </Link>
           ) : (
             <button
@@ -786,23 +786,32 @@ function TailorPanel({
                   <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
                     Google X-Y-Z Accomplishment Transformations:
                   </span>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {result.thinking_process.xyz_transformations.map((tr, idx) => (
                       <div
                         key={idx}
-                        className="p-3 rounded-xl border text-xs space-y-1.5"
+                        className="p-3.5 rounded-xl border text-xs space-y-2 overflow-hidden"
                         style={{
                           borderColor: "var(--border-subtle)",
                           backgroundColor: "var(--bg-surface)",
                         }}
                       >
-                        <div className="flex items-center justify-between text-[11px]">
-                          <span className="font-bold text-purple-500 truncate">{tr.target}</span>
-                          <span className="font-mono text-emerald-500 font-semibold shrink-0">
-                            {tr.impact_metric}
-                          </span>
+                        <div className="flex flex-wrap items-center justify-between gap-1.5 text-[11px]">
+                          {tr.target && (
+                            <span
+                              className="font-bold text-purple-500 text-[10px] uppercase tracking-wider bg-purple-500/10 px-2 py-0.5 rounded border border-purple-500/20 max-w-[200px] truncate"
+                              title={tr.target}
+                            >
+                              {tr.target}
+                            </span>
+                          )}
+                          {tr.impact_metric && (
+                            <span className="font-mono text-emerald-500 dark:text-emerald-400 font-semibold text-[11px] break-words flex-1 text-right">
+                              {tr.impact_metric}
+                            </span>
+                          )}
                         </div>
-                        <p className="text-[11px] leading-relaxed" style={{ color: "var(--text-secondary)" }}>
+                        <p className="text-[11px] leading-relaxed break-words" style={{ color: "var(--text-secondary)" }}>
                           {tr.bullet}
                         </p>
                       </div>
@@ -825,7 +834,7 @@ function TailorPanel({
               : "text-slate-400 hover:text-slate-200"
           }`}
         >
-          <FileText className="w-3.5 h-3.5" /> Full CV Preview
+          <FileText className="w-3.5 h-3.5" /> Full CV / Resume Preview
         </button>
 
         <button
@@ -836,7 +845,7 @@ function TailorPanel({
               : "text-slate-400 hover:text-slate-200"
           }`}
         >
-          <Code2 className="w-3.5 h-3.5" /> Raw Full CV JSON
+          <Code2 className="w-3.5 h-3.5" /> Raw Full CV / Resume JSON
         </button>
 
         <button
@@ -1120,11 +1129,11 @@ function TailorPanel({
         </div>
       )}
 
-      {/* ── Tab 2: Raw Full CV JSON ───────────────────────────────────────── */}
+      {/* ── Tab 2: Raw Full CV / Resume JSON ───────────────────────────────────────── */}
       {activeTab === "json" && (
         <div className="space-y-4 animate-fade-in-up">
           <div className="flex items-center justify-between text-xs text-slate-400">
-            <span>Canonical Full CV JSON Structure (Ready for export, SQLite import, or downstream ATS)</span>
+            <span>Canonical Full CV / Resume JSON Structure (Ready for export, SQLite import, or downstream ATS)</span>
             <div className="flex items-center gap-2">
               <button
                 onClick={() => handleCopy(JSON.stringify(result.raw_cv_json || result, null, 2))}
@@ -1230,11 +1239,22 @@ function TailorPanel({
                       borderColor: "var(--border-subtle)",
                     }}
                   >
-                    <div className="flex items-center justify-between text-xs font-bold">
-                      <span className="text-purple-500">{x.target}</span>
-                      <span className="text-emerald-500 font-mono">{x.impact_metric}</span>
+                    <div className="flex flex-wrap items-center justify-between gap-1.5 text-xs font-bold">
+                      {x.target && (
+                        <span
+                          className="text-purple-500 text-[10px] uppercase tracking-wider bg-purple-500/10 px-2 py-0.5 rounded border border-purple-500/20 max-w-[200px] truncate"
+                          title={x.target}
+                        >
+                          {x.target}
+                        </span>
+                      )}
+                      {x.impact_metric && (
+                        <span className="text-emerald-500 font-mono break-words flex-1 text-right">
+                          {x.impact_metric}
+                        </span>
+                      )}
                     </div>
-                    <p className="text-xs text-slate-300 leading-relaxed">{x.bullet}</p>
+                    <p className="text-xs text-slate-300 leading-relaxed break-words">{x.bullet}</p>
                   </div>
                 ))}
               </div>

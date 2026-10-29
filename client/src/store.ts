@@ -9,6 +9,7 @@ interface AppState {
   currentResume: ResumeWithSections | null;
   loadingResumes: boolean;
   hasLoadedResumes: boolean;
+  resumesError: string | null;
 
   // Providers
   providers: ProviderInfo[];
@@ -34,6 +35,7 @@ interface AppState {
   fetchActiveProvider: () => Promise<void>;
   setActiveProvider:   (provider: string, model?: string) => Promise<void>;
   saveApiKey:          (provider: string, key: string) => Promise<void>;
+  deleteApiKey:        (provider: string) => Promise<void>;
   testProvider:        (provider: string, key: string, model?: string) => Promise<boolean>;
 
   fetchSettings:  () => Promise<void>;
@@ -75,6 +77,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   currentResume: null,
   loadingResumes: true,
   hasLoadedResumes: false,
+  resumesError: null,
   providers: [],
   activeProvider: null,
   settings: {},
@@ -83,12 +86,13 @@ export const useAppStore = create<AppState>((set, get) => ({
   theme: initialTheme,
 
   fetchResumes: async () => {
-    set({ loadingResumes: true });
+    set({ loadingResumes: true, resumesError: null });
     try {
       const resumes = await resumeApi.list();
-      set({ resumes, loadingResumes: false, hasLoadedResumes: true });
+      set({ resumes, loadingResumes: false, hasLoadedResumes: true, resumesError: null });
     } catch (e) {
-      set({ loadingResumes: false, hasLoadedResumes: true });
+      const msg = e instanceof Error ? e.message : String(e);
+      set({ loadingResumes: false, hasLoadedResumes: true, resumesError: msg });
       throw e;
     }
   },
@@ -140,6 +144,12 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   saveApiKey: async (provider, key) => {
     await aiApi.saveKey(provider, key);
+    await get().fetchProviders();
+    await get().fetchActiveProvider();
+  },
+
+  deleteApiKey: async (provider) => {
+    await aiApi.deleteKey(provider);
     await get().fetchProviders();
     await get().fetchActiveProvider();
   },

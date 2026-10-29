@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { useAppStore } from '../store';
@@ -6,6 +6,7 @@ import {
   Plus, FileText, Copy, Trash2, Pencil, Clock,
   Upload, Layers, CheckCircle2, Eye, X, Loader2,
   ShieldCheck, Zap, Database, Pin, Archive, ArchiveRestore,
+  RotateCcw, AlertTriangle,
 } from 'lucide-react';
 import type { Resume } from '../api';
 import TemplatePreviewModal from '../components/TemplatePreviewModal';
@@ -14,8 +15,24 @@ import ConfirmModal from '../components/ConfirmModal';
 type ProfileTab = 'active' | 'pinned' | 'archived' | 'all';
 
 export default function Dashboard() {
-  const { resumes, loadingResumes, hasLoadedResumes, createResume, deleteResume, duplicateResume, updateResume } = useAppStore();
+  const {
+    resumes,
+    loadingResumes,
+    hasLoadedResumes,
+    resumesError,
+    fetchResumes,
+    createResume,
+    deleteResume,
+    duplicateResume,
+    updateResume,
+  } = useAppStore();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!hasLoadedResumes || (resumesError && resumes.length === 0)) {
+      fetchResumes().catch(() => {});
+    }
+  }, [hasLoadedResumes, resumesError, resumes.length, fetchResumes]);
   const [creating, setCreating] = useState(false);
   const [newName, setNewName] = useState('');
 
@@ -187,6 +204,45 @@ export default function Dashboard() {
               <div className="h-16 rounded-xl bg-slate-400/10 pt-4" />
             </div>
           ))}
+        </div>
+      </div>
+    );
+  }
+
+  // ─── Connection Delay / Error State (Never falsely show zero profiles on error) ───
+  if (resumesError && resumes.length === 0 && !loadingResumes) {
+    return (
+      <div className="p-4 sm:p-6 md:p-10 max-w-7xl mx-auto animate-fade-in-up space-y-6">
+        <div
+          className="p-6 rounded-3xl border flex flex-col sm:flex-row items-center justify-between gap-6 glass-card"
+          style={{
+            borderColor: 'var(--border-subtle)',
+            backgroundColor: 'var(--bg-surface-elevated)',
+          }}
+        >
+          <div className="flex items-start gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 border border-amber-500/20">
+              <AlertTriangle className="w-6 h-6 text-amber-500" />
+            </div>
+            <div className="space-y-1">
+              <h2 className="text-base font-bold" style={{ color: 'var(--text-primary)' }}>
+                Database Connection Delayed
+              </h2>
+              <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+                Unable to load your career profiles on the initial attempt. The local service may still be warming up or initializing.
+              </p>
+              <p className="text-[11px] font-mono text-rose-400 mt-1">
+                {resumesError}
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => fetchResumes().catch(() => {})}
+            className="px-5 py-2.5 rounded-xl text-xs font-semibold btn-primary inline-flex items-center gap-2 cursor-pointer shrink-0"
+          >
+            <RotateCcw className="w-4 h-4" />
+            Retry Connection
+          </button>
         </div>
       </div>
     );
@@ -559,16 +615,32 @@ export default function Dashboard() {
                         </div>
                       </div>
 
-                      {/* Title and target role */}
-                      <div>
+                      {/* Title and target role with hover tooltip */}
+                      <div className="relative group/title">
                         <h3
                           className="font-display font-bold text-base line-clamp-1 group-hover:text-blue-600 transition-colors"
                           style={{ color: 'var(--text-primary)' }}
+                          title={resume.name}
                         >
                           {resume.name}
                         </h3>
+
+                        {/* Floating tooltip for full profile name on hover */}
+                        <div className="pointer-events-none absolute bottom-full left-0 mb-1.5 hidden group-hover/title:block z-30 max-w-xs sm:max-w-sm rounded-xl bg-slate-900/95 dark:bg-neutral-900/95 text-white px-3 py-2 text-xs shadow-xl border border-slate-700/60 backdrop-blur-xs whitespace-normal break-words animate-in fade-in-0 duration-150">
+                          <div className="font-semibold text-white leading-snug">{resume.name}</div>
+                          {resume.meta?.target_role && (
+                            <div className="text-[10px] text-slate-300 mt-0.5">
+                              {resume.meta.target_role} {resume.meta.target_company && `· ${resume.meta.target_company}`}
+                            </div>
+                          )}
+                        </div>
+
                         {resume.meta?.target_role && (
-                          <p className="text-xs mt-0.5 line-clamp-1" style={{ color: 'var(--text-secondary)' }}>
+                          <p
+                            className="text-xs mt-0.5 line-clamp-1"
+                            style={{ color: 'var(--text-secondary)' }}
+                            title={`${resume.meta.target_role}${resume.meta.target_company ? ` · ${resume.meta.target_company}` : ''}`}
+                          >
                             {resume.meta.target_role} {resume.meta.target_company && `· ${resume.meta.target_company}`}
                           </p>
                         )}

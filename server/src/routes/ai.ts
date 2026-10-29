@@ -21,6 +21,7 @@ router.get('/providers/active', (_req: Request, res: Response) => {
     const name = getActiveProviderName();
     const config = readProviderConfig(name);
     const hasKey = !!apiKeyQueries.get(config.provider);
+    const maskedKey = hasKey ? apiKeyQueries.getMasked(config.provider) : undefined;
     const selectedModel = settingsQueries.get(`provider_model_${config.provider}`);
     res.json({
       provider: config.provider,
@@ -29,6 +30,7 @@ router.get('/providers/active', (_req: Request, res: Response) => {
       models: config.models?.options,
       features: Object.entries(config.features ?? {}).filter(([, v]) => (v as { enabled?: boolean })?.enabled).map(([k]) => k),
       has_api_key: hasKey,
+      masked_api_key: maskedKey ?? undefined,
       local: config.local ?? false,
     });
   } catch (e) { res.status(500).json({ error: (e as Error).message }); }

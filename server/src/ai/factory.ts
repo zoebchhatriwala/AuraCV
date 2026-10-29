@@ -50,6 +50,7 @@ export interface ProviderListItem {
   default_model: string;
   features: string[];
   has_api_key: boolean;
+  masked_api_key?: string;
   error?: string;
 }
 
@@ -74,6 +75,8 @@ export function listProviderFiles(): ProviderListItem[] {
       try {
         const config = readProviderConfig(name);
         const selectedModel = settingsQueries.get(`provider_model_${config.provider}`);
+        const hasKey = !!apiKeyQueries.get(config.provider);
+        const maskedKey = hasKey ? apiKeyQueries.getMasked(config.provider) : undefined;
         return {
           file,
           name: config.name,
@@ -84,7 +87,8 @@ export function listProviderFiles(): ProviderListItem[] {
           models: config.models?.options ?? [],
           default_model: selectedModel || config.models?.default || '',
           features: Object.keys(config.features ?? {}),
-          has_api_key: !!apiKeyQueries.get(config.provider),
+          has_api_key: hasKey,
+          masked_api_key: maskedKey ?? undefined,
         } satisfies ProviderListItem;
       } catch (e) {
         return {

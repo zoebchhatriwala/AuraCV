@@ -15,10 +15,10 @@ export default function App() {
   const { fetchResumes, fetchProviders, fetchActiveProvider, fetchSettings } = useAppStore();
 
   useEffect(() => {
-    fetchResumes();
-    fetchProviders();
-    fetchActiveProvider();
-    fetchSettings();
+    fetchResumes().catch(() => {});
+    fetchProviders().catch(() => {});
+    fetchActiveProvider().catch(() => {});
+    fetchSettings().catch(() => {});
   }, [fetchResumes, fetchProviders, fetchActiveProvider, fetchSettings]);
 
   return (

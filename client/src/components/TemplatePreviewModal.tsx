@@ -234,7 +234,7 @@ export default function TemplatePreviewModal({
                 )}
               </div>
               <p className="text-xs hidden md:block" style={{ color: 'var(--text-secondary)' }}>
-                Live preview with realistic sample resume details
+                Live preview with realistic sample CV / Resume details
               </p>
             </div>
           </div>

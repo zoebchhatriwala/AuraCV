@@ -148,13 +148,22 @@ async function startProductionServer(): Promise<string> {
   return `http://localhost:${chosenPort}`;
 }
 
-// Wait for a URL to respond before loading
+// Wait for a URL and backend health to respond before loading
 function waitForServer(url: string, timeoutMs = 25000): Promise<void> {
   const startTime = Date.now();
   return new Promise((resolve, reject) => {
     const check = () => {
-      const req = http.get(url, (res) => {
-        resolve();
+      // Check health endpoint to ensure SQLite and routes are ready
+      const healthUrl = isDev ? 'http://localhost:3847/api/health' : `${url}/api/health`;
+      const req = http.get(healthUrl, (res) => {
+        if (res.statusCode === 200) {
+          resolve();
+        } else if (Date.now() - startTime > timeoutMs) {
+          // If timeout reached, proceed anyway to allow fallback error page
+          resolve();
+        } else {
+          setTimeout(check, 300);
+        }
       });
       req.on('error', () => {
         if (Date.now() - startTime > timeoutMs) {

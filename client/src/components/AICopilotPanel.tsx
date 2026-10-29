@@ -290,7 +290,7 @@ export default function AICopilotPanel({
                 >
                   <div>
                     <span className="text-[11px] font-medium block" style={{ color: 'var(--text-muted)' }}>
-                      Overall Resume Match
+                      Overall CV / Resume Match
                     </span>
                     <span className="text-2xl font-bold font-display" style={{ color: 'var(--text-primary)' }}>
                       {matchResult.overall_score}%
@@ -556,7 +556,7 @@ export default function AICopilotPanel({
                       ) : (
                         <>
                           <ArrowRight className="w-3.5 h-3.5" />
-                          Apply to Resume
+                          Apply to CV / Resume
                         </>
                       )}
                     </button>
@@ -612,7 +612,7 @@ export default function AICopilotPanel({
           <div className="space-y-4">
             <div>
               <label className="block text-xs font-medium mb-1.5" style={{ color: 'var(--text-secondary)' }}>
-                Target Resume Section
+                Target CV / Resume Section
               </label>
               <select
                 value={selectedReviewSection}

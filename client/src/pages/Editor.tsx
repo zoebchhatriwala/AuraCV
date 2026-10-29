@@ -789,7 +789,7 @@ export default function Editor() {
             handleTemplateChange(id);
             setShowTemplatePreview(false);
           }}
-          actionButtonLabel="Apply to This Resume"
+          actionButtonLabel="Apply to This CV / Resume"
         />
       )}
 
@@ -958,8 +958,8 @@ function SectionCard({
           style={{ color: isVisible ? undefined : "var(--text-muted)" }}
           title={
             isVisible
-              ? "Visible on resume (Click to hide)"
-              : "Hidden from resume (Click to show)"
+              ? "Visible on CV / Resume (Click to hide)"
+              : "Hidden from CV / Resume (Click to show)"
           }
         >
           {isVisible ? (
@@ -1056,7 +1056,7 @@ function AddSectionDropdown({
         className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl border-2 border-dashed text-xs font-semibold transition-all hover:border-blue-600 hover:bg-blue-500/5 text-blue-600 cursor-pointer"
         style={{ borderColor: "var(--border-default)" }}
       >
-        <Plus className="w-4 h-4" /> Add Resume Section
+        <Plus className="w-4 h-4" /> Add CV / Resume Section
       </button>
       {open && (
         <div

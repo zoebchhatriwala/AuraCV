@@ -32,6 +32,7 @@ export default function Settings() {
     activeProvider,
     setActiveProvider,
     saveApiKey,
+    deleteApiKey,
     testProvider,
     settings,
     updateSettings,
@@ -45,6 +46,7 @@ export default function Settings() {
     Record<string, boolean | null>
   >({});
   const [saving, setSaving] = useState<Record<string, boolean>>({});
+  const [deleting, setDeleting] = useState<Record<string, boolean>>({});
   const [dbStats, setDbStats] = useState<DatabaseStats | null>(null);
   const [exportingDb, setExportingDb] = useState(false);
   const [exportDbSuccess, setExportDbSuccess] = useState(false);
@@ -60,12 +62,17 @@ export default function Settings() {
 
   useEffect(() => {
     let ignore = false;
-    exportApi.dbStats().then(stats => {
-      if (!ignore) setDbStats(stats);
-    }).catch(e => {
-      console.warn("Failed to load DB stats:", e);
-    });
-    return () => { ignore = true; };
+    exportApi
+      .dbStats()
+      .then((stats) => {
+        if (!ignore) setDbStats(stats);
+      })
+      .catch((e) => {
+        console.warn("Failed to load DB stats:", e);
+      });
+    return () => {
+      ignore = true;
+    };
   }, []);
 
   const [exportDbError, setExportDbError] = useState<string | null>(null);
@@ -82,7 +89,7 @@ export default function Settings() {
     } catch (e) {
       console.error("Database export failed:", e);
       setExportDbError(
-        `Export failed: ${e instanceof Error ? e.message : "Unknown error"}`
+        `Export failed: ${e instanceof Error ? e.message : "Unknown error"}`,
       );
     } finally {
       setExportingDb(false);
@@ -93,7 +100,9 @@ export default function Settings() {
   const [restoringDb, setRestoringDb] = useState(false);
   const [restoreDbSuccess, setRestoreDbSuccess] = useState(false);
   const [restoreDbError, setRestoreDbError] = useState<string | null>(null);
-  const [selectedRestoreFile, setSelectedRestoreFile] = useState<File | null>(null);
+  const [selectedRestoreFile, setSelectedRestoreFile] = useState<File | null>(
+    null,
+  );
   const [showConfirmRestoreModal, setShowConfirmRestoreModal] = useState(false);
 
   const handleSelectFile = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -164,6 +173,16 @@ export default function Settings() {
     await saveApiKey(provider, key);
     setKeys((k) => ({ ...k, [provider]: "" }));
     setSaving((s) => ({ ...s, [provider]: false }));
+  };
+
+  const handleDeleteKey = async (provider: string) => {
+    setDeleting((d) => ({ ...d, [provider]: true }));
+    try {
+      await deleteApiKey(provider);
+      setKeys((k) => ({ ...k, [provider]: "" }));
+    } finally {
+      setDeleting((d) => ({ ...d, [provider]: false }));
+    }
   };
 
   return (
@@ -325,8 +344,8 @@ export default function Settings() {
               AI Providers
             </h2>
             <p className="text-xs" style={{ color: "var(--text-secondary)" }}>
-              Select which AI provider powers your profile suggestions and review
-              tools
+              Select which AI provider powers your profile suggestions and
+              review tools
             </p>
           </div>
         </div>
@@ -412,89 +431,122 @@ export default function Settings() {
 
                 {/* API Key Vault input (skip for local ollama) */}
                 {!provider.local && (
-                  <div className="flex flex-col sm:flex-row gap-2 pt-2">
-                    <div className="relative flex-1">
-                      <Key className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                      <input
-                        type={isShowingKey ? "text" : "password"}
-                        value={keys[provider.provider] ?? ""}
-                        onChange={(e) =>
-                          setKeys((k) => ({
-                            ...k,
-                            [provider.provider]: e.target.value,
-                          }))
-                        }
-                        placeholder={
-                          provider.has_api_key
-                            ? "•••••••••••••••••••••••••••• (Encrypted in DB)"
-                            : "Paste API Key (AES-256 encrypted)…"
-                        }
-                        className="w-full rounded-xl pl-10 pr-10 py-2.5 text-xs transition-all border focus:outline-none focus:ring-2 focus:ring-blue-500/20 font-mono"
-                        style={{
-                          backgroundColor: "var(--bg-surface-elevated)",
-                          borderColor: "var(--border-default)",
-                          color: "var(--text-primary)",
-                        }}
-                      />
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setShowKey((s) => ({
-                            ...s,
-                            [provider.provider]: !isShowingKey,
-                          }))
-                        }
-                        className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer hover:opacity-80"
-                        style={{ color: "var(--text-muted)" }}
-                        title={isShowingKey ? "Hide key" : "Show key"}
-                      >
-                        {isShowingKey ? (
-                          <EyeOff className="w-4 h-4" />
-                        ) : (
-                          <Eye className="w-4 h-4" />
-                        )}
-                      </button>
-                    </div>
+                  <div className="space-y-2 pt-2">
+                    {provider.has_api_key && (
+                      <div className="flex items-center justify-between text-xs px-3.5 py-2 rounded-xl border bg-emerald-500/10 border-emerald-500/20 text-emerald-600 dark:text-emerald-400">
+                        <div className="flex items-center gap-2">
+                          <ShieldCheck className="w-4 h-4 text-emerald-500 shrink-0" />
+                          <span className="font-semibold">
+                            Key Stored in Database:
+                          </span>
+                          <span className="font-mono text-[11px] text-slate-700 dark:text-slate-200 bg-black/10 dark:bg-white/10 px-2 py-0.5 rounded">
+                            {provider.masked_api_key ||
+                              "•••••••••••••••• (Encrypted in DB)"}
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteKey(provider.provider)}
+                          disabled={deleting[provider.provider]}
+                          className="text-[11px] text-rose-500 hover:text-rose-600 dark:text-rose-400 font-semibold cursor-pointer underline disabled:opacity-50"
+                        >
+                          {deleting[provider.provider]
+                            ? "Removing..."
+                            : "Remove Key"}
+                        </button>
+                      </div>
+                    )}
 
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => handleTest(provider.provider)}
-                        disabled={
-                          (!keys[provider.provider] && !provider.has_api_key) ||
-                          testing[provider.provider]
-                        }
-                        className="px-3.5 py-2.5 rounded-xl border text-xs font-semibold transition-all disabled:opacity-40 flex items-center gap-1.5 hover:bg-slate-100 dark:hover:bg-neutral-700 cursor-pointer"
-                        style={{
-                          borderColor: "var(--border-default)",
-                          color: "var(--text-primary)",
-                        }}
-                      >
-                        {testing[provider.provider] ? (
-                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                        ) : (
-                          "Test"
+                    <div className="flex flex-col sm:flex-row gap-2">
+                      <div className="relative flex-1">
+                        <Key className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                        <input
+                          type={isShowingKey ? "text" : "password"}
+                          value={keys[provider.provider] ?? ""}
+                          onChange={(e) =>
+                            setKeys((k) => ({
+                              ...k,
+                              [provider.provider]: e.target.value,
+                            }))
+                          }
+                          placeholder={
+                            provider.has_api_key
+                              ? "Enter new key to replace existing..."
+                              : "Paste API Key (AES-256 encrypted)…"
+                          }
+                          className="w-full rounded-xl pl-10 pr-10 py-2.5 text-xs transition-all border focus:outline-none focus:ring-2 focus:ring-blue-500/20 font-mono"
+                          style={{
+                            backgroundColor: "var(--bg-surface-elevated)",
+                            borderColor: "var(--border-default)",
+                            color: "var(--text-primary)",
+                          }}
+                        />
+                        {keys[provider.provider] && (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setShowKey((s) => ({
+                                ...s,
+                                [provider.provider]: !isShowingKey,
+                              }))
+                            }
+                            className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer hover:opacity-80"
+                            style={{ color: "var(--text-muted)" }}
+                            title={isShowingKey ? "Hide key" : "Show key"}
+                          >
+                            {isShowingKey ? (
+                              <EyeOff className="w-4 h-4" />
+                            ) : (
+                              <Eye className="w-4 h-4" />
+                            )}
+                          </button>
                         )}
-                        {testResults[provider.provider] === true && (
-                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
-                        )}
-                        {testResults[provider.provider] === false && (
-                          <XCircle className="w-3.5 h-3.5 text-rose-500" />
-                        )}
-                      </button>
+                      </div>
 
-                      <button
-                        onClick={() => handleSave(provider.provider)}
-                        disabled={
-                          !keys[provider.provider] || saving[provider.provider]
-                        }
-                        className="btn-primary px-4 py-2.5 rounded-xl text-xs font-semibold transition-all disabled:opacity-40 cursor-pointer"
-                      >
-                        {saving[provider.provider] ? (
-                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                        ) : (
-                          "Save Key"
-                        )}
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => handleTest(provider.provider)}
+                          disabled={
+                            (!keys[provider.provider] &&
+                              !provider.has_api_key) ||
+                            testing[provider.provider]
+                          }
+                          className="px-3.5 py-2.5 rounded-xl border text-xs font-semibold transition-all disabled:opacity-40 flex items-center gap-1.5 hover:bg-slate-100 dark:hover:bg-neutral-700 cursor-pointer"
+                          style={{
+                            borderColor: "var(--border-default)",
+                            color: "var(--text-primary)",
+                          }}
+                        >
+                          {testing[provider.provider] ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          ) : (
+                            "Test"
+                          )}
+                          {testResults[provider.provider] === true && (
+                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                          )}
+                          {testResults[provider.provider] === false && (
+                            <XCircle className="w-3.5 h-3.5 text-rose-500" />
+                          )}
+                        </button>
+
+                        <button
+                          onClick={() => handleSave(provider.provider)}
+                          disabled={
+                            !keys[provider.provider] ||
+                            saving[provider.provider]
+                          }
+                          className="btn-primary px-4 py-2.5 rounded-xl text-xs font-semibold transition-all disabled:opacity-40 cursor-pointer"
+                        >
+                          {saving[provider.provider] ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          ) : provider.has_api_key ? (
+                            "Update Key"
+                          ) : (
+                            "Save Key"
+                          )}
+                        </button>
+                      </div>
                     </div>
                   </div>
                 )}
@@ -578,8 +630,8 @@ export default function Settings() {
             Data Backup & Storage
           </h2>
           <p className="text-xs" style={{ color: "var(--text-secondary)" }}>
-            Manage and export your backup of all your profiles,
-            settings, and logs
+            Manage and export your backup of all your profiles, settings, and
+            logs
           </p>
         </div>
 
@@ -673,7 +725,8 @@ export default function Settings() {
             <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs flex items-center gap-2.5 animate-fade-in">
               <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-500" />
               <span>
-                <strong>Database restored successfully!</strong> All profiles and settings swapped. Reloading workspace…
+                <strong>Database restored successfully!</strong> All profiles
+                and settings swapped. Reloading workspace…
               </span>
             </div>
           )}
@@ -810,94 +863,27 @@ export default function Settings() {
               restoring onto another machine.
             </span>
           </div>
-
         </div>
       </section>
 
       {/* Database Restore Overwrite Confirmation Modal */}
-      {showConfirmRestoreModal && selectedRestoreFile && createPortal(
-        <div
-          className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 dark:bg-black/70 backdrop-blur-sm animate-fade-in"
-          onClick={() => {
-            if (!restoringDb) {
-              setShowConfirmRestoreModal(false);
-              setSelectedRestoreFile(null);
-            }
-          }}
-        >
+      {showConfirmRestoreModal &&
+        selectedRestoreFile &&
+        createPortal(
           <div
-            className="w-full max-w-lg rounded-3xl border glass-card p-6 md:p-8 space-y-6 shadow-2xl relative animate-scale-up"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Top Right Close Button */}
-            <button
-              type="button"
-              onClick={() => {
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 dark:bg-black/70 backdrop-blur-sm animate-fade-in"
+            onClick={() => {
+              if (!restoringDb) {
                 setShowConfirmRestoreModal(false);
                 setSelectedRestoreFile(null);
-              }}
-              disabled={restoringDb}
-              className="absolute top-5 right-5 p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer disabled:opacity-50"
-              style={{ color: "var(--text-muted)" }}
-              title="Close dialog"
-            >
-              <X className="w-4 h-4" />
-            </button>
-
-            {/* Header with Danger Warning Icon */}
-            <div className="flex items-start gap-4">
-              <div className="w-11 h-11 rounded-2xl bg-rose-500/10 text-rose-500 border border-rose-500/20 flex items-center justify-center shrink-0">
-                <AlertTriangle className="w-5 h-5" />
-              </div>
-              <div className="space-y-1 pr-6">
-                <h3 className="font-display font-bold text-xl" style={{ color: "var(--text-primary)" }}>
-                  Overwrite Existing Database?
-                </h3>
-                <p className="text-xs" style={{ color: "var(--text-secondary)" }}>
-                  Restoring a backup will permanently replace your active database file.
-                </p>
-              </div>
-            </div>
-
-            {/* Warning Details Callout */}
-            <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-xs space-y-2 text-rose-700 dark:text-rose-300">
-              <p className="font-semibold flex items-center gap-1.5">
-                <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
-                Irreversible Data Loss Warning
-              </p>
-              <p className="leading-relaxed">
-                Restoring this file will <strong>completely replace</strong> your active SQLite database (<span className="font-mono font-semibold px-1.5 py-0.5 rounded bg-rose-500/15">auracv.db</span>).
-              </p>
-              <ul className="list-disc list-inside space-y-1 text-[11px] opacity-90 pl-1">
-                <li>All currently saved resumes, versions, and sections will be overwritten.</li>
-                <li>Custom vault fields, AI generation histories, and preferences will be replaced.</li>
-              </ul>
-              <p className="text-[11px] font-medium pt-2 border-t border-rose-500/20 text-slate-600 dark:text-neutral-300">
-                💡 <strong>Safety Recommendation:</strong> If you have unsaved profiles, cancel and click <em>Download Backup File</em> first.
-              </p>
-            </div>
-
-            {/* Uploaded File Snapshot */}
+              }
+            }}
+          >
             <div
-              className="p-3.5 rounded-2xl border text-xs flex items-center justify-between"
-              style={{
-                backgroundColor: "var(--bg-surface-elevated)",
-                borderColor: "var(--border-subtle)",
-              }}
+              className="w-full max-w-lg rounded-3xl border glass-card p-6 md:p-8 space-y-6 shadow-2xl relative animate-scale-up"
+              onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex items-center gap-2.5 truncate">
-                <Database className="w-4 h-4 text-blue-500 shrink-0" />
-                <span className="font-mono font-medium truncate" style={{ color: "var(--text-primary)" }}>
-                  {selectedRestoreFile.name}
-                </span>
-              </div>
-              <span className="text-[11px] font-semibold shrink-0" style={{ color: "var(--text-muted)" }}>
-                {(selectedRestoreFile.size / 1024).toFixed(1)} KB
-              </span>
-            </div>
-
-            {/* Dialog Action Buttons */}
-            <div className="flex items-center justify-end gap-3 pt-3 border-t" style={{ borderColor: "var(--border-subtle)" }}>
+              {/* Top Right Close Button */}
               <button
                 type="button"
                 onClick={() => {
@@ -905,33 +891,130 @@ export default function Settings() {
                   setSelectedRestoreFile(null);
                 }}
                 disabled={restoringDb}
-                className="btn-secondary px-5 py-2.5 rounded-xl text-xs font-semibold cursor-pointer disabled:opacity-50"
+                className="absolute top-5 right-5 p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer disabled:opacity-50"
+                style={{ color: "var(--text-muted)" }}
+                title="Close dialog"
               >
-                Cancel
+                <X className="w-4 h-4" />
               </button>
-              <button
-                type="button"
-                onClick={handleConfirmRestore}
-                disabled={restoringDb}
-                className="btn-danger px-5 py-2.5 rounded-xl text-xs font-semibold cursor-pointer shadow-sm flex items-center gap-2 disabled:opacity-50"
+
+              {/* Header with Danger Warning Icon */}
+              <div className="flex items-start gap-4">
+                <div className="w-11 h-11 rounded-2xl bg-rose-500/10 text-rose-500 border border-rose-500/20 flex items-center justify-center shrink-0">
+                  <AlertTriangle className="w-5 h-5" />
+                </div>
+                <div className="space-y-1 pr-6">
+                  <h3
+                    className="font-display font-bold text-xl"
+                    style={{ color: "var(--text-primary)" }}
+                  >
+                    Overwrite Existing Database?
+                  </h3>
+                  <p
+                    className="text-xs"
+                    style={{ color: "var(--text-secondary)" }}
+                  >
+                    Restoring a backup will permanently replace your active
+                    database file.
+                  </p>
+                </div>
+              </div>
+
+              {/* Warning Details Callout */}
+              <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-xs space-y-2 text-rose-700 dark:text-rose-300">
+                <p className="font-semibold flex items-center gap-1.5">
+                  <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                  Irreversible Data Loss Warning
+                </p>
+                <p className="leading-relaxed">
+                  Restoring this file will <strong>completely replace</strong>{" "}
+                  your active SQLite database (
+                  <span className="font-mono font-semibold px-1.5 py-0.5 rounded bg-rose-500/15">
+                    auracv.db
+                  </span>
+                  ).
+                </p>
+                <ul className="list-disc list-inside space-y-1 text-[11px] opacity-90 pl-1">
+                  <li>
+                    All currently saved resumes, versions, and sections will be
+                    overwritten.
+                  </li>
+                  <li>
+                    Custom vault fields, AI generation histories, and
+                    preferences will be replaced.
+                  </li>
+                </ul>
+                <p className="text-[11px] font-medium pt-2 border-t border-rose-500/20 text-slate-600 dark:text-neutral-300">
+                  💡 <strong>Safety Recommendation:</strong> If you have unsaved
+                  profiles, cancel and click <em>Download Backup File</em>{" "}
+                  first.
+                </p>
+              </div>
+
+              {/* Uploaded File Snapshot */}
+              <div
+                className="p-3.5 rounded-2xl border text-xs flex items-center justify-between"
+                style={{
+                  backgroundColor: "var(--bg-surface-elevated)",
+                  borderColor: "var(--border-subtle)",
+                }}
               >
-                {restoringDb ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin shrink-0" />
-                    <span>Restoring & Hot-Swapping…</span>
-                  </>
-                ) : (
-                  <>
-                    <RotateCcw className="w-4 h-4 shrink-0" />
-                    <span>Yes, Overwrite & Restore</span>
-                  </>
-                )}
-              </button>
+                <div className="flex items-center gap-2.5 truncate">
+                  <Database className="w-4 h-4 text-blue-500 shrink-0" />
+                  <span
+                    className="font-mono font-medium truncate"
+                    style={{ color: "var(--text-primary)" }}
+                  >
+                    {selectedRestoreFile.name}
+                  </span>
+                </div>
+                <span
+                  className="text-[11px] font-semibold shrink-0"
+                  style={{ color: "var(--text-muted)" }}
+                >
+                  {(selectedRestoreFile.size / 1024).toFixed(1)} KB
+                </span>
+              </div>
+
+              {/* Dialog Action Buttons */}
+              <div
+                className="flex items-center justify-end gap-3 pt-3 border-t"
+                style={{ borderColor: "var(--border-subtle)" }}
+              >
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowConfirmRestoreModal(false);
+                    setSelectedRestoreFile(null);
+                  }}
+                  disabled={restoringDb}
+                  className="btn-secondary px-5 py-2.5 rounded-xl text-xs font-semibold cursor-pointer disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConfirmRestore}
+                  disabled={restoringDb}
+                  className="btn-danger px-5 py-2.5 rounded-xl text-xs font-semibold cursor-pointer shadow-sm flex items-center gap-2 disabled:opacity-50"
+                >
+                  {restoringDb ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin shrink-0" />
+                      <span>Restoring & Hot-Swapping…</span>
+                    </>
+                  ) : (
+                    <>
+                      <RotateCcw className="w-4 h-4 shrink-0" />
+                      <span>Yes, Overwrite & Restore</span>
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
-          </div>
-        </div>,
-        document.body
-      )}
+          </div>,
+          document.body,
+        )}
     </div>
   );
 }

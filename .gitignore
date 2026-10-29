@@ -48,5 +48,9 @@ Thumbs.db
 *.sln
 *.sw?
 
+# Secrets & Vault Keys
+*.key
+.auracv_vault*
+
 # DevMind Agent Workspace
 .devmind/

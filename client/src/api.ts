@@ -3,15 +3,34 @@
 const BASE = '/api';
 
 async function request<T>(path: string, opts?: RequestInit): Promise<T> {
-  const res = await fetch(`${BASE}${path}`, {
-    headers: { 'Content-Type': 'application/json', ...opts?.headers },
-    ...opts,
-  });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ error: res.statusText }));
-    throw new Error((err as { error?: string }).error ?? `HTTP ${res.status}`);
+  const isGet = !opts?.method || opts.method.toUpperCase() === 'GET';
+  const maxRetries = isGet ? 3 : 0;
+
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      const res = await fetch(`${BASE}${path}`, {
+        headers: { 'Content-Type': 'application/json', ...opts?.headers },
+        ...opts,
+      });
+      if (!res.ok) {
+        if (isGet && attempt < maxRetries && (res.status === 502 || res.status === 503 || res.status === 504)) {
+          await new Promise((r) => setTimeout(r, 250 * Math.pow(2, attempt)));
+          continue;
+        }
+        const err = await res.json().catch(() => ({ error: res.statusText }));
+        throw new Error((err as { error?: string }).error ?? `HTTP ${res.status}`);
+      }
+      return (await res.json()) as T;
+    } catch (err) {
+      if (isGet && attempt < maxRetries) {
+        // Wait and retry for transient network connection error (e.g. backend still booting or proxy race)
+        await new Promise((r) => setTimeout(r, 250 * Math.pow(2, attempt)));
+        continue;
+      }
+      throw err;
+    }
   }
-  return res.json() as Promise<T>;
+  throw new Error('Request failed after retries');
 }
 
 const get  = <T>(path: string) => request<T>(path, { method: 'GET' });
@@ -258,6 +277,7 @@ export interface ProviderInfo {
   default_model: string;
   features: string[];
   has_api_key: boolean;
+  masked_api_key?: string;
   error?: string;
 }
 
@@ -268,6 +288,7 @@ export interface ActiveProvider {
   models: ModelOption[];
   features: string[];
   has_api_key: boolean;
+  masked_api_key?: string;
   local: boolean;
 }
 
