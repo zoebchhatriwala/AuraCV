@@ -166,12 +166,18 @@ export default function CVTailor() {
       );
       const duplicatedResume = await resumeApi.get(newResumeId);
       const existingSections = duplicatedResume.sections;
+      const updatedSectionIds = new Set<string>();
 
       // Update or create all sections from the tailored CV
       for (let i = 0; i < tailorResult.sections.length; i++) {
         const tailoredSec = tailorResult.sections[i];
         const existing = existingSections.find(
-          (s) => s.section_type === tailoredSec.section_type,
+          (s) =>
+            !updatedSectionIds.has(s.id) &&
+            s.section_type === tailoredSec.section_type &&
+            // Custom sections share a type, so their titles identify the section.
+            (s.section_type !== "custom" ||
+              s.title.trim().toLowerCase() === tailoredSec.title.trim().toLowerCase()),
         );
 
         if (existing) {
@@ -179,6 +185,7 @@ export default function CVTailor() {
             title: tailoredSec.title || existing.title,
             content: tailoredSec.content as unknown[],
           });
+          updatedSectionIds.add(existing.id);
         } else {
           await resumeApi.addSection(newResumeId, {
             section_type: tailoredSec.section_type,

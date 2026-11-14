@@ -305,11 +305,12 @@ export const resumeQueries = {
     const db = getDb();
     const src = db.prepare(`SELECT * FROM resumes WHERE id=?`).get(id) as unknown as ResumeRow | undefined;
     if (!src) return null;
+    const meta: ResumeMeta = { ...parseResume(src).meta, is_pinned: false, pinned: false };
     const newId = crypto.randomUUID();
     db.prepare(`
       INSERT INTO resumes (id, name, version_tag, template_id, meta, parent_id)
       VALUES (?, ?, ?, ?, ?, ?)
-    `).run(newId, newName ?? `${src.name} (copy)`, src.version_tag, src.template_id, src.meta, id);
+    `).run(newId, newName ?? `${src.name} (copy)`, src.version_tag, src.template_id, JSON.stringify(meta), id);
     const sections = db.prepare(`SELECT * FROM resume_sections WHERE resume_id=?`).all(id) as unknown as SectionRow[];
     for (const s of sections) {
       db.prepare(`
