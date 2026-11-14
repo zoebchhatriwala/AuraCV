@@ -3,6 +3,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 import * as http from 'http';
 import * as net from 'net';
+import { renderPdf } from './pdf';
 
 const isDev = !app.isPackaged;
 let mainWindow: BrowserWindow | null = null;
@@ -82,19 +83,6 @@ function checkPortAvailable(port: number): Promise<boolean> {
   });
 }
 
-function checkAuraCvHealth(url: string, timeoutMs = 1500): Promise<boolean> {
-  return new Promise((resolve) => {
-    const req = http.get(`${url}/api/health`, { timeout: timeoutMs }, (res) => {
-      resolve(res.statusCode === 200);
-    });
-    req.on('error', () => resolve(false));
-    req.on('timeout', () => {
-      req.destroy();
-      resolve(false);
-    });
-  });
-}
-
 async function findAvailablePort(startPort: number, maxAttempts = 10): Promise<number> {
   for (let p = startPort; p < startPort + maxAttempts; p++) {
     const free = await checkPortAvailable(p);
@@ -112,14 +100,7 @@ async function startProductionServer(): Promise<string> {
   const defaultPort = Number(process.env.PORT || 3847);
   let chosenPort = defaultPort;
 
-  // 1. Check if an AuraCV backend is already healthy on default port (e.g. background service)
-  const isHealthy = await checkAuraCvHealth(`http://localhost:${defaultPort}`);
-  if (isHealthy) {
-    console.log(`[Desktop] Reusing existing healthy AuraCV service on port ${defaultPort}`);
-    return `http://localhost:${defaultPort}`;
-  }
-
-  // 2. If port is occupied by another application, find a free port
+  // Own the embedded server so PDF export always uses Electron's bundled Chromium.
   const portFree = await checkPortAvailable(defaultPort);
   if (!portFree) {
     chosenPort = await findAvailablePort(defaultPort + 1);
@@ -137,7 +118,8 @@ async function startProductionServer(): Promise<string> {
 
     if (serverPath) {
       console.log('[Desktop] Starting embedded server from:', serverPath, `on port ${chosenPort}`);
-      require(serverPath);
+      const serverApp = require(serverPath).default;
+      serverApp.locals.renderPdf = renderPdf;
     } else {
       console.warn('[Desktop] Compiled server not found in candidates:', candidates);
     }

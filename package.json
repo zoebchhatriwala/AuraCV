@@ -1,13 +1,14 @@
 {
   "name": "auracv",
-  "version": "2.2.0",
+  "version": "2.2.1",
   "description": "Privacy-first career intelligence studio and CV / Resume builder",
   "author": "Zoeb Chhatriwala <zoeb@chhatriwala.com>",
   "desktopName": "auracv.desktop",
   "private": true,
   "main": "dist-electron/main.js",
   "scripts": {
-    "setup": "npm install && npm install --prefix server && npm install --prefix client",
+    "setup": "npm install && npm install --prefix server && npm install --prefix client && npm run browser:install",
+    "browser:install": "npm --prefix server run browser:install",
     "dev": "concurrently --names SERVER,CLIENT --prefix-colors magenta,cyan \"npm run dev:server\" \"npm run dev:client\"",
     "dev:server": "cd server && npm run dev",
     "dev:client": "cd client && npm run dev",

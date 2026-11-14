@@ -43,6 +43,17 @@ AuraCV is a modern, privacy-first career intelligence studio and CV / Resume bui
    npm run setup
    ```
 
+   Setup also downloads the Chrome version required for web/development PDF export. If export reports
+   `Could not find Chrome`, restore the browser from the repository root:
+
+   ```bash
+   npm run browser:install
+   ```
+
+   In Windows PowerShell, use `npm.cmd` if script execution policy blocks `npm`.
+   Run the command as the same user that runs the server so both use the same
+   [Puppeteer browser cache](https://pptr.dev/guides/configuration).
+
 ### Running Locally
 
 - **Web Mode:**
@@ -78,6 +89,10 @@ npm run build:desktop:linux
 ```
 
 Installers and packages are output to the `release/` directory.
+
+Installed desktop apps export PDFs using Electron's bundled Chromium. Users do not
+need Chrome, a Puppeteer browser cache, or a browser download. Web mode and
+`npm run desktop` development mode use the Node server's Puppeteer renderer.
 
 ## Configuration & Custom Providers
 

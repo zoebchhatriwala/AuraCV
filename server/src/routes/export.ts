@@ -7,7 +7,7 @@ import Handlebars from 'handlebars';
 import { marked } from 'marked';
 import { resumeQueries, sectionQueries, exportDatabaseSnapshot, restoreDatabase, getDatabaseStats } from '../db/database';
 import { getCandidateName, getNormalizedExportName, cleanExportFileName } from '../export/exportName';
-import puppeteer from 'puppeteer';
+import { renderPdfWithPuppeteer, type PdfRenderer } from '../export/pdf';
 import {
   Document,
   Paragraph,
@@ -303,7 +303,6 @@ router.get('/:id/preview', (req: Request, res: Response) => {
 
 // POST /api/export/:id/pdf
 router.post('/:id/pdf', async (req: Request, res: Response) => {
-  let browser: any = null;
   try {
     const id = String(req.params.id);
     const resume = resumeQueries.get(id);
@@ -318,34 +317,8 @@ router.post('/:id/pdf', async (req: Request, res: Response) => {
     const sections = sectionQueries.list(id);
     const html = renderTemplate(templateId, resume, sections);
 
-    browser = await puppeteer.launch({
-      headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu'],
-    });
-    const page = await browser.newPage();
-    try {
-      await page.setContent(html, {
-        waitUntil: ['load', 'networkidle0'],
-        timeout: 15000,
-      });
-    } catch {
-      await page.setContent(html, { waitUntil: 'load', timeout: 5000 });
-    }
-
-    try {
-      await Promise.race([
-        page.evaluate('document.fonts.ready'),
-        new Promise((resolve) => setTimeout(resolve, 3000)),
-      ]);
-    } catch {
-      // Font loading fallback
-    }
-
-    const pdfBuffer = await page.pdf({
-      format: 'A4',
-      margin: { top: '15mm', bottom: '15mm', left: '15mm', right: '15mm' },
-      printBackground: true,
-    });
+    const renderPdf: PdfRenderer = req.app.locals.renderPdf ?? renderPdfWithPuppeteer;
+    const pdfBuffer = await renderPdf(html);
 
     const candidateName = getCandidateName(sections);
     const defaultBase = getNormalizedExportName(candidateName, resume.name);
@@ -357,14 +330,6 @@ router.post('/:id/pdf', async (req: Request, res: Response) => {
   } catch (e) {
     console.error('PDF Export Error:', e);
     res.status(500).json({ error: (e as Error).message });
-  } finally {
-    if (browser) {
-      try {
-        await browser.close();
-      } catch (closeErr) {
-        console.warn('Failed to close browser:', closeErr);
-      }
-    }
   }
 });
 
